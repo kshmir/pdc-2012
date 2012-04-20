@@ -46,7 +46,7 @@ public abstract class Worker<T extends DataEvent> implements Runnable {
 			}
 
 			if (event.canClose()) {
-				this.receiver.closeConnection(event);
+				// this.receiver.closeConnection(event);
 			}
 
 		}

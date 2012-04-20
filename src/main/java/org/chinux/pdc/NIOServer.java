@@ -177,10 +177,13 @@ public class NIOServer implements DataReceiver<NIODataEvent> {
 		// Clear out our read buffer so it's ready for new data
 		this.readBuffer.clear();
 
+		// No se porqué falla con esto
+		final ByteBuffer readBuffer = ByteBuffer.allocate(1024);
+
 		// Attempt to read off the channel
 		int numRead;
 		try {
-			numRead = socketChannel.read(this.readBuffer);
+			numRead = socketChannel.read(readBuffer);
 		} catch (final IOException e) {
 			// The remote forcibly closed the connection, cancel
 			// the selection key and close the channel.
@@ -197,8 +200,9 @@ public class NIOServer implements DataReceiver<NIODataEvent> {
 			return;
 		}
 		// Hand the data off to our worker thread
-		this.worker.processData(new NIODataEvent(socketChannel, this.readBuffer
-				.array().clone()));
+		final byte[] data = (numRead > 0) ? readBuffer.array() : new byte[] {};
+
+		this.worker.processData(new NIODataEvent(socketChannel, data));
 	}
 
 	public static void main(final String[] args) throws UnknownHostException,
