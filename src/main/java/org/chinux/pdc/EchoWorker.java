@@ -1,5 +1,4 @@
-package org.chinux.pdc;
-
+package main.java.org.chinux.pdc;
 
 public class EchoWorker extends Worker<NIODataEvent> {
 

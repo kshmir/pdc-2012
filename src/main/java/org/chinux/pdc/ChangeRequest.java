@@ -1,4 +1,4 @@
-package org.chinux.pdc;
+package main.java.org.chinux.pdc;
 
 import java.nio.channels.SocketChannel;
 

@@ -1,4 +1,4 @@
-package org.chinux.pdc;
+package main.java.org.chinux.pdc;
 
 public interface DataEvent {
 	public byte[] getData();

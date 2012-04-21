@@ -1,4 +1,4 @@
-package org.chinux.pdc;
+package main.java.org.chinux.pdc;
 
 import java.nio.channels.SocketChannel;
 
@@ -26,22 +26,27 @@ public class NIODataEvent implements DataEvent {
 		this.canClose = canClose;
 	}
 
+	@Override
 	public void setCanClose(final boolean closeable) {
 		this.canClose = closeable;
 	}
 
+	@Override
 	public void setCanSend(final boolean sendable) {
 		this.canSend = sendable;
 	}
 
+	@Override
 	public byte[] getData() {
 		return this.data;
 	}
 
+	@Override
 	public boolean canSend() {
 		return this.canSend;
 	}
 
+	@Override
 	public boolean canClose() {
 		return this.canClose;
 	}

@@ -17,11 +17,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-// TODO: Check all the TODO's
-public class NIOServer implements DataReceiver<NIODataEvent> {
+public class NIOAsyncClient implements DataForwarder<NIODataEvent>,
+		DataReceiver<NIODataEvent> {
 
 	private InetAddress host;
 	private int port;
+	private int externalPort;
 	private ServerSocketChannel serverChannel;
 	private Selector selector;
 	private ByteBuffer readBuffer;
@@ -33,9 +34,10 @@ public class NIOServer implements DataReceiver<NIODataEvent> {
 	private Map<SocketChannel, ArrayList<ByteBuffer>> pendingData = new HashMap<SocketChannel, ArrayList<ByteBuffer>>();
 	private Worker<NIODataEvent> worker;
 
-	public NIOServer(final int destPort) throws IOException {
+	public NIOAsyncClient(final int destPort) throws IOException {
 		this.host = InetAddress.getByName("localhost");
 		this.port = destPort;
+		this.externalPort = 8080;
 		this.selector = this.initSelector();
 		this.readBuffer = ByteBuffer.allocate(1024);
 	}
@@ -107,6 +109,9 @@ public class NIOServer implements DataReceiver<NIODataEvent> {
 							key = change.socket.keyFor(this.selector);
 							change.socket.close();
 							key.cancel();
+							break;
+						case ChangeRequest.REGISTER:
+							change.socket.register(this.selector, change.ops);
 							break;
 						}
 					}
@@ -225,6 +230,7 @@ public class NIOServer implements DataReceiver<NIODataEvent> {
 	}
 
 	// TODO: Make this in a subclass
+	@Override
 	public void sendAnswer(final NIODataEvent event) {
 		final SocketChannel socket = event.socket;
 		final byte[] data = event.data;
@@ -250,7 +256,44 @@ public class NIOServer implements DataReceiver<NIODataEvent> {
 		this.selector.wakeup();
 	}
 
+	@Override
+	public void sendForward(final NIODataEvent event) {
+		// create the new socket for communication with the external server
+		SocketChannel socket2 = null;
+		try {
+			socket2 = SocketChannel.open();
+			socket2.configureBlocking(false);
+			socket2.connect(new InetSocketAddress(this.host, this.externalPort));
+		} catch (final IOException e) {
+			e.printStackTrace();
+		}
+
+		// final SocketChannel socket1 = event.socket;
+		final byte[] data = event.data;
+
+		synchronized (this.changeRequests) {
+			// Indicate we want the interest ops set changed
+			this.changeRequests.add(new ChangeRequest(socket2,
+					ChangeRequest.CHANGEOPS, SelectionKey.OP_WRITE));
+
+			// And queue the data we want written
+			synchronized (this.pendingData) {
+				ArrayList<ByteBuffer> queue = this.pendingData.get(socket2);
+				if (queue == null) {
+					queue = new ArrayList<ByteBuffer>();
+					this.pendingData.put(socket2, queue);
+				}
+				queue.add(ByteBuffer.wrap(data));
+			}
+		}
+
+		// Finally, wake up our selecting thread so it can make the required
+		// changes
+		this.selector.wakeup();
+	}
+
 	// TODO: Make this in a subclass
+	@Override
 	public void closeConnection(final NIODataEvent event) {
 		synchronized (this.changeRequests) {
 			// Indicate we want the interest ops set changed
@@ -259,4 +302,40 @@ public class NIOServer implements DataReceiver<NIODataEvent> {
 		}
 	}
 
+	private SocketChannel initiateConnection() throws IOException {
+		// Create a non-blocking socket channel
+		final SocketChannel socketChannel = SocketChannel.open();
+		socketChannel.configureBlocking(false);
+
+		// Kick off connection establishment
+		socketChannel.connect(new InetSocketAddress(this.host, this.port));
+
+		// Queue a channel registration since the caller is not the
+		// selecting thread. As part of the registration we'll register
+		// an interest in connection events. These are raised when a channel
+		// is ready to complete connection establishment.
+		synchronized (this.changeRequests) {
+			this.changeRequests.add(new ChangeRequest(socketChannel,
+					ChangeRequest.REGISTER, SelectionKey.OP_CONNECT));
+		}
+
+		return socketChannel;
+	}
+
+	private void finishConnection(final SelectionKey key) throws IOException {
+		final SocketChannel socketChannel = (SocketChannel) key.channel();
+
+		// Finish the connection. If the connection operation failed
+		// this will raise an IOException.
+		try {
+			socketChannel.finishConnection();
+		} catch (final IOException e) {
+			// Cancel the channel's registration with our selector
+			key.cancel();
+			return;
+		}
+
+		// Register an interest in writing on this channel
+		key.interestOps(SelectionKey.OP_WRITE);
+	}
 }
