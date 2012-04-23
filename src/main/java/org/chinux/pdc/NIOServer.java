@@ -2,7 +2,6 @@ package org.chinux.pdc;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
@@ -20,7 +19,6 @@ public class NIOServer {
 	private int port;
 	private ServerSocketChannel serverChannel;
 	private Selector selector;
-	private ByteBuffer readBuffer;
 
 	TCPHandler handler;
 
@@ -33,7 +31,6 @@ public class NIOServer {
 		this.port = destPort;
 		this.selector = selfactory.getSelector(this.host, this.port,
 				this.serverChannel);
-		this.readBuffer = ByteBuffer.allocate(1024);
 		this.handler = new ServerHandler(this.selector, 8080, destPort);
 
 	}
@@ -42,7 +39,6 @@ public class NIOServer {
 		this.worker = worker;
 	}
 
-	// TODO: Make this use the interface
 	public void run() {
 
 		while (true) {
