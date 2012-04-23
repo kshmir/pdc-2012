@@ -7,10 +7,6 @@ public abstract class Worker<T extends DataEvent> implements Runnable {
 
 	private DataReceiver<T> receiver;
 
-	public Worker(final DataReceiver<T> receiver) {
-		this.receiver = receiver;
-	}
-
 	private Deque<T> events = new LinkedList<T>();
 
 	public void processData(final T event) {

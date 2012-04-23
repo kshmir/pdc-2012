@@ -1,11 +1,6 @@
 package org.chinux.pdc;
 
-
 public class EchoWorker extends Worker<NIODataEvent> {
-
-	public EchoWorker(final DataReceiver<NIODataEvent> receiver) {
-		super(receiver);
-	}
 
 	@Override
 	public NIODataEvent DoWork(final NIODataEvent dataEvent) {
