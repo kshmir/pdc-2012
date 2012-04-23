@@ -1,4 +1,4 @@
-package main.java.org.chinux.pdc;
+package org.chinux.pdc;
 
 import java.io.IOException;
 import java.net.InetAddress;

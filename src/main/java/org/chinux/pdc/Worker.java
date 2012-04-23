@@ -1,16 +1,9 @@
-package main.java.org.chinux.pdc;
+package org.chinux.pdc;
 
 import java.util.Deque;
 import java.util.LinkedList;
 
 public abstract class Worker<T extends DataEvent> implements Runnable {
-
-	private DataReceiver<T> receiver;
-	private DataForwarder<T> forwarder;
-
-	public Worker(final DataReceiver<T> receiver) {
-		this.receiver = receiver;
-	}
 
 	private Deque<T> events = new LinkedList<T>();
 
@@ -44,16 +37,11 @@ public abstract class Worker<T extends DataEvent> implements Runnable {
 			final T event = this.DoWork(dataEvent);
 
 			if (event.canSend()) {
-				if (event instanceof NIOClientEvent) {
-					this.receiver.sendAnswer(event);
-				} else if (event instanceof NIOServerEvent) {
-					this.forwarder.sendForward(event);
-				}
-
+				event.getReceiver().sendAnswer(event);
 			}
 
 			if (event.canClose()) {
-				// this.receiver.closeConnection(event);
+				event.getReceiver().closeConnection(event);
 			}
 
 		}
