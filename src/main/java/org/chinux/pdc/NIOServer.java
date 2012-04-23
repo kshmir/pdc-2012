@@ -2,12 +2,10 @@ package org.chinux.pdc;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.spi.SelectorProvider;
 import java.util.Iterator;
 
 import org.chinux.pdc.events.NIODataEvent;
@@ -22,16 +20,18 @@ public class NIOServer {
 	private int port;
 	private ServerSocketChannel serverChannel;
 	private Selector selector;
-	private ByteBuffer readBuffer;
 
 	TCPHandler handler;
 
 	private Worker<NIODataEvent> worker;
 
-	public NIOServer(final int destPort) throws IOException {
+	public NIOServer(final int destPort, final ServerSelectorFactory selfactory)
+			throws IOException {
+
 		this.host = InetAddress.getByName("localhost");
 		this.port = destPort;
-		this.selector = this.initSelector();
+		this.selector = selfactory.getSelector(this.host, this.port,
+				this.serverChannel);
 		this.readBuffer = ByteBuffer.allocate(1024);
 		this.handler = new ServerHandler(this.selector, 8080, destPort);
 
@@ -39,28 +39,6 @@ public class NIOServer {
 
 	public void setWorker(final Worker<NIODataEvent> worker) {
 		this.worker = worker;
-	}
-
-	// TODO: See if we can extract this.
-	private Selector initSelector() throws IOException {
-		// Create a new selector
-		final Selector socketSelector = SelectorProvider.provider()
-				.openSelector();
-
-		// Create a new non-blocking server socket channel
-		this.serverChannel = ServerSocketChannel.open();
-		this.serverChannel.configureBlocking(false);
-
-		// Bind the server socket to the specified address and port
-		final InetSocketAddress isa = new InetSocketAddress(this.host,
-				this.port);
-		this.serverChannel.socket().bind(isa);
-
-		// Register the server socket channel, indicating an interest in
-		// accepting new connections
-		this.serverChannel.register(socketSelector, SelectionKey.OP_ACCEPT);
-
-		return socketSelector;
 	}
 
 	// TODO: Make this use the interface

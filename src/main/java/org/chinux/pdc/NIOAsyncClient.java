@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
-import java.nio.channels.spi.SelectorProvider;
 import java.util.Iterator;
 
 import org.chinux.pdc.events.NIODataEvent;
@@ -22,7 +21,8 @@ public class NIOAsyncClient implements Runnable {
 	public static void main(final String[] args) throws UnknownHostException,
 			IOException {
 		try {
-			final NIOAsyncClient client = new NIOAsyncClient(80);
+			final NIOAsyncClient client = new NIOAsyncClient(80,
+					new ClientSelectorFactory());
 			final Thread t = new Thread(client);
 			t.setDaemon(true);
 			t.start();
@@ -31,17 +31,14 @@ public class NIOAsyncClient implements Runnable {
 		}
 	}
 
-	public NIOAsyncClient(final int destPort) throws IOException {
-		this.selector = this.initSelector();
+	public NIOAsyncClient(final int destPort,
+			final ClientSelectorFactory selfactory) throws IOException {
+		this.selector = selfactory.getSelector();
 		this.handler = new AsyncClientHandler(this.selector, 8080, destPort);
 	}
 
 	public void setWorker(final Worker<NIODataEvent> worker) {
 		this.worker = worker;
-	}
-
-	private Selector initSelector() throws IOException {
-		return SelectorProvider.provider().openSelector();
 	}
 
 	@Override
