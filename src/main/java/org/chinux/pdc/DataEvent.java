@@ -1,7 +1,10 @@
-package main.java.org.chinux.pdc;
+package org.chinux.pdc;
+
 
 public interface DataEvent {
 	public byte[] getData();
+
+	public DataReceiver<DataEvent> getReceiver();
 
 	public void setCanSend(boolean sendable);
 

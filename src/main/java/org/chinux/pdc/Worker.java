@@ -1,16 +1,9 @@
-package main.java.org.chinux.pdc;
+package org.chinux.pdc;
 
 import java.util.Deque;
 import java.util.LinkedList;
 
 public abstract class Worker<T extends DataEvent> implements Runnable {
-
-	private DataReceiver<T> receiver;
-	private DataForwarder<T> forwarder;
-
-	public Worker(final DataReceiver<T> receiver) {
-		this.receiver = receiver;
-	}
 
 	private Deque<T> events = new LinkedList<T>();
 
@@ -45,11 +38,10 @@ public abstract class Worker<T extends DataEvent> implements Runnable {
 
 			if (event.canSend()) {
 				event.getReceiver().sendAnswer(event);
-
 			}
 
 			if (event.canClose()) {
-				// this.receiver.closeConnection(event);
+				event.getReceiver().closeConnection(event);
 			}
 
 		}
