@@ -1,4 +1,4 @@
-package main.java.org.chinux.pdc;
+package org.chinux.pdc;
 
 import java.nio.channels.SocketChannel;
 
@@ -49,5 +49,11 @@ public class NIODataEvent implements DataEvent {
 	@Override
 	public boolean canClose() {
 		return this.canClose;
+	}
+
+	@Override
+	public DataReceiver<DataEvent> getReceiver() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }
