@@ -1,4 +1,4 @@
-package org.chinux.pdc;
+package org.chinux.pdc.events;
 
 import java.nio.channels.SocketChannel;
 

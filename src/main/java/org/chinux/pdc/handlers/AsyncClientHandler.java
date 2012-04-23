@@ -16,9 +16,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.chinux.pdc.ChangeRequest;
-import org.chinux.pdc.NIODataEvent;
-import org.chinux.pdc.NIOServerEvent;
-import org.chinux.pdc.Worker;
+import org.chinux.pdc.events.NIODataEvent;
+import org.chinux.pdc.events.NIOServerEvent;
+import org.chinux.pdc.workers.Worker;
 
 public class AsyncClientHandler implements TCPHandler {
 
@@ -40,10 +40,10 @@ public class AsyncClientHandler implements TCPHandler {
 		this.readBuffer = ByteBuffer.allocate(1024);
 	}
 
-	void setWorker(Worker worker){
+	void setWorker(final Worker worker) {
 		this.worker = worker;
 	}
-	
+
 	@Override
 	public void handleAccept(final SelectionKey key) throws IOException {
 		System.out.println("not used");

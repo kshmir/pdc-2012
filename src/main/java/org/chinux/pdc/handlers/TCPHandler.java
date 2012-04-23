@@ -4,8 +4,7 @@ import java.io.IOException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 
-import org.chinux.pdc.DataReceiver;
-import org.chinux.pdc.NIODataEvent;
+import org.chinux.pdc.events.NIODataEvent;
 
 public interface TCPHandler extends DataReceiver<NIODataEvent> {
 

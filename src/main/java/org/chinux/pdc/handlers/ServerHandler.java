@@ -15,8 +15,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.chinux.pdc.ChangeRequest;
-import org.chinux.pdc.NIOClientEvent;
-import org.chinux.pdc.NIODataEvent;
+import org.chinux.pdc.events.DataEvent;
+import org.chinux.pdc.events.NIOClientEvent;
+import org.chinux.pdc.events.NIODataEvent;
+import org.chinux.pdc.workers.Worker;
 
 public class ServerHandler implements TCPHandler {
 
@@ -29,6 +31,7 @@ public class ServerHandler implements TCPHandler {
 	private List<ChangeRequest> changeRequests = new LinkedList<ChangeRequest>();
 
 	private Map<SocketChannel, ArrayList<ByteBuffer>> pendingData = new HashMap<SocketChannel, ArrayList<ByteBuffer>>();
+	private Worker<DataEvent> worker;
 
 	public ServerHandler(final Selector selector, final int externalPort,
 			final int port) {
@@ -167,7 +170,12 @@ public class ServerHandler implements TCPHandler {
 					break;
 				case ChangeRequest.CLOSE:
 					key = change.socket.keyFor(this.selector);
-					change.socket.close();
+					try {
+						change.socket.close();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 					key.cancel();
 					break;
 				}

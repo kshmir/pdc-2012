@@ -3,7 +3,6 @@ package org.chinux.pdc;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -11,8 +10,10 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.spi.SelectorProvider;
 import java.util.Iterator;
 
+import org.chinux.pdc.events.NIODataEvent;
 import org.chinux.pdc.handlers.ServerHandler;
 import org.chinux.pdc.handlers.TCPHandler;
+import org.chinux.pdc.workers.Worker;
 
 // TODO: Check all the TODO's
 public class NIOServer {
@@ -65,9 +66,6 @@ public class NIOServer {
 	// TODO: Make this use the interface
 	public void run() {
 
-		// TODO: Make this better, can we?
-		new Thread(this.worker).start();
-
 		while (true) {
 			try {
 
@@ -101,25 +99,6 @@ public class NIOServer {
 				e.printStackTrace();
 			}
 		}
-	}
-
-	public static void main(final String[] args) throws UnknownHostException,
-			IOException {
-		int inPort;
-
-		if (args.length == 1) {
-			inPort = Integer.valueOf(args[0]);
-		} else {
-			inPort = 8080;
-		}
-
-		final NIOServer server = new NIOServer(inPort);
-
-		final Worker<NIODataEvent> worker = new EchoWorker(server);
-
-		server.setWorker(worker);
-
-		server.run();
 	}
 
 }
