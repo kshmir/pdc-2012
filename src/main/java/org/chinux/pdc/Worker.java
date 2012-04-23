@@ -25,6 +25,7 @@ public abstract class Worker<T extends DataEvent> implements Runnable {
 	/**
 	 * This loop receives all the data and handles all the bussiness logic.
 	 */
+	@Override
 	public void run() {
 		T dataEvent;
 
