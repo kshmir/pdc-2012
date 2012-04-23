@@ -44,11 +44,7 @@ public abstract class Worker<T extends DataEvent> implements Runnable {
 			final T event = this.DoWork(dataEvent);
 
 			if (event.canSend()) {
-				if (event instanceof NIOClientEvent) {
-					this.receiver.sendAnswer(event);
-				} else if (event instanceof NIOServerEvent) {
-					this.forwarder.sendForward(event);
-				}
+				event.getReceiver().sendAnswer(event);
 
 			}
 
