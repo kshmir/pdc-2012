@@ -1,6 +1,8 @@
-package org.chinux.pdc;
+package org.chinux.pdc.events;
 
 import java.nio.channels.SocketChannel;
+
+import org.chinux.pdc.handlers.DataReceiver;
 
 /**
  * Represents any kind of processed data ready to be sent to a server

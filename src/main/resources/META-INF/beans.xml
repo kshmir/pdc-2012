@@ -20,13 +20,19 @@
 	</bean>
 
 
-	<bean id="mainWorker" class="org.chinux.pdc.EchoWorker" />
+	<bean id="mainWorker" class="org.chinux.pdc.workers.EchoWorker" />
+	
+	<bean id="workerServerHandler" class="org.chinux.pdc.handlers.WorkerServerHandler" lazy-init="false">
+		<constructor-arg>
+			<ref bean="mainWorker"/>
+		</constructor-arg>
+	</bean>
 
 	<bean id="server" class="org.chinux.pdc.NIOServer" lazy-init="false">
 		<constructor-arg>
 			<value type="java.lang.Integer">9090</value>
 		</constructor-arg>
-		<property name="worker" ref="mainWorker"></property>
+		<property name="handler" ref="workerServerHandler"></property>
 	</bean>
 
 	<bean id="application" class="org.chinux.pdc.App">
