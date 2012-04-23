@@ -26,23 +26,34 @@ public class NIODataEvent implements DataEvent {
 		this.canClose = canClose;
 	}
 
+	@Override
 	public void setCanClose(final boolean closeable) {
 		this.canClose = closeable;
 	}
 
+	@Override
 	public void setCanSend(final boolean sendable) {
 		this.canSend = sendable;
 	}
 
+	@Override
 	public byte[] getData() {
 		return this.data;
 	}
 
+	@Override
 	public boolean canSend() {
 		return this.canSend;
 	}
 
+	@Override
 	public boolean canClose() {
 		return this.canClose;
+	}
+
+	@Override
+	public DataReceiver<DataEvent> getReceiver() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

@@ -5,8 +5,6 @@ import java.util.LinkedList;
 
 public abstract class Worker<T extends DataEvent> implements Runnable {
 
-	private DataReceiver<T> receiver;
-
 	private Deque<T> events = new LinkedList<T>();
 
 	public void processData(final T event) {
@@ -39,14 +37,13 @@ public abstract class Worker<T extends DataEvent> implements Runnable {
 			final T event = this.DoWork(dataEvent);
 
 			if (event.canSend()) {
-				this.receiver.sendAnswer(event);
+				event.getReceiver().sendAnswer(event);
 			}
 
 			if (event.canClose()) {
-				// this.receiver.closeConnection(event);
+				event.getReceiver().closeConnection(event);
 			}
 
 		}
 	}
-
 }
