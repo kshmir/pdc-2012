@@ -20,6 +20,7 @@ public class NIOServer {
 	private int port;
 	private ServerSocketChannel serverChannel;
 	private Selector selector;
+	private ByteBuffer readBuffer;
 
 	TCPHandler handler;
 
