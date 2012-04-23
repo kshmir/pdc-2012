@@ -4,12 +4,22 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 public class App {
 
-	public void run(final NIOServer server, final Runnable client,
-			final Worker<DataEvent> worker) {
+	private NIOServer server;
+	private Worker<DataEvent> worker;
 
-		new Thread(server).run();
-		new Thread(client).run();
-		new Thread(worker).run();
+	public App(final NIOServer server, final Worker<DataEvent> worker) {
+		this.server = server;
+		this.worker = worker;
+
+		this.run();
+	}
+
+	public void run() {
+
+		new Thread(this.worker).start();
+		new Thread(this.server).start();
+		// new Thread(client).run();
+
 	}
 
 	public static void main(final String[] args) {

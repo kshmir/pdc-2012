@@ -1,4 +1,4 @@
-package main.java.org.chinux.pdc;
+package org.chinux.pdc;
 
 public interface DataHandler<T> {
 	public void accept(T key);

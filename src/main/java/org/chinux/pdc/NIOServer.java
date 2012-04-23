@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 // TODO: Check all the TODO's
-public class NIOServer implements DataReceiver<NIODataEvent>, Runnable {
+public class NIOServer implements DataReceiver<DataEvent>, Runnable {
 
 	private InetAddress host;
 	private int port;
@@ -32,9 +32,9 @@ public class NIOServer implements DataReceiver<NIODataEvent>, Runnable {
 	private Map<SocketChannel, ArrayList<ByteBuffer>> pendingData = new HashMap<SocketChannel, ArrayList<ByteBuffer>>();
 	private Worker<NIODataEvent> worker;
 
-	public NIOServer(final int destPort) throws IOException {
+	public NIOServer(final int localPort) throws IOException {
 		this.host = InetAddress.getByName("localhost");
-		this.port = destPort;
+		this.port = localPort;
 		this.selector = this.initSelector();
 		this.readBuffer = ByteBuffer.allocate(1024);
 	}
@@ -198,12 +198,13 @@ public class NIOServer implements DataReceiver<NIODataEvent>, Runnable {
 		// Hand the data off to our worker thread
 		final byte[] data = (numRead > 0) ? readBuffer.array() : new byte[] {};
 
-		this.worker.processData(new NIODataEvent(socketChannel, data));
+		this.worker.processData(new NIODataEvent(socketChannel, data, this));
 	}
 
 	// TODO: Make this in a subclass
 	@Override
-	public void sendAnswer(final NIODataEvent event) {
+	public void sendAnswer(final DataEvent dataEvent) {
+		final NIODataEvent event = (NIODataEvent) dataEvent;
 		final SocketChannel socket = event.socket;
 		final byte[] data = event.data;
 
@@ -230,7 +231,8 @@ public class NIOServer implements DataReceiver<NIODataEvent>, Runnable {
 
 	// TODO: Make this in a subclass
 	@Override
-	public void closeConnection(final NIODataEvent event) {
+	public void closeConnection(final DataEvent dataEvent) {
+		final NIODataEvent event = (NIODataEvent) dataEvent;
 		synchronized (this.changeRequests) {
 			// Indicate we want the interest ops set changed
 			this.changeRequests.add(new ChangeRequest(event.socket,
