@@ -1,13 +1,15 @@
 package org.chinux.pdc;
 
+import org.chinux.pdc.events.DataEvent;
+import org.chinux.pdc.workers.WorkerAsync;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 public class App {
 
 	private NIOServer server;
-	private Worker<DataEvent> worker;
+	private WorkerAsync<DataEvent> worker;
 
-	public App(final NIOServer server, final Worker<DataEvent> worker) {
+	public App(final NIOServer server, final WorkerAsync<DataEvent> worker) {
 		this.server = server;
 		this.worker = worker;
 

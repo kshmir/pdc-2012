@@ -1,6 +1,8 @@
-package org.chinux.pdc;
+package org.chinux.pdc.workers;
 
-public class EchoWorker extends Worker<NIODataEvent> {
+import org.chinux.pdc.events.NIODataEvent;
+
+public class EchoWorker extends WorkerAsync<NIODataEvent> {
 
 	@Override
 	public NIODataEvent DoWork(final NIODataEvent dataEvent) {
