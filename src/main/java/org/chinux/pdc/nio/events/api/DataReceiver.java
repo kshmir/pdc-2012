@@ -1,6 +1,4 @@
-package org.chinux.pdc.handlers;
-
-import org.chinux.pdc.events.DataEvent;
+package org.chinux.pdc.nio.events.api;
 
 public interface DataReceiver<T extends DataEvent> {
 

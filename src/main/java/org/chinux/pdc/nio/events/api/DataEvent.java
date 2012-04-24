@@ -1,6 +1,4 @@
-package org.chinux.pdc.events;
-
-import org.chinux.pdc.handlers.DataReceiver;
+package org.chinux.pdc.nio.events.api;
 
 public interface DataEvent {
 	public byte[] getData();

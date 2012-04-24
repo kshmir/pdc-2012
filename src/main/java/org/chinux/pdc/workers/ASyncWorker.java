@@ -3,9 +3,9 @@ package org.chinux.pdc.workers;
 import java.util.Deque;
 import java.util.LinkedList;
 
-import org.chinux.pdc.events.DataEvent;
+import org.chinux.pdc.nio.events.api.DataEvent;
 
-public abstract class WorkerAsync<T extends DataEvent> implements Runnable,
+public abstract class ASyncWorker<T extends DataEvent> implements Runnable,
 		Worker<T> {
 
 	private Deque<T> events = new LinkedList<T>();
