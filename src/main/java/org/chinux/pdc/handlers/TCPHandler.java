@@ -2,22 +2,21 @@ package org.chinux.pdc.handlers;
 
 import java.io.IOException;
 import java.nio.channels.SelectionKey;
-import java.nio.channels.SocketChannel;
+import java.nio.channels.Selector;
 
-import org.chinux.pdc.events.NIODataEvent;
+import org.chinux.pdc.events.DataEvent;
 
-public interface TCPHandler extends DataReceiver<NIODataEvent> {
+public interface TCPHandler extends DataReceiver<DataEvent> {
 
-	void handleAccept(SelectionKey key) throws IOException;
+	public void setSelector(final Selector selector);
 
-	void handleRead(SelectionKey key) throws IOException;
+	public void setConnectionPort(final int port);
 
-	void handleWrite(SelectionKey key) throws IOException;
+	public void handleAccept(SelectionKey key) throws IOException;
 
-	void handlePendingChanges();
+	public void handleRead(SelectionKey key) throws IOException;
 
-	void finishConnection(final SelectionKey key) throws IOException;
+	public void handleWrite(SelectionKey key) throws IOException;
 
-	SocketChannel initiateConnection() throws IOException;
-
+	public void handlePendingChanges();
 }

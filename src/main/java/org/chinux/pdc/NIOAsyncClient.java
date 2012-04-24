@@ -1,43 +1,27 @@
 package org.chinux.pdc;
 
 import java.io.IOException;
-import java.net.UnknownHostException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.spi.SelectorProvider;
 import java.util.Iterator;
 
-import org.chinux.pdc.events.NIODataEvent;
-import org.chinux.pdc.handlers.AsyncClientHandler;
 import org.chinux.pdc.handlers.TCPHandler;
-import org.chinux.pdc.workers.Worker;
 
 public class NIOAsyncClient implements Runnable {
 
 	private Selector selector;
-	TCPHandler handler;
+	private TCPHandler handler;
+	private int connectionPort;
 
-	private Worker<NIODataEvent> worker;
-
-	public static void main(final String[] args) throws UnknownHostException,
-			IOException {
-		try {
-			final NIOAsyncClient client = new NIOAsyncClient(80);
-			final Thread t = new Thread(client);
-			t.setDaemon(true);
-			t.start();
-		} catch (final Exception e) {
-			e.printStackTrace();
-		}
-	}
-
-	public NIOAsyncClient(final int destPort) throws IOException {
+	public NIOAsyncClient(final int connectionPort) throws IOException {
 		this.selector = this.initSelector();
-		this.handler = new AsyncClientHandler(this.selector, 8080, destPort);
+		this.connectionPort = connectionPort;
 	}
 
-	public void setWorker(final Worker<NIODataEvent> worker) {
-		this.worker = worker;
+	private void setHandler(final TCPHandler handler) {
+		this.handler = handler;
+		this.handler.setConnectionPort(this.connectionPort);
 	}
 
 	private Selector initSelector() throws IOException {
@@ -66,7 +50,7 @@ public class NIOAsyncClient implements Runnable {
 					}
 					// Check what event is available and deal with it
 					if (key.isAcceptable()) {
-						this.handler.finishConnection(key);
+						this.handler.handleAccept(key);
 					} else if (key.isReadable()) {
 						this.handler.handleRead(key);
 					} else if (key.isWritable()) {

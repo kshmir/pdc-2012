@@ -1,0 +1,49 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+					    http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+						http://www.springframework.org/schema/aop
+						http://www.springframework.org/schema/aop/spring-aop-2.5.xsd
+						http://www.springframework.org/schema/context
+						http://www.springframework.org/schema/context/spring-context-2.5.xsd">
+
+	<bean id="log4jconfig"
+		class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+		<property name="targetClass" value="org.springframework.util.Log4jConfigurer" />
+		<property name="targetMethod" value="initLogging" />
+		<property name="arguments">
+			<list>
+				<value>src/main/resources/log4j.properties</value>
+			</list>
+		</property>
+	</bean>
+
+
+	<bean id="mainWorker" class="org.chinux.pdc.workers.EchoWorker" />
+	
+	<bean id="workerServerHandler" class="org.chinux.pdc.handlers.WorkerServerHandler" lazy-init="false">
+		<constructor-arg>
+			<ref bean="mainWorker"/>
+		</constructor-arg>
+	</bean>
+
+	<bean id="server" class="org.chinux.pdc.NIOServer" lazy-init="false">
+		<constructor-arg>
+			<value type="java.lang.Integer">9090</value>
+		</constructor-arg>
+		<property name="handler" ref="workerServerHandler"></property>
+	</bean>
+
+	<bean id="application" class="org.chinux.pdc.App">
+		<constructor-arg>
+			<ref bean="server" />
+		</constructor-arg>
+		<constructor-arg>
+			<ref bean="mainWorker" />
+		</constructor-arg>
+	</bean>
+	<!-- <bean id="client" class="org.chinux.pdc.NIOAsyncClient" lazy-init="false"> 
+		<property name="worker" ref="mainWorker"></property> </bean> -->
+
+</beans>

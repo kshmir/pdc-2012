@@ -10,13 +10,10 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.spi.SelectorProvider;
 import java.util.Iterator;
 
-import org.chinux.pdc.events.NIODataEvent;
-import org.chinux.pdc.handlers.ServerHandler;
 import org.chinux.pdc.handlers.TCPHandler;
-import org.chinux.pdc.workers.Worker;
 
 // TODO: Check all the TODO's
-public class NIOServer {
+public class NIOServer implements Runnable {
 
 	private InetAddress host;
 	private int port;
@@ -24,21 +21,20 @@ public class NIOServer {
 	private Selector selector;
 	private ByteBuffer readBuffer;
 
-	TCPHandler handler;
-
-	private Worker<NIODataEvent> worker;
+	private TCPHandler handler;
 
 	public NIOServer(final int destPort) throws IOException {
 		this.host = InetAddress.getByName("localhost");
 		this.port = destPort;
 		this.selector = this.initSelector();
 		this.readBuffer = ByteBuffer.allocate(1024);
-		this.handler = new ServerHandler(this.selector, 8080, destPort);
 
 	}
 
-	public void setWorker(final Worker<NIODataEvent> worker) {
-		this.worker = worker;
+	public void setHandler(final TCPHandler handler) {
+		this.handler = handler;
+		this.handler.setConnectionPort(this.port);
+		this.handler.setSelector(this.selector);
 	}
 
 	// TODO: See if we can extract this.
@@ -64,6 +60,7 @@ public class NIOServer {
 	}
 
 	// TODO: Make this use the interface
+	@Override
 	public void run() {
 
 		while (true) {

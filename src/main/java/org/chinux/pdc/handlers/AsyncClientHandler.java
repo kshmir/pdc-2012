@@ -16,32 +16,35 @@ import java.util.List;
 import java.util.Map;
 
 import org.chinux.pdc.ChangeRequest;
+import org.chinux.pdc.events.DataEvent;
 import org.chinux.pdc.events.NIODataEvent;
 import org.chinux.pdc.events.NIOServerEvent;
 import org.chinux.pdc.workers.Worker;
 
 public class AsyncClientHandler implements TCPHandler {
 
-	private InetAddress host;
-	private ByteBuffer readBuffer;
 	private Selector selector;
 	private int externalPort;
-	private int port;
-	private Worker worker;
+
+	private ByteBuffer readBuffer;
+	private Worker<DataEvent> worker;
 
 	private Map<SocketChannel, ArrayList<ByteBuffer>> pendingData = new HashMap<SocketChannel, ArrayList<ByteBuffer>>();
 	private List<ChangeRequest> changeRequests = new LinkedList<ChangeRequest>();
 
-	public AsyncClientHandler(final Selector selector, final int externalPort,
-			final int port) {
-		this.selector = selector;
-		this.externalPort = externalPort;
-		this.port = port;
+	public AsyncClientHandler(final Worker<DataEvent> worker) {
+		this.worker = worker;
 		this.readBuffer = ByteBuffer.allocate(1024);
 	}
 
-	void setWorker(final Worker worker) {
-		this.worker = worker;
+	@Override
+	public void setSelector(final Selector selector) {
+		this.selector = selector;
+	}
+
+	@Override
+	public void setConnectionPort(final int externalPort) {
+		this.externalPort = externalPort;
 	}
 
 	@Override
@@ -81,7 +84,7 @@ public class AsyncClientHandler implements TCPHandler {
 		// Hand the data off to our worker thread
 		final byte[] data = (numRead > 0) ? readBuffer.array() : new byte[] {};
 
-		this.worker.processData(new NIOServerEvent(socketChannel, data));
+		this.worker.processData(new NIOServerEvent(socketChannel, data, this));
 	}
 
 	@Override
@@ -113,15 +116,16 @@ public class AsyncClientHandler implements TCPHandler {
 	}
 
 	@Override
-	public void sendAnswer(final NIODataEvent event) {
+	public void sendAnswer(final DataEvent dataEvent) {
+		final NIODataEvent event = (NIODataEvent) dataEvent;
 		// get the ip from socket1
-		this.host = event.socket.socket().getInetAddress();
+		final InetAddress host = event.socket.socket().getInetAddress();
 		// create the new socket for communication with the external server
 		SocketChannel socket2 = null;
 		try {
 			socket2 = SocketChannel.open();
 			socket2.configureBlocking(false);
-			socket2.connect(new InetSocketAddress(this.host, this.externalPort));
+			socket2.connect(new InetSocketAddress(host, this.externalPort));
 		} catch (final IOException e) {
 			e.printStackTrace();
 		}
@@ -151,7 +155,8 @@ public class AsyncClientHandler implements TCPHandler {
 	}
 
 	@Override
-	public void closeConnection(final NIODataEvent event) {
+	public void closeConnection(final DataEvent dataEvent) {
+		final NIODataEvent event = (NIODataEvent) dataEvent;
 		synchronized (this.changeRequests) {
 			// Indicate we want the interest ops set changed
 			this.changeRequests.add(new ChangeRequest(event.socket,
@@ -185,7 +190,6 @@ public class AsyncClientHandler implements TCPHandler {
 		}
 	}
 
-	@Override
 	public void finishConnection(final SelectionKey key) throws IOException {
 		final SocketChannel socketChannel = (SocketChannel) key.channel();
 
@@ -204,25 +208,25 @@ public class AsyncClientHandler implements TCPHandler {
 		key.interestOps(SelectionKey.OP_WRITE);
 	}
 
-	@Override
-	public SocketChannel initiateConnection() throws IOException {
-		// Create a non-blocking socket channel
-		final SocketChannel socketChannel = SocketChannel.open();
-		socketChannel.configureBlocking(false);
-
-		// Kick off connection establishment
-		socketChannel.connect(new InetSocketAddress(this.host, this.port));
-
-		// Queue a channel registration since the caller is not the
-		// selecting thread. As part of the registration we'll register
-		// an interest in connection events. These are raised when a channel
-		// is ready to complete connection establishment.
-		synchronized (this.changeRequests) {
-			this.changeRequests.add(new ChangeRequest(socketChannel,
-					ChangeRequest.REGISTER, SelectionKey.OP_CONNECT));
-		}
-
-		return socketChannel;
+	public SocketChannel initiateConnection() {
+		return null;
+		// // Create a non-blocking socket channel
+		// final SocketChannel socketChannel = SocketChannel.open();
+		// socketChannel.configureBlocking(false);
+		//
+		// // Kick off connection establishment
+		// socketChannel.connect(new InetSocketAddress(this.host, this.port));
+		//
+		// // Queue a channel registration since the caller is not the
+		// // selecting thread. As part of the registration we'll register
+		// // an interest in connection events. These are raised when a channel
+		// // is ready to complete connection establishment.
+		// synchronized (this.changeRequests) {
+		// this.changeRequests.add(new ChangeRequest(socketChannel,
+		// ChangeRequest.REGISTER, SelectionKey.OP_CONNECT));
+		// }
+		//
+		// return socketChannel;
 	}
 
 }

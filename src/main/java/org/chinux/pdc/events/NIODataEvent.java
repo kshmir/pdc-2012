@@ -12,16 +12,20 @@ import org.chinux.pdc.handlers.DataReceiver;
  */
 public class NIODataEvent implements DataEvent {
 	public SocketChannel socket;
+	public DataReceiver<DataEvent> receiver;
 	public byte[] data;
 	private boolean canSend;
 	private boolean canClose;
 
-	public NIODataEvent(final SocketChannel socket, final byte[] data) {
-		this(socket, data, false, false);
+	public NIODataEvent(final SocketChannel socket, final byte[] data,
+			final DataReceiver<DataEvent> receiver) {
+		this(socket, data, receiver, false, false);
 	}
 
 	public NIODataEvent(final SocketChannel socket, final byte[] data,
-			final boolean canSend, final boolean canClose) {
+			final DataReceiver<DataEvent> receiver, final boolean canSend,
+			final boolean canClose) {
+		this.receiver = receiver;
 		this.socket = socket;
 		this.data = data;
 		this.canSend = canSend;
@@ -55,7 +59,6 @@ public class NIODataEvent implements DataEvent {
 
 	@Override
 	public DataReceiver<DataEvent> getReceiver() {
-		// TODO Auto-generated method stub
-		return null;
+		return this.receiver;
 	}
 }

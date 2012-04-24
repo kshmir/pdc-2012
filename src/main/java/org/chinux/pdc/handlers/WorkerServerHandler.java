@@ -1,7 +1,6 @@
 package org.chinux.pdc.handlers;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -20,29 +19,35 @@ import org.chinux.pdc.events.NIOClientEvent;
 import org.chinux.pdc.events.NIODataEvent;
 import org.chinux.pdc.workers.Worker;
 
-public class ServerHandler implements TCPHandler {
+public class WorkerServerHandler implements TCPHandler {
 
-	private InetAddress host;
 	private ByteBuffer readBuffer;
 	private Selector selector;
-	private int externalPort;
-	private int port;
 
 	private List<ChangeRequest> changeRequests = new LinkedList<ChangeRequest>();
 
 	private Map<SocketChannel, ArrayList<ByteBuffer>> pendingData = new HashMap<SocketChannel, ArrayList<ByteBuffer>>();
 	private Worker<DataEvent> worker;
 
-	public ServerHandler(final Selector selector, final int externalPort,
-			final int port) {
-		this.selector = selector;
-		this.externalPort = externalPort;
-		this.port = port;
+	public WorkerServerHandler(final Worker<DataEvent> worker) {
+		this.worker = worker;
 		this.readBuffer = ByteBuffer.allocate(1024);
 	}
 
 	@Override
-	public void sendAnswer(final NIODataEvent event) {
+	public void setSelector(final Selector selector) {
+		this.selector = selector;
+	}
+
+	@Override
+	public void setConnectionPort(final int port) {
+		// nop
+	}
+
+	@Override
+	public void sendAnswer(final DataEvent dataEvent) {
+
+		final NIODataEvent event = (NIODataEvent) dataEvent;
 		final SocketChannel socket = event.socket;
 		final byte[] data = event.data;
 
@@ -68,7 +73,10 @@ public class ServerHandler implements TCPHandler {
 	}
 
 	@Override
-	public void closeConnection(final NIODataEvent event) {
+	public void closeConnection(final DataEvent dataEvent) {
+
+		final NIODataEvent event = (NIODataEvent) dataEvent;
+
 		synchronized (this.changeRequests) {
 			// Indicate we want the interest ops set changed
 			this.changeRequests.add(new ChangeRequest(event.socket,
@@ -124,7 +132,7 @@ public class ServerHandler implements TCPHandler {
 		// Hand the data off to our worker thread
 		final byte[] data = (numRead > 0) ? readBuffer.array() : new byte[] {};
 
-		this.worker.processData(new NIOClientEvent(socketChannel, data));
+		this.worker.processData(new NIOClientEvent(socketChannel, data, this));
 	}
 
 	@Override
@@ -172,7 +180,7 @@ public class ServerHandler implements TCPHandler {
 					key = change.socket.keyFor(this.selector);
 					try {
 						change.socket.close();
-					} catch (IOException e) {
+					} catch (final IOException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
@@ -183,17 +191,4 @@ public class ServerHandler implements TCPHandler {
 			this.changeRequests.clear();
 		}
 	}
-
-	@Override
-	public void finishConnection(final SelectionKey key) throws IOException {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public SocketChannel initiateConnection() throws IOException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
 }
