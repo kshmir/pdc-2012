@@ -1,3 +1,5 @@
+*.out.xml # Suelen generarse por ejecutar algun xml
+
 .classpath
 .project
 .settings
