@@ -1,4 +1,4 @@
-package org.chinux.pdc.handlers;
+package org.chinux.pdc.nio.handlers.impl;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -13,13 +13,14 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.chinux.pdc.ChangeRequest;
-import org.chinux.pdc.events.DataEvent;
-import org.chinux.pdc.events.NIOClientEvent;
-import org.chinux.pdc.events.NIODataEvent;
+import org.chinux.pdc.nio.events.api.DataEvent;
+import org.chinux.pdc.nio.events.impl.NIOClientEvent;
+import org.chinux.pdc.nio.events.impl.NIODataEvent;
+import org.chinux.pdc.nio.handlers.api.NIOHandler;
+import org.chinux.pdc.nio.services.util.ChangeRequest;
 import org.chinux.pdc.workers.Worker;
 
-public class WorkerServerHandler implements TCPHandler {
+public class ServerHandler implements NIOHandler {
 
 	private ByteBuffer readBuffer;
 	private Selector selector;
@@ -29,7 +30,7 @@ public class WorkerServerHandler implements TCPHandler {
 	private Map<SocketChannel, ArrayList<ByteBuffer>> pendingData = new HashMap<SocketChannel, ArrayList<ByteBuffer>>();
 	private Worker<DataEvent> worker;
 
-	public WorkerServerHandler(final Worker<DataEvent> worker) {
+	public ServerHandler(final Worker<DataEvent> worker) {
 		this.worker = worker;
 		this.readBuffer = ByteBuffer.allocate(1024);
 	}

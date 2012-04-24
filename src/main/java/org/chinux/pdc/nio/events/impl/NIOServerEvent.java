@@ -1,8 +1,9 @@
-package org.chinux.pdc.events;
+package org.chinux.pdc.nio.events.impl;
 
 import java.nio.channels.SocketChannel;
 
-import org.chinux.pdc.handlers.DataReceiver;
+import org.chinux.pdc.nio.events.api.DataEvent;
+import org.chinux.pdc.nio.events.api.DataReceiver;
 
 public class NIOServerEvent extends NIODataEvent {
 

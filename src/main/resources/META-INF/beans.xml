@@ -21,16 +21,22 @@
 
 
 	<bean id="mainWorker" class="org.chinux.pdc.workers.EchoWorker" />
-	
-	<bean id="workerServerHandler" class="org.chinux.pdc.handlers.WorkerServerHandler" lazy-init="false">
+
+	<bean id="serverSelectorFactory" class="org.chinux.pdc.nio.services.util.ServerSelectorFactory"></bean>
+
+	<bean id="workerServerHandler" class="org.chinux.pdc.nio.handlers.impl.ServerHandler"
+		lazy-init="false">
 		<constructor-arg>
-			<ref bean="mainWorker"/>
+			<ref bean="mainWorker" />
 		</constructor-arg>
 	</bean>
 
-	<bean id="server" class="org.chinux.pdc.NIOServer" lazy-init="false">
+	<bean id="server" class="org.chinux.pdc.nio.services.NIOServer" lazy-init="false">
 		<constructor-arg>
 			<value type="java.lang.Integer">9090</value>
+		</constructor-arg>
+		<constructor-arg>
+			<ref bean="serverSelectorFactory" />
 		</constructor-arg>
 		<property name="handler" ref="workerServerHandler"></property>
 	</bean>

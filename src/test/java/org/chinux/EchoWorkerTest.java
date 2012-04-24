@@ -4,7 +4,8 @@ import java.nio.channels.SocketChannel;
 
 import junit.framework.Assert;
 
-import org.chinux.pdc.events.NIODataEvent;
+import org.chinux.pdc.nio.events.api.DataReceiver;
+import org.chinux.pdc.nio.events.impl.NIODataEvent;
 import org.chinux.pdc.workers.EchoWorker;
 import org.jmock.Mockery;
 import org.jmock.lib.legacy.ClassImposteriser;
@@ -26,7 +27,9 @@ public class EchoWorkerTest {
 
 		final byte[] data = "data".getBytes();
 
-		final NIODataEvent event = new NIODataEvent(socket, data);
+		@SuppressWarnings("unchecked")
+		final NIODataEvent event = new NIODataEvent(socket, data,
+				this.context.mock(DataReceiver.class));
 
 		final NIODataEvent echoEvent = worker.DoWork(event);
 

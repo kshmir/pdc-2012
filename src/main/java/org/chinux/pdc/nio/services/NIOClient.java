@@ -1,31 +1,28 @@
-package org.chinux.pdc;
+package org.chinux.pdc.nio.services;
 
 import java.io.IOException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
-import java.nio.channels.spi.SelectorProvider;
 import java.util.Iterator;
 
-import org.chinux.pdc.handlers.TCPHandler;
+import org.chinux.pdc.nio.handlers.api.NIOHandler;
+import org.chinux.pdc.nio.services.util.ClientSelectorFactory;
 
-public class NIOAsyncClient implements Runnable {
+public class NIOClient implements Runnable {
 
 	private Selector selector;
-	private TCPHandler handler;
+	private NIOHandler handler;
 	private int connectionPort;
 
-	public NIOAsyncClient(final int connectionPort) throws IOException {
-		this.selector = this.initSelector();
+	public NIOClient(final int connectionPort,
+			final ClientSelectorFactory selfactory) throws IOException {
+		this.selector = selfactory.getSelector();
 		this.connectionPort = connectionPort;
 	}
 
-	private void setHandler(final TCPHandler handler) {
+	public void setHandler(final NIOHandler handler) {
 		this.handler = handler;
 		this.handler.setConnectionPort(this.connectionPort);
-	}
-
-	private Selector initSelector() throws IOException {
-		return SelectorProvider.provider().openSelector();
 	}
 
 	@Override
