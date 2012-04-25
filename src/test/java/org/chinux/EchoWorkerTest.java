@@ -20,7 +20,6 @@ public class EchoWorkerTest {
 
 	@Test
 	public void doWorkTest() {
-
 		final SocketChannel socket = this.context.mock(SocketChannel.class);
 
 		final EchoWorker worker = new EchoWorker();

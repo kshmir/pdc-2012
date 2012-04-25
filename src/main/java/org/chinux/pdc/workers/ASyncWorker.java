@@ -8,10 +8,10 @@ import org.chinux.pdc.nio.events.api.DataEvent;
 public abstract class ASyncWorker<T extends DataEvent> implements Runnable,
 		Worker<T> {
 
-	private Deque<T> events = new LinkedList<T>();
+	private Deque<Object> events = new LinkedList<Object>();
 
 	@Override
-	public void processData(final T event) {
+	public void processData(final Object event) {
 		synchronized (this.events) {
 			this.events.addLast(event);
 			this.events.notify();
@@ -21,6 +21,7 @@ public abstract class ASyncWorker<T extends DataEvent> implements Runnable,
 	/**
 	 * This loop receives all the data and handles all the bussiness logic.
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	public void run() {
 		T dataEvent;
@@ -33,13 +34,13 @@ public abstract class ASyncWorker<T extends DataEvent> implements Runnable,
 					} catch (final InterruptedException e) {
 					}
 				}
-				dataEvent = this.events.poll();
+				dataEvent = (T) this.events.poll();
 			}
 
 			final T event = this.DoWork(dataEvent);
 
 			if (event.canSend()) {
-				event.getReceiver().sendAnswer(event);
+				event.getReceiver().receiveEvent(event);
 			}
 
 			if (event.canClose()) {

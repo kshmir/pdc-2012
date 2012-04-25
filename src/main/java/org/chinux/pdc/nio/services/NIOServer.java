@@ -7,7 +7,7 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.util.Iterator;
 
-import org.chinux.pdc.nio.handlers.api.NIOHandler;
+import org.chinux.pdc.nio.handlers.api.NIOServerHandler;
 import org.chinux.pdc.nio.services.util.ServerSelectorFactory;
 
 // TODO: Check all the TODO's
@@ -18,7 +18,7 @@ public class NIOServer implements Runnable {
 	private ServerSocketChannel serverChannel;
 	private Selector selector;
 
-	private NIOHandler handler;
+	private NIOServerHandler handler;
 
 	public NIOServer(final int destPort, final ServerSelectorFactory selfactory)
 			throws IOException {
@@ -30,9 +30,8 @@ public class NIOServer implements Runnable {
 
 	}
 
-	public void setHandler(final NIOHandler handler) {
+	public void setHandler(final NIOServerHandler handler) {
 		this.handler = handler;
-		this.handler.setConnectionPort(this.port);
 		this.handler.setSelector(this.selector);
 	}
 
@@ -45,7 +44,7 @@ public class NIOServer implements Runnable {
 				// Process any pending changes
 				this.handler.handlePendingChanges();
 
-				// Wait for an event one of the registered channels
+				// Wait for an event one of th3e registered channels
 				this.selector.select();
 
 				// Iterate over the set of keys for which events are available

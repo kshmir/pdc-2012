@@ -1,5 +1,6 @@
 package org.chinux.pdc.nio.events.impl;
 
+import java.net.InetAddress;
 import java.nio.channels.SocketChannel;
 
 import org.chinux.pdc.nio.events.api.DataEvent;
@@ -12,19 +13,25 @@ import org.chinux.pdc.nio.events.api.DataReceiver;
  * 
  */
 public class NIODataEvent implements DataEvent {
+
+	public Object owner;
+
+	public InetAddress inetAddress;
+
 	public SocketChannel socket;
-	public DataReceiver<DataEvent> receiver;
+	public DataReceiver<NIODataEvent> receiver;
 	public byte[] data;
+
 	private boolean canSend;
 	private boolean canClose;
 
 	public NIODataEvent(final SocketChannel socket, final byte[] data,
-			final DataReceiver<DataEvent> receiver) {
+			final DataReceiver<NIODataEvent> receiver) {
 		this(socket, data, receiver, false, false);
 	}
 
 	public NIODataEvent(final SocketChannel socket, final byte[] data,
-			final DataReceiver<DataEvent> receiver, final boolean canSend,
+			final DataReceiver<NIODataEvent> receiver, final boolean canSend,
 			final boolean canClose) {
 		this.receiver = receiver;
 		this.socket = socket;
@@ -58,8 +65,9 @@ public class NIODataEvent implements DataEvent {
 		return this.canClose;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public DataReceiver<DataEvent> getReceiver() {
+	public DataReceiver getReceiver() {
 		return this.receiver;
 	}
 }

@@ -14,13 +14,14 @@ import java.util.List;
 import java.util.Map;
 
 import org.chinux.pdc.nio.events.api.DataEvent;
-import org.chinux.pdc.nio.events.impl.NIOClientEvent;
+import org.chinux.pdc.nio.events.api.DataReceiver;
 import org.chinux.pdc.nio.events.impl.NIODataEvent;
-import org.chinux.pdc.nio.handlers.api.NIOHandler;
+import org.chinux.pdc.nio.handlers.api.NIOServerHandler;
 import org.chinux.pdc.nio.services.util.ChangeRequest;
 import org.chinux.pdc.workers.Worker;
 
-public class ServerHandler implements NIOHandler {
+public class ServerHandler implements NIOServerHandler,
+		DataReceiver<NIODataEvent> {
 
 	private ByteBuffer readBuffer;
 	private Selector selector;
@@ -41,14 +42,8 @@ public class ServerHandler implements NIOHandler {
 	}
 
 	@Override
-	public void setConnectionPort(final int port) {
-		// nop
-	}
+	public void receiveEvent(final NIODataEvent event) {
 
-	@Override
-	public void sendAnswer(final DataEvent dataEvent) {
-
-		final NIODataEvent event = (NIODataEvent) dataEvent;
 		final SocketChannel socket = event.socket;
 		final byte[] data = event.data;
 
@@ -74,10 +69,7 @@ public class ServerHandler implements NIOHandler {
 	}
 
 	@Override
-	public void closeConnection(final DataEvent dataEvent) {
-
-		final NIODataEvent event = (NIODataEvent) dataEvent;
-
+	public void closeConnection(final NIODataEvent event) {
 		synchronized (this.changeRequests) {
 			// Indicate we want the interest ops set changed
 			this.changeRequests.add(new ChangeRequest(event.socket,
@@ -133,7 +125,7 @@ public class ServerHandler implements NIOHandler {
 		// Hand the data off to our worker thread
 		final byte[] data = (numRead > 0) ? readBuffer.array() : new byte[] {};
 
-		this.worker.processData(new NIOClientEvent(socketChannel, data, this));
+		this.worker.processData(new NIODataEvent(socketChannel, data, this));
 	}
 
 	@Override
