@@ -33,7 +33,7 @@ public class ServerHandler implements NIOServerHandler,
 
 	public ServerHandler(final Worker<DataEvent> worker) {
 		this.worker = worker;
-		this.readBuffer = ByteBuffer.allocate(1024);
+		readBuffer = ByteBuffer.allocate(1024);
 	}
 
 	@Override
@@ -47,17 +47,17 @@ public class ServerHandler implements NIOServerHandler,
 		final SocketChannel socket = event.socket;
 		final byte[] data = event.data;
 
-		synchronized (this.changeRequests) {
+		synchronized (changeRequests) {
 			// Indicate we want the interest ops set changed
-			this.changeRequests.add(new ChangeRequest(socket,
+			changeRequests.add(new ChangeRequest(socket,
 					ChangeRequest.CHANGEOPS, SelectionKey.OP_WRITE));
 
 			// And queue the data we want written
-			synchronized (this.pendingData) {
-				ArrayList<ByteBuffer> queue = this.pendingData.get(socket);
+			synchronized (pendingData) {
+				ArrayList<ByteBuffer> queue = pendingData.get(socket);
 				if (queue == null) {
 					queue = new ArrayList<ByteBuffer>();
-					this.pendingData.put(socket, queue);
+					pendingData.put(socket, queue);
 				}
 				queue.add(ByteBuffer.wrap(data));
 			}
@@ -65,14 +65,14 @@ public class ServerHandler implements NIOServerHandler,
 
 		// Finally, wake up our selecting thread so it can make the required
 		// changes
-		this.selector.wakeup();
+		selector.wakeup();
 	}
 
 	@Override
 	public void closeConnection(final NIODataEvent event) {
-		synchronized (this.changeRequests) {
+		synchronized (changeRequests) {
 			// Indicate we want the interest ops set changed
-			this.changeRequests.add(new ChangeRequest(event.socket,
+			changeRequests.add(new ChangeRequest(event.socket,
 					ChangeRequest.CHANGEOPS, SelectionKey.OP_WRITE));
 		}
 	}
@@ -90,15 +90,16 @@ public class ServerHandler implements NIOServerHandler,
 
 		// Register the new SocketChannel with our Selector, indicating
 		// we'd like to be notified when there's data waiting to be read
-		socketChannel.register(this.selector, SelectionKey.OP_READ);
+		socketChannel.register(selector, SelectionKey.OP_READ);
 	}
 
 	@Override
 	public void handleRead(final SelectionKey key) throws IOException {
+
 		final SocketChannel socketChannel = (SocketChannel) key.channel();
 
 		// Clear out our read buffer so it's ready for new data
-		this.readBuffer.clear();
+		readBuffer.clear();
 
 		// No se porqué falla con esto
 		final ByteBuffer readBuffer = ByteBuffer.allocate(1024);
@@ -125,16 +126,15 @@ public class ServerHandler implements NIOServerHandler,
 		// Hand the data off to our worker thread
 		final byte[] data = (numRead > 0) ? readBuffer.array() : new byte[] {};
 
-		this.worker.processData(new NIODataEvent(socketChannel, data, this));
+		worker.processData(new NIODataEvent(socketChannel, data, this));
 	}
 
 	@Override
 	public void handleWrite(final SelectionKey key) throws IOException {
 		final SocketChannel socketChannel = (SocketChannel) key.channel();
 
-		synchronized (this.pendingData) {
-			final ArrayList<ByteBuffer> queue = this.pendingData
-					.get(socketChannel);
+		synchronized (pendingData) {
+			final ArrayList<ByteBuffer> queue = pendingData.get(socketChannel);
 
 			// Write until there's not more data ...
 			while (!queue.isEmpty()) {
@@ -158,19 +158,18 @@ public class ServerHandler implements NIOServerHandler,
 
 	@Override
 	public void handlePendingChanges() {
-		synchronized (this.changeRequests) {
-			final Iterator<ChangeRequest> changes = this.changeRequests
-					.iterator();
+		synchronized (changeRequests) {
+			final Iterator<ChangeRequest> changes = changeRequests.iterator();
 			while (changes.hasNext()) {
 				final ChangeRequest change = changes.next();
 				SelectionKey key;
 				switch (change.type) {
 				case ChangeRequest.CHANGEOPS:
-					key = change.socket.keyFor(this.selector);
+					key = change.socket.keyFor(selector);
 					key.interestOps(change.ops);
 					break;
 				case ChangeRequest.CLOSE:
-					key = change.socket.keyFor(this.selector);
+					key = change.socket.keyFor(selector);
 					try {
 						change.socket.close();
 					} catch (final IOException e) {
@@ -181,7 +180,7 @@ public class ServerHandler implements NIOServerHandler,
 					break;
 				}
 			}
-			this.changeRequests.clear();
+			changeRequests.clear();
 		}
 	}
 }

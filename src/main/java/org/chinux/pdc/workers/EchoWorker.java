@@ -6,6 +6,7 @@ public class EchoWorker extends ASyncWorker<NIODataEvent> {
 
 	@Override
 	public NIODataEvent DoWork(final NIODataEvent dataEvent) {
+		System.out.println("EVENT!");
 		dataEvent.setCanSend(true);
 		return dataEvent; // An echo is just 'send the same' isn't it ?
 	}

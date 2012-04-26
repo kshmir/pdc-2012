@@ -10,7 +10,6 @@ import java.util.Iterator;
 import org.chinux.pdc.nio.handlers.api.NIOServerHandler;
 import org.chinux.pdc.nio.services.util.ServerSelectorFactory;
 
-// TODO: Check all the TODO's
 public class NIOServer implements Runnable {
 
 	private InetAddress host;
@@ -23,16 +22,15 @@ public class NIOServer implements Runnable {
 	public NIOServer(final int destPort, final ServerSelectorFactory selfactory)
 			throws IOException {
 
-		this.host = InetAddress.getByName("localhost");
-		this.port = destPort;
-		this.selector = selfactory.getSelector(this.host, this.port,
-				this.serverChannel);
+		host = InetAddress.getLocalHost();
+		port = destPort;
+		selector = selfactory.getSelector(host, port, serverChannel);
 
 	}
 
 	public void setHandler(final NIOServerHandler handler) {
 		this.handler = handler;
-		this.handler.setSelector(this.selector);
+		this.handler.setSelector(selector);
 	}
 
 	@Override
@@ -42,13 +40,13 @@ public class NIOServer implements Runnable {
 			try {
 
 				// Process any pending changes
-				this.handler.handlePendingChanges();
+				handler.handlePendingChanges();
 
-				// Wait for an event one of th3e registered channels
-				this.selector.select();
+				// Wait for an event one of the registered channels
+				selector.select();
 
 				// Iterate over the set of keys for which events are available
-				final Iterator<SelectionKey> selectedKeys = this.selector
+				final Iterator<SelectionKey> selectedKeys = selector
 						.selectedKeys().iterator();
 				while (selectedKeys.hasNext()) {
 					final SelectionKey key = selectedKeys.next();
@@ -60,11 +58,11 @@ public class NIOServer implements Runnable {
 
 					// Check what event is available and deal with it
 					if (key.isAcceptable()) {
-						this.handler.handleAccept(key);
+						handler.handleAccept(key);
 					} else if (key.isReadable()) {
-						this.handler.handleRead(key);
+						handler.handleRead(key);
 					} else if (key.isWritable()) {
-						this.handler.handleWrite(key);
+						handler.handleWrite(key);
 					}
 				}
 			} catch (final Exception e) {

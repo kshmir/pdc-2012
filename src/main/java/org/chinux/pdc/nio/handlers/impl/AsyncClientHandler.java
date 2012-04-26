@@ -114,7 +114,8 @@ public class AsyncClientHandler implements NIOClientHandler,
 		}
 	}
 
-	public void receiveEvent(final NIODataEvent event, final SocketChannel sock) {
+	@Override
+	public void receiveEvent(final NIODataEvent event) {
 		final InetAddress host = event.inetAddress;
 
 		final InetSocketAddress socketHost = new InetSocketAddress(host,
@@ -204,9 +205,4 @@ public class AsyncClientHandler implements NIOClientHandler,
 		key.interestOps(SelectionKey.OP_WRITE);
 	}
 
-	@Override
-	public void receiveEvent(final NIODataEvent event) {
-		// TODO Auto-generated method stub
-
-	}
 }
