@@ -114,8 +114,7 @@ public class AsyncClientHandler implements NIOClientHandler,
 		}
 	}
 
-	@Override
-	public void receiveEvent(final NIODataEvent event) {
+	public void receiveEvent(final NIODataEvent event, final SocketChannel sock) {
 		final InetAddress host = event.inetAddress;
 
 		final InetSocketAddress socketHost = new InetSocketAddress(host,
@@ -129,7 +128,6 @@ public class AsyncClientHandler implements NIOClientHandler,
 				try {
 					socketChannel = channelFactory.getSocketChannel(socketHost);
 				} catch (final IOException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 
@@ -145,6 +143,7 @@ public class AsyncClientHandler implements NIOClientHandler,
 							ChangeRequest.REGISTER, SelectionKey.OP_CONNECT,
 							event.owner));
 				}
+
 			}
 		}
 
@@ -170,7 +169,7 @@ public class AsyncClientHandler implements NIOClientHandler,
 	}
 
 	@Override
-	public void handlePendingChanges() {
+	public void handlePendingChanges() throws ClosedChannelException {
 		synchronized (changeRequests) {
 			if (!changeRequests.isEmpty()) {
 				final ChangeRequest change = changeRequests.remove(0);
@@ -182,12 +181,8 @@ public class AsyncClientHandler implements NIOClientHandler,
 					key.interestOps(change.ops);
 					break;
 				case ChangeRequest.REGISTER:
-					try {
-						key = change.socket.register(selector, change.ops);
-						key.attach(change.attachment);
-					} catch (final ClosedChannelException e) {
-						e.printStackTrace(); // TODO: Handle this
-					}
+					key = change.socket.register(selector, change.ops);
+					key.attach(change.attachment);
 					break;
 				}
 			}
@@ -207,5 +202,11 @@ public class AsyncClientHandler implements NIOClientHandler,
 
 		// Register an interest in writing on this channel
 		key.interestOps(SelectionKey.OP_WRITE);
+	}
+
+	@Override
+	public void receiveEvent(final NIODataEvent event) {
+		// TODO Auto-generated method stub
+
 	}
 }

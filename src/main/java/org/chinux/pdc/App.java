@@ -23,7 +23,7 @@ public class App {
 		this.server = server;
 		this.worker = worker;
 
-		this.run();
+		// this.run();
 	}
 
 	public void run() {
