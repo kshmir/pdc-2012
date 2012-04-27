@@ -1,4 +1,4 @@
-package org.chinux;
+package org.chinux.nio;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -19,8 +19,8 @@ import org.chinux.pdc.nio.receivers.api.ClientDataReceiver;
 import org.chinux.pdc.nio.receivers.impl.ASyncClientDataReceiver;
 import org.chinux.pdc.nio.services.NIOClient;
 import org.chinux.pdc.nio.services.NIOServer;
-import org.chinux.pdc.workers.EchoWorker;
-import org.chinux.pdc.workers.Worker;
+import org.chinux.pdc.workers.api.Worker;
+import org.chinux.pdc.workers.impl.EchoWorker;
 import org.junit.Test;
 
 /**

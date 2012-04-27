@@ -4,7 +4,7 @@ import java.util.Deque;
 import java.util.LinkedList;
 
 import org.chinux.pdc.nio.events.api.DataEvent;
-import org.chinux.pdc.workers.Worker;
+import org.chinux.pdc.workers.api.Worker;
 
 public class ASyncEventDispatcher<T extends DataEvent> implements Runnable,
 		EventDispatcher<T> {

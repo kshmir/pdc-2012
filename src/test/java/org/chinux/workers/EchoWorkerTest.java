@@ -1,9 +1,9 @@
-package org.chinux;
+package org.chinux.workers;
 
 import junit.framework.Assert;
 
 import org.chinux.pdc.nio.events.api.DataEvent;
-import org.chinux.pdc.workers.EchoWorker;
+import org.chinux.pdc.workers.impl.EchoWorker;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;

@@ -1,7 +1,7 @@
 package org.chinux.pdc.nio.dispatchers;
 
 import org.chinux.pdc.nio.events.api.DataEvent;
-import org.chinux.pdc.workers.Worker;
+import org.chinux.pdc.workers.api.Worker;
 
 public class SyncEventDispatcher<T extends DataEvent> implements
 		EventDispatcher<T> {

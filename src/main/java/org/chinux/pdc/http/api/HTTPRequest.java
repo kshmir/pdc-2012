@@ -1,4 +1,4 @@
-package org.chinux.pdc;
+package org.chinux.pdc.http.api;
 
 public interface HTTPRequest {
 

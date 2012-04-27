@@ -1,4 +1,4 @@
-package org.chinux.pdc.workers;
+package org.chinux.pdc.workers.api;
 
 import org.chinux.pdc.nio.events.api.DataEvent;
 

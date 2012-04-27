@@ -1,0 +1,4 @@
+GET /kshmir/pdc-2012/issues/3?licenseID=string&content=string&paramsXML=string HTTP/1.1
+Host: github.com
+Connection: keep-alive
+Cache-Control: max-age=0

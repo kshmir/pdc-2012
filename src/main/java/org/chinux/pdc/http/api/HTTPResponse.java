@@ -1,4 +1,4 @@
-package org.chinux.pdc;
+package org.chinux.pdc.http.api;
 
 public interface HTTPResponse {
 
@@ -9,5 +9,4 @@ public interface HTTPResponse {
 	public int returnStatusCode();
 
 	public String getHeader(String name);
-
 }

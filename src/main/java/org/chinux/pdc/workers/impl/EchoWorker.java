@@ -1,6 +1,7 @@
-package org.chinux.pdc.workers;
+package org.chinux.pdc.workers.impl;
 
 import org.chinux.pdc.nio.events.api.DataEvent;
+import org.chinux.pdc.workers.api.Worker;
 
 public class EchoWorker implements Worker<DataEvent> {
 

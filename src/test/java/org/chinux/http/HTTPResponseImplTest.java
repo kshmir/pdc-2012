@@ -1,9 +1,10 @@
-package org.chinux;
+package org.chinux.http;
 
 import junit.framework.Assert;
 
-import org.chinux.pdc.HTTPResponse;
-import org.chinux.pdc.HTTPResponseImpl;
+import org.chinux.pdc.http.api.HTTPResponse;
+import org.chinux.pdc.http.impl.HTTPResponseImpl;
+import org.chinux.util.TestUtils;
 import org.junit.Test;
 
 public class HTTPResponseImplTest {
@@ -11,7 +12,7 @@ public class HTTPResponseImplTest {
 	@Test
 	public void ResponseImplTest() {
 		final HTTPResponse req = new HTTPResponseImpl(
-				"HTTP/1.0 200 OK\nDate: Fri, 31 Dec 1999 23:59:59 GMT\nContent-Type: text/html\nContent-Length: 1354\n\n<html>\n<body>\n<h1>Hello World!</h1>\n</body>\n</html>");
+				TestUtils.stringFromFile("http/responses/response1.txt"));
 		Assert.assertEquals("1354", req.getHeader("content-length"));
 		Assert.assertEquals(200, req.returnStatusCode());
 	}

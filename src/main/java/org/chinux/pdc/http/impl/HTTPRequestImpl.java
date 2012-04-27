@@ -1,11 +1,20 @@
-package org.chinux.pdc;
+package org.chinux.pdc.http.impl;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.chinux.pdc.http.api.HTTPRequest;
+
 public class HTTPRequestImpl implements HTTPRequest {
+
+	private static Pattern headPattern = Pattern
+			.compile("([\\w-/]+) (.+) ([\\w-/\\.]+)");
+
+	private static Pattern headerPattern = Pattern.compile("([\\w-]+): (.+)");
+
+	private static Pattern parametersPattern = Pattern.compile("([\\w|=]+)");
 
 	private String method;
 	private Map<String, String> headers;
@@ -17,15 +26,13 @@ public class HTTPRequestImpl implements HTTPRequest {
 		this.parameters = new HashMap<String, String>();
 		final String firstLine = request.substring(0, request.indexOf('\n'));
 
-		Pattern pattern = Pattern.compile("([\\w-/]+) (.+) ([\\w-/\\.]+)");
-		Matcher match = pattern.matcher(firstLine);
+		Matcher match = headPattern.matcher(firstLine);
 		if (match.find()) {
 			this.method = match.group(1);
 			this.URI = match.group(2);
 		}
 
-		pattern = Pattern.compile("([\\w-]+): (.+)");
-		match = pattern.matcher(request);
+		match = headerPattern.matcher(request);
 		while (match.find()) {
 			this.headers.put(match.group(1).toLowerCase(), match.group(2));
 		}
@@ -35,10 +42,8 @@ public class HTTPRequestImpl implements HTTPRequest {
 				return;
 			}
 
-			pattern = Pattern.compile("([\\w|=]+)");
-			match = pattern
-					.matcher(this.URI.substring(this.URI.indexOf('?') + 1));
-			pattern = Pattern.compile("(\\w+)=(\\w+)");
+			match = parametersPattern.matcher(this.URI.substring(this.URI
+					.indexOf('?') + 1));
 			String[] values = null;
 			while (match.find()) {
 				values = match.group(1).split("=");
@@ -47,9 +52,8 @@ public class HTTPRequestImpl implements HTTPRequest {
 		}
 
 		if (this.method.equals("POST")) {
-			pattern = Pattern.compile("([\\w|=]+)");
-			match = pattern
-					.matcher(request.substring(request.indexOf("\n\n") + 2));
+			match = parametersPattern.matcher(request.substring(request
+					.indexOf("\n\n") + 2));
 
 			String[] values = null;
 			while (match.find()) {
@@ -59,19 +63,23 @@ public class HTTPRequestImpl implements HTTPRequest {
 		}
 	}
 
+	@Override
 	public String getHeader(final String name) {
 		return this.headers.containsKey(name.toLowerCase()) ? this.headers
 				.get(name.toLowerCase()) : null;
 	}
 
+	@Override
 	public String getMethod() {
 		return this.method;
 	}
 
+	@Override
 	public String getRequestURI() {
 		return this.URI;
 	}
 
+	@Override
 	public String getParameter(final String name) {
 		return this.parameters.containsKey(name) ? this.parameters.get(name)
 				: null;
