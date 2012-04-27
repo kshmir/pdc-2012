@@ -5,6 +5,7 @@ import java.util.LinkedList;
 
 import org.chinux.pdc.nio.events.api.DataEvent;
 
+@SuppressWarnings("rawtypes")
 public abstract class ASyncWorker<T extends DataEvent> implements Runnable,
 		Worker<T> {
 
@@ -21,6 +22,7 @@ public abstract class ASyncWorker<T extends DataEvent> implements Runnable,
 	/**
 	 * This loop receives all the data and handles all the bussiness logic.
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	public void run() {
 		T dataEvent;
@@ -36,10 +38,10 @@ public abstract class ASyncWorker<T extends DataEvent> implements Runnable,
 				dataEvent = this.events.poll();
 			}
 
-			final T event = this.DoWork(dataEvent);
+			final T event = DoWork(dataEvent);
 
 			if (event.canSend()) {
-				event.getReceiver().sendAnswer(event);
+				event.getReceiver().receiveEvent(event);
 			}
 
 			if (event.canClose()) {

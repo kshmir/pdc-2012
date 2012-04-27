@@ -14,13 +14,16 @@ import java.util.List;
 import java.util.Map;
 
 import org.chinux.pdc.nio.events.api.DataEvent;
-import org.chinux.pdc.nio.events.impl.NIOClientEvent;
+import org.chinux.pdc.nio.events.api.DataReceiver;
 import org.chinux.pdc.nio.events.impl.NIODataEvent;
-import org.chinux.pdc.nio.handlers.api.NIOHandler;
+import org.chinux.pdc.nio.events.impl.NIOServerDataEvent;
+import org.chinux.pdc.nio.handlers.api.NIOServerHandler;
 import org.chinux.pdc.nio.services.util.ChangeRequest;
 import org.chinux.pdc.workers.Worker;
 
-public class ServerHandler implements NIOHandler {
+@SuppressWarnings("rawtypes")
+public class ServerHandler implements NIOServerHandler,
+		DataReceiver<NIODataEvent> {
 
 	private ByteBuffer readBuffer;
 	private Selector selector;
@@ -28,11 +31,12 @@ public class ServerHandler implements NIOHandler {
 	private List<ChangeRequest> changeRequests = new LinkedList<ChangeRequest>();
 
 	private Map<SocketChannel, ArrayList<ByteBuffer>> pendingData = new HashMap<SocketChannel, ArrayList<ByteBuffer>>();
+
 	private Worker<DataEvent> worker;
 
 	public ServerHandler(final Worker<DataEvent> worker) {
 		this.worker = worker;
-		this.readBuffer = ByteBuffer.allocate(1024);
+		readBuffer = ByteBuffer.allocate(1024);
 	}
 
 	@Override
@@ -41,28 +45,28 @@ public class ServerHandler implements NIOHandler {
 	}
 
 	@Override
-	public void setConnectionPort(final int port) {
-		// nop
-	}
+	public void receiveEvent(final NIODataEvent dataEvent) {
 
-	@Override
-	public void sendAnswer(final DataEvent dataEvent) {
+		if (!(dataEvent instanceof NIOServerDataEvent)) {
+			throw new RuntimeException("Must receive a NIOServerDataEvent");
+		}
 
-		final NIODataEvent event = (NIODataEvent) dataEvent;
-		final SocketChannel socket = event.socket;
-		final byte[] data = event.data;
+		final NIOServerDataEvent event = (NIOServerDataEvent) dataEvent;
 
-		synchronized (this.changeRequests) {
+		final SocketChannel socket = event.getChannel();
+		final byte[] data = event.getData();
+
+		synchronized (changeRequests) {
 			// Indicate we want the interest ops set changed
-			this.changeRequests.add(new ChangeRequest(socket,
+			changeRequests.add(new ChangeRequest(socket,
 					ChangeRequest.CHANGEOPS, SelectionKey.OP_WRITE));
 
 			// And queue the data we want written
-			synchronized (this.pendingData) {
-				ArrayList<ByteBuffer> queue = this.pendingData.get(socket);
+			synchronized (pendingData) {
+				ArrayList<ByteBuffer> queue = pendingData.get(socket);
 				if (queue == null) {
 					queue = new ArrayList<ByteBuffer>();
-					this.pendingData.put(socket, queue);
+					pendingData.put(socket, queue);
 				}
 				queue.add(ByteBuffer.wrap(data));
 			}
@@ -70,17 +74,21 @@ public class ServerHandler implements NIOHandler {
 
 		// Finally, wake up our selecting thread so it can make the required
 		// changes
-		this.selector.wakeup();
+		selector.wakeup();
 	}
 
 	@Override
-	public void closeConnection(final DataEvent dataEvent) {
+	public void closeConnection(final NIODataEvent dataEvent) {
 
-		final NIODataEvent event = (NIODataEvent) dataEvent;
+		if (!(dataEvent instanceof NIOServerDataEvent)) {
+			throw new RuntimeException("Must receive a NIOServerDataEvent");
+		}
 
-		synchronized (this.changeRequests) {
+		final NIOServerDataEvent event = (NIOServerDataEvent) dataEvent;
+
+		synchronized (changeRequests) {
 			// Indicate we want the interest ops set changed
-			this.changeRequests.add(new ChangeRequest(event.socket,
+			changeRequests.add(new ChangeRequest(event.getChannel(),
 					ChangeRequest.CHANGEOPS, SelectionKey.OP_WRITE));
 		}
 	}
@@ -98,15 +106,16 @@ public class ServerHandler implements NIOHandler {
 
 		// Register the new SocketChannel with our Selector, indicating
 		// we'd like to be notified when there's data waiting to be read
-		socketChannel.register(this.selector, SelectionKey.OP_READ);
+		socketChannel.register(selector, SelectionKey.OP_READ);
 	}
 
 	@Override
 	public void handleRead(final SelectionKey key) throws IOException {
+
 		final SocketChannel socketChannel = (SocketChannel) key.channel();
 
 		// Clear out our read buffer so it's ready for new data
-		this.readBuffer.clear();
+		readBuffer.clear();
 
 		// No se porqué falla con esto
 		final ByteBuffer readBuffer = ByteBuffer.allocate(1024);
@@ -133,16 +142,15 @@ public class ServerHandler implements NIOHandler {
 		// Hand the data off to our worker thread
 		final byte[] data = (numRead > 0) ? readBuffer.array() : new byte[] {};
 
-		this.worker.processData(new NIOClientEvent(socketChannel, data, this));
+		worker.processData(new NIOServerDataEvent(socketChannel, data, this));
 	}
 
 	@Override
 	public void handleWrite(final SelectionKey key) throws IOException {
 		final SocketChannel socketChannel = (SocketChannel) key.channel();
 
-		synchronized (this.pendingData) {
-			final ArrayList<ByteBuffer> queue = this.pendingData
-					.get(socketChannel);
+		synchronized (pendingData) {
+			final ArrayList<ByteBuffer> queue = pendingData.get(socketChannel);
 
 			// Write until there's not more data ...
 			while (!queue.isEmpty()) {
@@ -166,19 +174,18 @@ public class ServerHandler implements NIOHandler {
 
 	@Override
 	public void handlePendingChanges() {
-		synchronized (this.changeRequests) {
-			final Iterator<ChangeRequest> changes = this.changeRequests
-					.iterator();
+		synchronized (changeRequests) {
+			final Iterator<ChangeRequest> changes = changeRequests.iterator();
 			while (changes.hasNext()) {
 				final ChangeRequest change = changes.next();
 				SelectionKey key;
 				switch (change.type) {
 				case ChangeRequest.CHANGEOPS:
-					key = change.socket.keyFor(this.selector);
+					key = change.socket.keyFor(selector);
 					key.interestOps(change.ops);
 					break;
 				case ChangeRequest.CLOSE:
-					key = change.socket.keyFor(this.selector);
+					key = change.socket.keyFor(selector);
 					try {
 						change.socket.close();
 					} catch (final IOException e) {
@@ -189,7 +196,7 @@ public class ServerHandler implements NIOHandler {
 					break;
 				}
 			}
-			this.changeRequests.clear();
+			changeRequests.clear();
 		}
 	}
 }

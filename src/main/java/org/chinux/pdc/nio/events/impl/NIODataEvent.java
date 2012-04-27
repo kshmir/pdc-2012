@@ -1,33 +1,31 @@
 package org.chinux.pdc.nio.events.impl;
 
-import java.nio.channels.SocketChannel;
-
 import org.chinux.pdc.nio.events.api.DataEvent;
 import org.chinux.pdc.nio.events.api.DataReceiver;
 
 /**
- * Represents any kind of processed data ready to be sent to a server
+ * Represents any kind of processed data ready to be sent to a receiver
  * 
  * @author cris
  * 
  */
-public class NIODataEvent implements DataEvent {
-	public SocketChannel socket;
-	public DataReceiver<DataEvent> receiver;
-	public byte[] data;
+public abstract class NIODataEvent implements DataEvent<NIODataEvent> {
+
+	private DataReceiver<NIODataEvent> receiver;
+	private byte[] data;
+
 	private boolean canSend;
 	private boolean canClose;
 
-	public NIODataEvent(final SocketChannel socket, final byte[] data,
-			final DataReceiver<DataEvent> receiver) {
-		this(socket, data, receiver, false, false);
+	public NIODataEvent(final byte[] data,
+			final DataReceiver<NIODataEvent> receiver) {
+		this(data, receiver, false, false);
 	}
 
-	public NIODataEvent(final SocketChannel socket, final byte[] data,
-			final DataReceiver<DataEvent> receiver, final boolean canSend,
+	public NIODataEvent(final byte[] data,
+			final DataReceiver<NIODataEvent> receiver, final boolean canSend,
 			final boolean canClose) {
 		this.receiver = receiver;
-		this.socket = socket;
 		this.data = data;
 		this.canSend = canSend;
 		this.canClose = canClose;
@@ -35,31 +33,31 @@ public class NIODataEvent implements DataEvent {
 
 	@Override
 	public void setCanClose(final boolean closeable) {
-		this.canClose = closeable;
+		canClose = closeable;
 	}
 
 	@Override
 	public void setCanSend(final boolean sendable) {
-		this.canSend = sendable;
+		canSend = sendable;
 	}
 
 	@Override
 	public byte[] getData() {
-		return this.data;
+		return data;
 	}
 
 	@Override
 	public boolean canSend() {
-		return this.canSend;
+		return canSend;
 	}
 
 	@Override
 	public boolean canClose() {
-		return this.canClose;
+		return canClose;
 	}
 
 	@Override
-	public DataReceiver<DataEvent> getReceiver() {
-		return this.receiver;
+	public DataReceiver<NIODataEvent> getReceiver() {
+		return receiver;
 	}
 }

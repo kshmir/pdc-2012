@@ -5,13 +5,13 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.util.Iterator;
 
-import org.chinux.pdc.nio.handlers.api.NIOHandler;
+import org.chinux.pdc.nio.handlers.api.NIOClientHandler;
 import org.chinux.pdc.nio.services.util.ClientSelectorFactory;
 
 public class NIOClient implements Runnable {
 
 	private Selector selector;
-	private NIOHandler handler;
+	private NIOClientHandler handler;
 	private int connectionPort;
 
 	public NIOClient(final int connectionPort,
@@ -20,9 +20,10 @@ public class NIOClient implements Runnable {
 		this.connectionPort = connectionPort;
 	}
 
-	public void setHandler(final NIOHandler handler) {
+	public void setHandler(final NIOClientHandler handler) {
 		this.handler = handler;
 		this.handler.setConnectionPort(this.connectionPort);
+		this.handler.setSelector(this.selector);
 	}
 
 	@Override
@@ -46,8 +47,8 @@ public class NIOClient implements Runnable {
 						continue;
 					}
 					// Check what event is available and deal with it
-					if (key.isAcceptable()) {
-						this.handler.handleAccept(key);
+					if (key.isConnectable()) {
+						this.handler.handleConnection(key);
 					} else if (key.isReadable()) {
 						this.handler.handleRead(key);
 					} else if (key.isWritable()) {
@@ -59,5 +60,4 @@ public class NIOClient implements Runnable {
 			}
 		}
 	}
-
 }

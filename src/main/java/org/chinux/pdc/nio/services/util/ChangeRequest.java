@@ -10,11 +10,18 @@ public class ChangeRequest {
 	public SocketChannel socket;
 	public int type;
 	public int ops;
+	public Object attachment;
 
 	public ChangeRequest(final SocketChannel socket, final int type,
 			final int ops) {
+		this(socket, type, ops, null);
+	}
+
+	public ChangeRequest(final SocketChannel socket, final int type,
+			final int ops, final Object attachment) {
 		this.socket = socket;
 		this.type = type;
 		this.ops = ops;
+		this.attachment = attachment;
 	}
 }

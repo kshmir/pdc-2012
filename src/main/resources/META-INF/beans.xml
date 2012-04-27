@@ -22,7 +22,7 @@
 
 	<bean id="mainWorker" class="org.chinux.pdc.workers.EchoWorker" />
 
-	<bean id="serverSelectorFactory" class="org.chinux.pdc.nio.services.util.ServerSelectorFactory"></bean>
+	<bean id="serverSelectorFactory" class="org.chinux.pdc.nio.services.util.ServerSelectorFactoryImpl"></bean>
 
 	<bean id="workerServerHandler" class="org.chinux.pdc.nio.handlers.impl.ServerHandler"
 		lazy-init="false">
