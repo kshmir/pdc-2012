@@ -16,10 +16,12 @@ import java.util.Map;
 import org.chinux.pdc.nio.events.api.DataEvent;
 import org.chinux.pdc.nio.events.api.DataReceiver;
 import org.chinux.pdc.nio.events.impl.NIODataEvent;
+import org.chinux.pdc.nio.events.impl.NIOServerDataEvent;
 import org.chinux.pdc.nio.handlers.api.NIOServerHandler;
 import org.chinux.pdc.nio.services.util.ChangeRequest;
 import org.chinux.pdc.workers.Worker;
 
+@SuppressWarnings("rawtypes")
 public class ServerHandler implements NIOServerHandler,
 		DataReceiver<NIODataEvent> {
 
@@ -29,6 +31,7 @@ public class ServerHandler implements NIOServerHandler,
 	private List<ChangeRequest> changeRequests = new LinkedList<ChangeRequest>();
 
 	private Map<SocketChannel, ArrayList<ByteBuffer>> pendingData = new HashMap<SocketChannel, ArrayList<ByteBuffer>>();
+
 	private Worker<DataEvent> worker;
 
 	public ServerHandler(final Worker<DataEvent> worker) {
@@ -42,10 +45,16 @@ public class ServerHandler implements NIOServerHandler,
 	}
 
 	@Override
-	public void receiveEvent(final NIODataEvent event) {
+	public void receiveEvent(final NIODataEvent dataEvent) {
 
-		final SocketChannel socket = event.socket;
-		final byte[] data = event.data;
+		if (!(dataEvent instanceof NIOServerDataEvent)) {
+			throw new RuntimeException("Must receive a NIOServerDataEvent");
+		}
+
+		final NIOServerDataEvent event = (NIOServerDataEvent) dataEvent;
+
+		final SocketChannel socket = event.getChannel();
+		final byte[] data = event.getData();
 
 		synchronized (changeRequests) {
 			// Indicate we want the interest ops set changed
@@ -69,10 +78,17 @@ public class ServerHandler implements NIOServerHandler,
 	}
 
 	@Override
-	public void closeConnection(final NIODataEvent event) {
+	public void closeConnection(final NIODataEvent dataEvent) {
+
+		if (!(dataEvent instanceof NIOServerDataEvent)) {
+			throw new RuntimeException("Must receive a NIOServerDataEvent");
+		}
+
+		final NIOServerDataEvent event = (NIOServerDataEvent) dataEvent;
+
 		synchronized (changeRequests) {
 			// Indicate we want the interest ops set changed
-			changeRequests.add(new ChangeRequest(event.socket,
+			changeRequests.add(new ChangeRequest(event.getChannel(),
 					ChangeRequest.CHANGEOPS, SelectionKey.OP_WRITE));
 		}
 	}
@@ -126,7 +142,7 @@ public class ServerHandler implements NIOServerHandler,
 		// Hand the data off to our worker thread
 		final byte[] data = (numRead > 0) ? readBuffer.array() : new byte[] {};
 
-		worker.processData(new NIODataEvent(socketChannel, data, this));
+		worker.processData(new NIOServerDataEvent(socketChannel, data, this));
 	}
 
 	@Override

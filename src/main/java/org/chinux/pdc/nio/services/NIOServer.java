@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
-import java.nio.channels.ServerSocketChannel;
 import java.util.Iterator;
 
 import org.chinux.pdc.nio.handlers.api.NIOServerHandler;
@@ -14,7 +13,6 @@ public class NIOServer implements Runnable {
 
 	private InetAddress host;
 	private int port;
-	private ServerSocketChannel serverChannel;
 	private Selector selector;
 
 	private NIOServerHandler handler;
@@ -22,9 +20,9 @@ public class NIOServer implements Runnable {
 	public NIOServer(final int destPort, final ServerSelectorFactory selfactory)
 			throws IOException {
 
-		host = InetAddress.getLocalHost();
+		host = InetAddress.getByName("0.0.0.0");
 		port = destPort;
-		selector = selfactory.getSelector(host, port, serverChannel);
+		selector = selfactory.getSelector(host, port);
 
 	}
 

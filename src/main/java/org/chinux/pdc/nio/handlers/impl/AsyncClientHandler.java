@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.chinux.pdc.nio.events.api.DataReceiver;
+import org.chinux.pdc.nio.events.impl.NIOClientDataEvent;
 import org.chinux.pdc.nio.events.impl.NIODataEvent;
 import org.chinux.pdc.nio.handlers.api.NIOClientHandler;
 import org.chinux.pdc.nio.handlers.util.SocketChannelFactory;
@@ -83,10 +84,7 @@ public class AsyncClientHandler implements NIOClientHandler,
 		// Hand the data off to our worker thread
 		final byte[] data = (numRead > 0) ? readBuffer.array() : new byte[] {};
 
-		final NIODataEvent event = new NIODataEvent(socketChannel, data, this);
-		event.owner = key.attachment();
-		worker.processData(event);
-		key.attach(null);
+		worker.processData(new NIOClientDataEvent(data, key.attachment()));
 	}
 
 	@Override
@@ -115,15 +113,22 @@ public class AsyncClientHandler implements NIOClientHandler,
 	}
 
 	@Override
-	public void receiveEvent(final NIODataEvent event) {
-		final InetAddress host = event.inetAddress;
+	public void receiveEvent(final NIODataEvent dataEvent) {
+
+		if (!(dataEvent instanceof NIOClientDataEvent)) {
+			throw new RuntimeException("Must receive a NIOClientDataEvent!");
+		}
+
+		final NIOClientDataEvent event = (NIOClientDataEvent) dataEvent;
+
+		final InetAddress host = event.getAddress();
 
 		final InetSocketAddress socketHost = new InetSocketAddress(host,
 				externalPort);
 
 		SocketChannel socketChannel;
 		synchronized (clientIPMap) {
-			socketChannel = clientIPMap.get(event.owner);
+			socketChannel = clientIPMap.get(event.getOwner());
 
 			if (socketChannel == null) {
 				try {
@@ -132,7 +137,7 @@ public class AsyncClientHandler implements NIOClientHandler,
 					e.printStackTrace();
 				}
 
-				clientIPMap.put(event.owner, socketChannel);
+				clientIPMap.put(event.getOwner(), socketChannel);
 
 				// Queue a channel registration since the caller is not the
 				// selecting thread. As part of the registration we'll register
@@ -142,19 +147,19 @@ public class AsyncClientHandler implements NIOClientHandler,
 				synchronized (changeRequests) {
 					changeRequests.add(new ChangeRequest(socketChannel,
 							ChangeRequest.REGISTER, SelectionKey.OP_CONNECT,
-							event.owner));
+							event.getOwner()));
 				}
 
 			}
 		}
 
-		final byte[] data = event.data;
+		final byte[] data = event.getData();
 
 		synchronized (pendingData) {
-			ArrayList<ByteBuffer> queue = pendingData.get(event.owner);
+			ArrayList<ByteBuffer> queue = pendingData.get(event.getOwner());
 			if (queue == null) {
 				queue = new ArrayList<ByteBuffer>();
-				pendingData.put(event.owner, queue);
+				pendingData.put(event.getOwner(), queue);
 			}
 			queue.add(ByteBuffer.wrap(data));
 		}

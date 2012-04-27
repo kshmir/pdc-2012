@@ -15,19 +15,19 @@ public class ServerSelectorFactoryImpl implements ServerSelectorFactory {
 	}
 
 	@Override
-	public Selector getSelector(final InetAddress host, final int port,
-			final ServerSocketChannel serverChannel) throws IOException {
-		return this.initSelector(host, port, serverChannel);
+	public Selector getSelector(final InetAddress host, final int port)
+			throws IOException {
+		return initSelector(host, port);
 	}
 
-	private Selector initSelector(final InetAddress host, final int port,
-			ServerSocketChannel serverChannel) throws IOException {
+	private Selector initSelector(final InetAddress host, final int port)
+			throws IOException {
 		// Create a new selector
 		final Selector socketSelector = SelectorProvider.provider()
 				.openSelector();
 
 		// Create a new non-blocking server socket channel
-		serverChannel = ServerSocketChannel.open();
+		final ServerSocketChannel serverChannel = ServerSocketChannel.open();
 		serverChannel.configureBlocking(false);
 
 		// Bind the server socket to the specified address and port

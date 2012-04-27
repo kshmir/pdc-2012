@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 
 import junit.framework.Assert;
 
+import org.chinux.pdc.nio.events.impl.NIOClientDataEvent;
 import org.chinux.pdc.nio.events.impl.NIODataEvent;
 import org.chinux.pdc.nio.handlers.impl.AsyncClientHandler;
 import org.chinux.pdc.nio.handlers.impl.ServerHandler;
@@ -20,27 +21,40 @@ import org.chinux.pdc.workers.EchoWorker;
 import org.chinux.pdc.workers.Worker;
 import org.junit.Test;
 
-public class NIOServerAndClientTest {
+/**
+ * Tests a basic connection between a client and server
+ * 
+ * @author cris
+ */
+public class NIOSCBasicTest {
 
-	String receivedString;
+	// String to be sent to the server and to be received back by the echo
+	// worker.
+	private String toSendString = "HOLA";
 
+	// String to be received from the server
+	private String receivedString;
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Test
 	public void test() throws IOException, InterruptedException {
 
+		// Scheduler to prepare 3 threads, worker, client and server
 		final ScheduledExecutorService service = Executors
 				.newScheduledThreadPool(3);
 
-		service.awaitTermination(100, TimeUnit.MILLISECONDS);
-
+		// Echo Worker for the server
 		final EchoWorker worker = new EchoWorker();
 
+		// Server logic
+		final ServerHandler serverHandler = new ServerHandler((Worker) worker);
+
+		// Client logic
 		final AsyncClientHandler clientHandler = new AsyncClientHandler(
 				new Worker<NIODataEvent>() {
 					@Override
-					public void processData(final Object event) {
-						final NIODataEvent nioEvent = (NIODataEvent) event;
-
-						receivedString = new String(nioEvent.getData()).trim();
+					public void processData(final NIODataEvent event) {
+						receivedString = new String(event.getData()).trim();
 					}
 
 					@Override
@@ -48,9 +62,6 @@ public class NIOServerAndClientTest {
 						return dataEvent;
 					}
 				}, new SocketChannelFactoryImpl());
-
-		@SuppressWarnings("unchecked")
-		final ServerHandler serverHandler = new ServerHandler((Worker) worker);
 
 		final NIOClient client = new NIOClient(9090,
 				new ClientSelectorFactoryImpl());
@@ -65,20 +76,20 @@ public class NIOServerAndClientTest {
 		service.execute(client);
 		service.execute(server);
 
-		service.awaitTermination(100, TimeUnit.MILLISECONDS);
+		service.awaitTermination(1, TimeUnit.MILLISECONDS);
 
-		// Wait for initial locks
-
-		final NIODataEvent event = new NIODataEvent(null, "HOLA".getBytes(),
+		final NIODataEvent event = new NIOClientDataEvent(
+				toSendString.getBytes(), InetAddress.getLocalHost(),
 				clientHandler);
-		event.inetAddress = InetAddress.getLocalHost();
 
 		clientHandler.receiveEvent(event);
 
-		service.awaitTermination(100, TimeUnit.MILLISECONDS);
+		// 1ms should be enough to receive the data
+		service.awaitTermination(10, TimeUnit.MILLISECONDS);
 
 		service.shutdownNow();
 
-		Assert.assertEquals("HOLA", receivedString);
+		// We got the string, yay!
+		Assert.assertEquals(toSendString, receivedString);
 	}
 }

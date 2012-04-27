@@ -1,10 +1,10 @@
 package org.chinux.pdc.nio.events.api;
 
-public interface DataEvent {
+@SuppressWarnings("rawtypes")
+public interface DataEvent<T extends DataEvent> {
 	public byte[] getData();
 
-	@SuppressWarnings("rawtypes")
-	public DataReceiver getReceiver();
+	public DataReceiver<T> getReceiver();
 
 	public void setCanSend(boolean sendable);
 

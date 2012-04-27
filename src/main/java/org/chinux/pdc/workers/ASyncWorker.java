@@ -5,13 +5,14 @@ import java.util.LinkedList;
 
 import org.chinux.pdc.nio.events.api.DataEvent;
 
+@SuppressWarnings("rawtypes")
 public abstract class ASyncWorker<T extends DataEvent> implements Runnable,
 		Worker<T> {
 
-	private Deque<Object> events = new LinkedList<Object>();
+	private Deque<T> events = new LinkedList<T>();
 
 	@Override
-	public void processData(final Object event) {
+	public void processData(final T event) {
 		synchronized (this.events) {
 			this.events.addLast(event);
 			this.events.notify();
@@ -34,10 +35,10 @@ public abstract class ASyncWorker<T extends DataEvent> implements Runnable,
 					} catch (final InterruptedException e) {
 					}
 				}
-				dataEvent = (T) this.events.poll();
+				dataEvent = this.events.poll();
 			}
 
-			final T event = this.DoWork(dataEvent);
+			final T event = DoWork(dataEvent);
 
 			if (event.canSend()) {
 				event.getReceiver().receiveEvent(event);
