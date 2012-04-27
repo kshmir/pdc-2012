@@ -3,10 +3,10 @@ package org.chinux.pdc.nio.services;
 import java.io.IOException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
+import java.nio.channels.spi.SelectorProvider;
 import java.util.Iterator;
 
 import org.chinux.pdc.nio.handlers.api.NIOClientHandler;
-import org.chinux.pdc.nio.services.util.ClientSelectorFactory;
 
 public class NIOClient implements Runnable {
 
@@ -14,16 +14,15 @@ public class NIOClient implements Runnable {
 	private NIOClientHandler handler;
 	private int connectionPort;
 
-	public NIOClient(final int connectionPort,
-			final ClientSelectorFactory selfactory) throws IOException {
-		this.selector = selfactory.getSelector();
+	public NIOClient(final int connectionPort) throws IOException {
+		selector = SelectorProvider.provider().openSelector();
 		this.connectionPort = connectionPort;
 	}
 
 	public void setHandler(final NIOClientHandler handler) {
 		this.handler = handler;
-		this.handler.setConnectionPort(this.connectionPort);
-		this.handler.setSelector(this.selector);
+		this.handler.setConnectionPort(connectionPort);
+		this.handler.setSelector(selector);
 	}
 
 	@Override
@@ -32,12 +31,12 @@ public class NIOClient implements Runnable {
 		while (true) {
 			try {
 				// Process any pending changes
-				this.handler.handlePendingChanges();
+				handler.handlePendingChanges();
 				// Wait for an event one of the registered channels
-				this.selector.select();
+				selector.select();
 
 				// Iterate over the set of keys for which events are available
-				final Iterator<SelectionKey> selectedKeys = this.selector
+				final Iterator<SelectionKey> selectedKeys = selector
 						.selectedKeys().iterator();
 				while (selectedKeys.hasNext()) {
 					final SelectionKey key = selectedKeys.next();
@@ -48,11 +47,11 @@ public class NIOClient implements Runnable {
 					}
 					// Check what event is available and deal with it
 					if (key.isConnectable()) {
-						this.handler.handleConnection(key);
+						handler.handleConnection(key);
 					} else if (key.isReadable()) {
-						this.handler.handleRead(key);
+						handler.handleRead(key);
 					} else if (key.isWritable()) {
-						this.handler.handleWrite(key);
+						handler.handleWrite(key);
 					}
 				}
 			} catch (final Exception e) {

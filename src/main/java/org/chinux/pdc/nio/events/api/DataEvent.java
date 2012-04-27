@@ -1,16 +1,54 @@
 package org.chinux.pdc.nio.events.api;
 
-@SuppressWarnings("rawtypes")
-public interface DataEvent<T extends DataEvent> {
-	public byte[] getData();
+import org.chinux.pdc.nio.receivers.api.DataReceiver;
 
-	public DataReceiver<T> getReceiver();
+/**
+ * Represents any kind of processed data ready to be sent to a receiver
+ * 
+ * @author cris
+ * 
+ */
+public abstract class DataEvent {
 
-	public void setCanSend(boolean sendable);
+	private DataReceiver<DataEvent> receiver;
+	private byte[] data;
 
-	public void setCanClose(boolean closeable);
+	private boolean canSend;
+	private boolean canClose;
 
-	public boolean canSend();
+	public DataEvent(final byte[] data, final DataReceiver<DataEvent> receiver) {
+		this(data, receiver, false, false);
+	}
 
-	public boolean canClose();
+	public DataEvent(final byte[] data, final DataReceiver<DataEvent> receiver,
+			final boolean canSend, final boolean canClose) {
+		this.receiver = receiver;
+		this.data = data;
+		this.canSend = canSend;
+		this.canClose = canClose;
+	}
+
+	public void setCanClose(final boolean closeable) {
+		canClose = closeable;
+	}
+
+	public void setCanSend(final boolean sendable) {
+		canSend = sendable;
+	}
+
+	public byte[] getData() {
+		return data;
+	}
+
+	public boolean canSend() {
+		return canSend;
+	}
+
+	public boolean canClose() {
+		return canClose;
+	}
+
+	public DataReceiver<DataEvent> getReceiver() {
+		return receiver;
+	}
 }

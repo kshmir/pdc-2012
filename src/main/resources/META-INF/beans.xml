@@ -20,14 +20,26 @@
 	</bean>
 
 
-	<bean id="mainWorker" class="org.chinux.pdc.workers.EchoWorker" />
+	<bean id="httpProxyWorker" class="org.chinux.pdc.workers.HttpProxyWorker"/>
 
-	<bean id="serverSelectorFactory" class="org.chinux.pdc.nio.services.util.ServerSelectorFactoryImpl"></bean>
-
-	<bean id="workerServerHandler" class="org.chinux.pdc.nio.handlers.impl.ServerHandler"
+	<bean id="eventDispatcher" class="org.chinux.pdc.nio.dispatchers.ASyncEventDispatcher"
 		lazy-init="false">
 		<constructor-arg>
-			<ref bean="mainWorker" />
+			<ref bean="httpProxyWorker" />
+		</constructor-arg>
+	</bean>
+	
+	<bean id="clientHandler" class="org.chinux.pdc.nio.handlers.impl.ClientHandler"
+		lazy-init="false">
+		<constructor-arg>
+			<ref bean="eventDispatcher" />
+		</constructor-arg>
+	</bean>
+	
+	<bean id="serverHandler" class="org.chinux.pdc.nio.handlers.impl.ServerHandler"
+		lazy-init="false">
+		<constructor-arg>
+			<ref bean="eventDispatcher" />
 		</constructor-arg>
 	</bean>
 
@@ -35,20 +47,36 @@
 		<constructor-arg>
 			<value type="java.lang.Integer">9090</value>
 		</constructor-arg>
-		<constructor-arg>
-			<ref bean="serverSelectorFactory" />
-		</constructor-arg>
-		<property name="handler" ref="workerServerHandler"></property>
+		<property name="handler" ref="serverHandler"></property>
 	</bean>
-
-	<bean id="application" class="org.chinux.pdc.App">
+	
+	<bean id="client" class="org.chinux.pdc.nio.services.NIOClient" lazy-init="false">
+		<constructor-arg>
+			<value type="java.lang.Integer">9090</value>
+		</constructor-arg>
+		<property name="handler" ref="clientHandler"></property>
+	</bean>
+	
+	
+	<bean id="dispatcherService" class="org.chinux.pdc.Service" lazy-init="default">
+		<constructor-arg>
+			<ref bean="eventDispatcher" />
+		</constructor-arg>
+	</bean>
+	
+	<bean id="serverService" class="org.chinux.pdc.Service" lazy-init="default">
 		<constructor-arg>
 			<ref bean="server" />
 		</constructor-arg>
+	</bean>
+	
+	<bean id="clientService" class="org.chinux.pdc.Service" lazy-init="default">
 		<constructor-arg>
-			<ref bean="mainWorker" />
+			<ref bean="client" />
 		</constructor-arg>
 	</bean>
+
+	
 	<!-- <bean id="client" class="org.chinux.pdc.NIOAsyncClient" lazy-init="false"> 
 		<property name="worker" ref="mainWorker"></property> </bean> -->
 

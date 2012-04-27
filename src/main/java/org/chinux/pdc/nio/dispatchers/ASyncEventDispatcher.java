@@ -1,15 +1,20 @@
-package org.chinux.pdc.workers;
+package org.chinux.pdc.nio.dispatchers;
 
 import java.util.Deque;
 import java.util.LinkedList;
 
 import org.chinux.pdc.nio.events.api.DataEvent;
+import org.chinux.pdc.workers.Worker;
 
-@SuppressWarnings("rawtypes")
-public abstract class ASyncWorker<T extends DataEvent> implements Runnable,
-		Worker<T> {
+public class ASyncEventDispatcher<T extends DataEvent> implements Runnable,
+		EventDispatcher<T> {
 
 	private Deque<T> events = new LinkedList<T>();
+	private Worker<T> worker;
+
+	public ASyncEventDispatcher(final Worker<T> worker) {
+		this.worker = worker;
+	}
 
 	@Override
 	public void processData(final T event) {
@@ -22,7 +27,6 @@ public abstract class ASyncWorker<T extends DataEvent> implements Runnable,
 	/**
 	 * This loop receives all the data and handles all the bussiness logic.
 	 */
-	@SuppressWarnings("unchecked")
 	@Override
 	public void run() {
 		T dataEvent;
@@ -38,7 +42,7 @@ public abstract class ASyncWorker<T extends DataEvent> implements Runnable,
 				dataEvent = this.events.poll();
 			}
 
-			final T event = DoWork(dataEvent);
+			final T event = worker.DoWork(dataEvent);
 
 			if (event.canSend()) {
 				event.getReceiver().receiveEvent(event);

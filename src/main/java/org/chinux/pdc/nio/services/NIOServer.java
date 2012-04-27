@@ -2,12 +2,14 @@ package org.chinux.pdc.nio.services;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.spi.SelectorProvider;
 import java.util.Iterator;
 
 import org.chinux.pdc.nio.handlers.api.NIOServerHandler;
-import org.chinux.pdc.nio.services.util.ServerSelectorFactory;
 
 public class NIOServer implements Runnable {
 
@@ -17,13 +19,31 @@ public class NIOServer implements Runnable {
 
 	private NIOServerHandler handler;
 
-	public NIOServer(final int destPort, final ServerSelectorFactory selfactory)
-			throws IOException {
-
+	public NIOServer(final int destPort) throws IOException {
 		host = InetAddress.getByName("0.0.0.0");
 		port = destPort;
-		selector = selfactory.getSelector(host, port);
+		selector = initSelector(host, port);
+	}
 
+	private Selector initSelector(final InetAddress host, final int port)
+			throws IOException {
+		// Create a new selector
+		final Selector socketSelector = SelectorProvider.provider()
+				.openSelector();
+
+		// Create a new non-blocking server socket channel
+		final ServerSocketChannel serverChannel = ServerSocketChannel.open();
+		serverChannel.configureBlocking(false);
+
+		// Bind the server socket to the specified address and port
+		final InetSocketAddress isa = new InetSocketAddress(host, port);
+		serverChannel.socket().bind(isa);
+
+		// Register the server socket channel, indicating an interest in
+		// accepting new connections
+		serverChannel.register(socketSelector, SelectionKey.OP_ACCEPT);
+
+		return socketSelector;
 	}
 
 	public void setHandler(final NIOServerHandler handler) {

@@ -2,7 +2,7 @@ package org.chinux;
 
 import junit.framework.Assert;
 
-import org.chinux.pdc.nio.events.impl.NIODataEvent;
+import org.chinux.pdc.nio.events.api.DataEvent;
 import org.chinux.pdc.workers.EchoWorker;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -17,10 +17,10 @@ public class EchoWorkerTest {
 
 		final byte[] data = "data".getBytes();
 
-		final NIODataEvent event = new NIODataEvent(data, null) {
+		final DataEvent event = new DataEvent(data, null) {
 		};
 
-		final NIODataEvent echoEvent = worker.DoWork(event);
+		final DataEvent echoEvent = worker.DoWork(event);
 
 		Assert.assertEquals(new String(event.getData()),
 				new String(echoEvent.getData()));

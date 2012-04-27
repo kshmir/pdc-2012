@@ -13,17 +13,14 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.chinux.pdc.nio.dispatchers.EventDispatcher;
 import org.chinux.pdc.nio.events.api.DataEvent;
-import org.chinux.pdc.nio.events.api.DataReceiver;
-import org.chinux.pdc.nio.events.impl.NIODataEvent;
-import org.chinux.pdc.nio.events.impl.NIOServerDataEvent;
+import org.chinux.pdc.nio.events.impl.ServerDataEvent;
 import org.chinux.pdc.nio.handlers.api.NIOServerHandler;
+import org.chinux.pdc.nio.receivers.api.DataReceiver;
 import org.chinux.pdc.nio.services.util.ChangeRequest;
-import org.chinux.pdc.workers.Worker;
 
-@SuppressWarnings("rawtypes")
-public class ServerHandler implements NIOServerHandler,
-		DataReceiver<NIODataEvent> {
+public class ServerHandler implements NIOServerHandler, DataReceiver<DataEvent> {
 
 	private ByteBuffer readBuffer;
 	private Selector selector;
@@ -32,10 +29,10 @@ public class ServerHandler implements NIOServerHandler,
 
 	private Map<SocketChannel, ArrayList<ByteBuffer>> pendingData = new HashMap<SocketChannel, ArrayList<ByteBuffer>>();
 
-	private Worker<DataEvent> worker;
+	private EventDispatcher<DataEvent> dispatcher;
 
-	public ServerHandler(final Worker<DataEvent> worker) {
-		this.worker = worker;
+	public ServerHandler(final EventDispatcher<DataEvent> dispatcher) {
+		this.dispatcher = dispatcher;
 		readBuffer = ByteBuffer.allocate(1024);
 	}
 
@@ -45,13 +42,13 @@ public class ServerHandler implements NIOServerHandler,
 	}
 
 	@Override
-	public void receiveEvent(final NIODataEvent dataEvent) {
+	public void receiveEvent(final DataEvent dataEvent) {
 
-		if (!(dataEvent instanceof NIOServerDataEvent)) {
+		if (!(dataEvent instanceof ServerDataEvent)) {
 			throw new RuntimeException("Must receive a NIOServerDataEvent");
 		}
 
-		final NIOServerDataEvent event = (NIOServerDataEvent) dataEvent;
+		final ServerDataEvent event = (ServerDataEvent) dataEvent;
 
 		final SocketChannel socket = event.getChannel();
 		final byte[] data = event.getData();
@@ -78,13 +75,13 @@ public class ServerHandler implements NIOServerHandler,
 	}
 
 	@Override
-	public void closeConnection(final NIODataEvent dataEvent) {
+	public void closeConnection(final DataEvent dataEvent) {
 
-		if (!(dataEvent instanceof NIOServerDataEvent)) {
+		if (!(dataEvent instanceof ServerDataEvent)) {
 			throw new RuntimeException("Must receive a NIOServerDataEvent");
 		}
 
-		final NIOServerDataEvent event = (NIOServerDataEvent) dataEvent;
+		final ServerDataEvent event = (ServerDataEvent) dataEvent;
 
 		synchronized (changeRequests) {
 			// Indicate we want the interest ops set changed
@@ -142,7 +139,7 @@ public class ServerHandler implements NIOServerHandler,
 		// Hand the data off to our worker thread
 		final byte[] data = (numRead > 0) ? readBuffer.array() : new byte[] {};
 
-		worker.processData(new NIOServerDataEvent(socketChannel, data, this));
+		dispatcher.processData(new ServerDataEvent(socketChannel, data, this));
 	}
 
 	@Override

@@ -2,29 +2,30 @@ package org.chinux.pdc.nio.events.impl;
 
 import java.net.InetAddress;
 
-import org.chinux.pdc.nio.events.api.DataReceiver;
+import org.chinux.pdc.nio.events.api.DataEvent;
+import org.chinux.pdc.nio.receivers.api.DataReceiver;
 
 /**
  * Represents a client data event
  * 
  * @author cris
  */
-public class NIOClientDataEvent extends NIODataEvent {
+public class ClientDataEvent extends DataEvent {
 
 	private InetAddress address;
 	private Object owner;
 
-	public NIOClientDataEvent(final byte[] data, final Object owner) {
+	public ClientDataEvent(final byte[] data, final Object owner) {
 		this(data, null, null, owner);
 	}
 
-	public NIOClientDataEvent(final byte[] data, final InetAddress address,
+	public ClientDataEvent(final byte[] data, final InetAddress address,
 			final Object owner) {
 		this(data, null, address, owner);
 	}
 
-	public NIOClientDataEvent(final byte[] data,
-			final DataReceiver<NIODataEvent> receiver,
+	public ClientDataEvent(final byte[] data,
+			final DataReceiver<DataEvent> receiver,
 			final InetAddress address, final Object owner) {
 		super(data, receiver);
 		this.address = address;

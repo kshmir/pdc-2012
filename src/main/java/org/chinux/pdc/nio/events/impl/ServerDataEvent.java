@@ -2,7 +2,8 @@ package org.chinux.pdc.nio.events.impl;
 
 import java.nio.channels.SocketChannel;
 
-import org.chinux.pdc.nio.events.api.DataReceiver;
+import org.chinux.pdc.nio.events.api.DataEvent;
+import org.chinux.pdc.nio.receivers.api.DataReceiver;
 
 /**
  * Represents a server data event
@@ -10,16 +11,16 @@ import org.chinux.pdc.nio.events.api.DataReceiver;
  * @author cris
  * 
  */
-public class NIOServerDataEvent extends NIODataEvent {
+public class ServerDataEvent extends DataEvent {
 
 	private SocketChannel channel;
 
-	public NIOServerDataEvent(final SocketChannel channel, final byte[] data) {
+	public ServerDataEvent(final SocketChannel channel, final byte[] data) {
 		this(channel, data, null);
 	}
 
-	public NIOServerDataEvent(final SocketChannel channel, final byte[] data,
-			final DataReceiver<NIODataEvent> receiver) {
+	public ServerDataEvent(final SocketChannel channel, final byte[] data,
+			final DataReceiver<DataEvent> receiver) {
 		super(data, receiver);
 
 		this.channel = channel;
