@@ -1,7 +1,9 @@
-package org.chinux.pdc;
+package org.chinux;
 
 import junit.framework.Assert;
 
+import org.chinux.pdc.HTTPRequest;
+import org.chinux.pdc.HTTPRequestImpl;
 import org.junit.Test;
 
 public class HTTPRequestImplTest {
