@@ -1,26 +1,22 @@
-package org.chinux.pdc;
+package org.chinux.pdc.workers;
 
 import java.util.Deque;
 import java.util.LinkedList;
 
-public abstract class Worker<T extends DataEvent> implements Runnable {
+import org.chinux.pdc.nio.events.api.DataEvent;
 
-	private DataReceiver<T> receiver;
-
-	public Worker(final DataReceiver<T> receiver) {
-		this.receiver = receiver;
-	}
+public abstract class ASyncWorker<T extends DataEvent> implements Runnable,
+		Worker<T> {
 
 	private Deque<T> events = new LinkedList<T>();
 
+	@Override
 	public void processData(final T event) {
 		synchronized (this.events) {
 			this.events.addLast(event);
 			this.events.notify();
 		}
 	}
-
-	public abstract T DoWork(T dataEvent);
 
 	/**
 	 * This loop receives all the data and handles all the bussiness logic.
@@ -42,14 +38,13 @@ public abstract class Worker<T extends DataEvent> implements Runnable {
 			final T event = this.DoWork(dataEvent);
 
 			if (event.canSend()) {
-				this.receiver.sendAnswer(event);
+				event.getReceiver().sendAnswer(event);
 			}
 
 			if (event.canClose()) {
-				// this.receiver.closeConnection(event);
+				event.getReceiver().closeConnection(event);
 			}
 
 		}
 	}
-
 }

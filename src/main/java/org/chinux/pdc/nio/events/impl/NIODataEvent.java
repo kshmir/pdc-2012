@@ -1,6 +1,9 @@
-package org.chinux.pdc;
+package org.chinux.pdc.nio.events.impl;
 
 import java.nio.channels.SocketChannel;
+
+import org.chinux.pdc.nio.events.api.DataEvent;
+import org.chinux.pdc.nio.events.api.DataReceiver;
 
 /**
  * Represents any kind of processed data ready to be sent to a server
@@ -10,39 +13,53 @@ import java.nio.channels.SocketChannel;
  */
 public class NIODataEvent implements DataEvent {
 	public SocketChannel socket;
+	public DataReceiver<DataEvent> receiver;
 	public byte[] data;
 	private boolean canSend;
 	private boolean canClose;
 
-	public NIODataEvent(final SocketChannel socket, final byte[] data) {
-		this(socket, data, false, false);
+	public NIODataEvent(final SocketChannel socket, final byte[] data,
+			final DataReceiver<DataEvent> receiver) {
+		this(socket, data, receiver, false, false);
 	}
 
 	public NIODataEvent(final SocketChannel socket, final byte[] data,
-			final boolean canSend, final boolean canClose) {
+			final DataReceiver<DataEvent> receiver, final boolean canSend,
+			final boolean canClose) {
+		this.receiver = receiver;
 		this.socket = socket;
 		this.data = data;
 		this.canSend = canSend;
 		this.canClose = canClose;
 	}
 
+	@Override
 	public void setCanClose(final boolean closeable) {
 		this.canClose = closeable;
 	}
 
+	@Override
 	public void setCanSend(final boolean sendable) {
 		this.canSend = sendable;
 	}
 
+	@Override
 	public byte[] getData() {
 		return this.data;
 	}
 
+	@Override
 	public boolean canSend() {
 		return this.canSend;
 	}
 
+	@Override
 	public boolean canClose() {
 		return this.canClose;
+	}
+
+	@Override
+	public DataReceiver<DataEvent> getReceiver() {
+		return this.receiver;
 	}
 }
