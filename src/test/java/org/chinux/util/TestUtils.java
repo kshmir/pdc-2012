@@ -8,6 +8,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.junit.Ignore;
+
+@Ignore
 public class TestUtils {
 	private static Map<String, String> fileCache = new HashMap<String, String>();
 
