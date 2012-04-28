@@ -13,7 +13,14 @@ public abstract class HttpBaseProxyWorker implements Worker<DataEvent> {
 
 	@Override
 	public DataEvent DoWork(final DataEvent dataEvent) {
-		// TODO Auto-generated method stub
-		return null;
+		if (dataEvent instanceof ClientDataEvent) {
+			return this.DoWork((ClientDataEvent) dataEvent);
+		}
+
+		if (dataEvent instanceof ServerDataEvent) {
+			return this.DoWork((ServerDataEvent) dataEvent);
+		}
+
+		throw new RuntimeException("Invalid DataEvent type received");
 	}
 }
