@@ -7,23 +7,28 @@ public class HTTPPostRequestReader implements HTTPReader {
 
 	private HTTPRequest requestheader;
 	private boolean finished;
+	private Integer currlenght;
 
 	public HTTPPostRequestReader(final HTTPRequest requestheader) {
 		this.requestheader = requestheader;
 		this.finished = false;
+		this.currlenght = 0;
 	}
 
 	@Override
 	public byte[] processData(final byte[] data) {
 		final Integer contentlenght = Integer.valueOf(this.requestheader
 				.getHeader("Content-Length"));
-		final int quant = 0;
+		this.currlenght += data.length;
+		if (this.currlenght >= contentlenght) {
+			this.finished = true;
+		}
 		return data;
 	}
 
 	@Override
 	public boolean isFinished() {
-		return false;
+		return this.finished;
 	}
 
 }
