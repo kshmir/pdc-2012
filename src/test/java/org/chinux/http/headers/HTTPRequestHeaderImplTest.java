@@ -38,6 +38,5 @@ public class HTTPRequestHeaderImplTest {
 		Assert.assertEquals("/enlighten/calais.asmx/Enlighten",
 				req.getRequestURI());
 		Assert.assertEquals("123", req.getHeader("Content-Length"));
-		Assert.assertEquals("string", req.getParameter("content"));
 	}
 }

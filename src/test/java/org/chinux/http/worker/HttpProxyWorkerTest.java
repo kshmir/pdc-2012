@@ -18,13 +18,18 @@ import org.mockito.Mockito;
 @SuppressWarnings("unchecked")
 public class HttpProxyWorkerTest {
 
+	final SocketChannel channel = Mockito.mock(SocketChannel.class);
+
+	final Socket socket = Mockito.mock(Socket.class);
+
 	@Test
 	public void testBasicGetRequest() throws UnknownHostException {
 		final String get = "GET / HTTP/1.0\n\n";
 
 		final InetAddress address = InetAddress.getLocalHost();
 		final HttpProxyWorker worker = new HttpProxyWorker();
-		final ClientDataEvent answer = testWorkerRequest(get, address, worker);
+		final ClientDataEvent answer = this.testWorkerRequest(get, address,
+				worker);
 
 		Assert.assertEquals(get, new String(answer.getData()));
 		Assert.assertEquals(true, answer.canSend());
@@ -38,9 +43,45 @@ public class HttpProxyWorkerTest {
 		final InetAddress address = InetAddress.getByName("localhost");
 		final HttpProxyWorker worker = new HttpProxyWorker();
 
-		final ClientDataEvent answer = testWorkerRequest(get, address, worker);
+		final ClientDataEvent answer = this.testWorkerRequest(get, address,
+				worker);
 
 		Assert.assertEquals(get, new String(answer.getData()));
+		Assert.assertEquals(true, answer.canSend());
+		Assert.assertNotNull(answer.getOwner());
+	}
+
+	@Test
+	public void testBasicPostRequestWithData() throws UnknownHostException {
+		final String get = "POST / HTTP/1.0\nHost: localhost\nContent-Length: 10\n\n0123456789\n";
+
+		final InetAddress address = InetAddress.getByName("localhost");
+		final HttpProxyWorker worker = new HttpProxyWorker();
+
+		final ClientDataEvent answer = this.testWorkerRequest(get, address,
+				worker);
+
+		Assert.assertEquals(get, new String(answer.getData()));
+		Assert.assertEquals(true, answer.canSend());
+		Assert.assertNotNull(answer.getOwner());
+	}
+
+	@Test
+	public void testSplittedPostRequestWithData() throws UnknownHostException {
+		final String get = "POST / HTTP/1.0\nHost: localhost\n";
+		final String get2 = "Content-Length: 10\n\n0123456789\n";
+
+		final InetAddress address = InetAddress.getByName("localhost");
+		final HttpProxyWorker worker = new HttpProxyWorker();
+
+		final ClientDataEvent a = this.testWorkerRequest(get, address, worker);
+
+		Assert.assertEquals(false, a.canSend());
+
+		final ClientDataEvent answer = this.testWorkerRequest(get2, address,
+				worker);
+
+		Assert.assertEquals(get + get2, new String(answer.getData()));
 		Assert.assertEquals(true, answer.canSend());
 		Assert.assertNotNull(answer.getOwner());
 	}
@@ -52,14 +93,10 @@ public class HttpProxyWorkerTest {
 
 		worker.setClientDataReceiver(clientReceiver);
 
-		final SocketChannel channel = Mockito.mock(SocketChannel.class);
+		Mockito.when(this.channel.socket()).thenReturn(this.socket);
+		Mockito.when(this.socket.getInetAddress()).thenReturn(address);
 
-		final Socket socket = Mockito.mock(Socket.class);
-
-		Mockito.when(channel.socket()).thenReturn(socket);
-		Mockito.when(socket.getInetAddress()).thenReturn(address);
-
-		final ServerDataEvent event = new ServerDataEvent(channel,
+		final ServerDataEvent event = new ServerDataEvent(this.channel,
 				get.getBytes());
 
 		final ClientDataEvent answer = (ClientDataEvent) worker.DoWork(event);

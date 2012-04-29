@@ -52,17 +52,6 @@ public class HTTPRequestHeaderImpl implements HTTPRequestHeader {
 				this.parameters.put(values[0], values[1]);
 			}
 		}
-
-		if (this.method.equals("POST")) {
-			match = parametersPattern.matcher(request.substring(request
-					.indexOf("\n\n") + 2));
-
-			String[] values = null;
-			while (match.find()) {
-				values = match.group(1).split("=");
-				this.parameters.put(values[0], values[1]);
-			}
-		}
 	}
 
 	@Override
