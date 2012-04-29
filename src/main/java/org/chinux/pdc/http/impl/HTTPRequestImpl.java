@@ -84,4 +84,9 @@ public class HTTPRequestImpl implements HTTPRequest {
 		return this.parameters.containsKey(name) ? this.parameters.get(name)
 				: null;
 	}
+
+	@Override
+	public String toString() {
+		return this.URI;
+	}
 }
