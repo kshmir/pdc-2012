@@ -3,13 +3,13 @@ package org.chinux.pdc.http.impl;
 import org.chinux.pdc.http.api.HTTPReader;
 import org.chinux.pdc.http.api.HTTPResponseHeader;
 
-public class HTTPPostResponseReader implements HTTPReader {
+public class HTTPImageResponseReader implements HTTPReader {
 
 	private HTTPResponseHeader responseheader;
 	private boolean finished;
 	private Integer currlenght;
 
-	public HTTPPostResponseReader(final HTTPResponseHeader responseheader) {
+	public HTTPImageResponseReader(final HTTPResponseHeader responseheader) {
 		this.responseheader = responseheader;
 		this.finished = false;
 		this.currlenght = 0;
