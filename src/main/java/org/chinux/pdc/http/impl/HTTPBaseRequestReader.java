@@ -23,7 +23,7 @@ public class HTTPBaseRequestReader implements HTTPReader {
 			this.finished = true;
 			return data;
 		} else if (method.equals("POST")) {
-			this.postereader = this.getPostReader();
+			this.getPostReader();
 			final byte[] aux = this.postereader.processData(data);
 			if (this.postereader.isFinished()) {
 				this.finished = true;
@@ -34,11 +34,10 @@ public class HTTPBaseRequestReader implements HTTPReader {
 		}
 	}
 
-	private HTTPPostRequestReader getPostReader() {
+	private void getPostReader() {
 		if (this.postereader == null) {
 			this.postereader = new HTTPPostRequestReader(this.requestheader);
 		}
-		return this.postereader;
 	}
 
 	@Override
