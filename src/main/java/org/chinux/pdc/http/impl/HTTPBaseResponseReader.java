@@ -6,33 +6,58 @@ import org.chinux.pdc.http.api.HTTPResponse;
 public class HTTPBaseResponseReader implements HTTPReader {
 
 	private HTTPResponse responseheader;
+	private boolean finished;
+	private HTTPPostResponseReader postereader;
+	private HTTPGetResponseReader getreader;
 
 	public HTTPBaseResponseReader(final HTTPResponse responseheader) {
 		this.responseheader = responseheader;
+		this.finished = false;
+		this.postereader = null;
 	}
 
 	@Override
 	public byte[] processData(final byte[] data) {
-		final String method = this.responseheader.getHeader("METHOD");
+		final String method = this.responseheader.getHeader("Method");
 
 		if (method.equals("HEAD")) {
-			/*
-			 * TODO if the method is head the data must be returned
-			 */
+			return this.responseheader.getResponse().getBytes();
 		} else if (method.equals("GET")) {
-			return data;
+			this.getreader = this.getGetReader();
+			final byte[] aux = this.getreader.processData(data);
+			if (this.getreader.isFinished()) {
+				this.finished = true;
+			}
+			return aux;
 		} else if (method.equals("POST")) {
-			return data;
+			this.postereader = this.getPostReader();
+			final byte[] aux = this.postereader.processData(data);
+			if (this.postereader.isFinished()) {
+				this.finished = true;
+			}
+			return aux;
 		} else {
 			throw new RuntimeException();
 		}
-		return null;
+	}
 
+	private HTTPPostResponseReader getPostReader() {
+		if (this.postereader == null) {
+			this.postereader = new HTTPPostResponseReader(this.responseheader);
+		}
+		return this.postereader;
+	}
+
+	private HTTPGetResponseReader getGetReader() {
+		if (this.getreader == null) {
+			this.getreader = new HTTPGetResponseReader(this.responseheader);
+		}
+		return this.getreader;
 	}
 
 	@Override
 	public boolean isFinished() {
-		return false;
+		return this.finished;
 	}
 
 }
