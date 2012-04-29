@@ -9,6 +9,8 @@ import org.chinux.pdc.http.api.HTTPResponse;
 
 public class HTTPResponseImpl implements HTTPResponse {
 
+	private String response;
+
 	private static Pattern headPattern = Pattern
 			.compile("([\\w-/\\w]+) ([\\w-/]+) ([\\w-/]+)");
 
@@ -18,6 +20,7 @@ public class HTTPResponseImpl implements HTTPResponse {
 	private Map<String, String> headers;
 
 	public HTTPResponseImpl(final String response) {
+		this.response = response;
 		this.headers = new HashMap<String, String>();
 		final String firstLine = response.substring(0, response.indexOf('\n'));
 
@@ -52,6 +55,11 @@ public class HTTPResponseImpl implements HTTPResponse {
 	public String getHeader(final String name) {
 		return this.headers.containsKey(name.toLowerCase()) ? this.headers
 				.get(name.toLowerCase()) : null;
+	}
+
+	@Override
+	public String getResponse() {
+		return this.response;
 	}
 
 }
