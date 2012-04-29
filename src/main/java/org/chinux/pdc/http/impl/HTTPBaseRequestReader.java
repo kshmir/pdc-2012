@@ -1,16 +1,16 @@
 package org.chinux.pdc.http.impl;
 
 import org.chinux.pdc.http.api.HTTPReader;
-import org.chinux.pdc.http.api.HTTPRequest;
+import org.chinux.pdc.http.api.HTTPRequestHeader;
 
 public class HTTPBaseRequestReader implements HTTPReader {
 
 	private static HTTPBaseRequestReader singleton;
-	private HTTPRequest requestheader;
+	private HTTPRequestHeader requestheader;
 	private boolean finished;
 	private HTTPPostRequestReader postereader;
 
-	private HTTPBaseRequestReader(final HTTPRequest requestheader) {
+	public HTTPBaseRequestReader(final HTTPRequestHeader requestheader) {
 		this.requestheader = requestheader;
 		this.finished = false;
 		this.postereader = null;

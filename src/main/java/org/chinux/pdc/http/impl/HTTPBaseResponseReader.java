@@ -1,13 +1,13 @@
 package org.chinux.pdc.http.impl;
 
 import org.chinux.pdc.http.api.HTTPReader;
-import org.chinux.pdc.http.api.HTTPResponse;
+import org.chinux.pdc.http.api.HTTPResponseHeader;
 
 public class HTTPBaseResponseReader implements HTTPReader {
 
-	private HTTPResponse responseheader;
+	private HTTPResponseHeader responseheader;
 
-	public HTTPBaseResponseReader(final HTTPResponse responseheader) {
+	public HTTPBaseResponseReader(final HTTPResponseHeader responseheader) {
 		this.responseheader = responseheader;
 	}
 
