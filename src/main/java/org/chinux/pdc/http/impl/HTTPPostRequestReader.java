@@ -16,7 +16,9 @@ public class HTTPPostRequestReader implements HTTPReader {
 	@Override
 	public byte[] processData(final byte[] data) {
 		final Integer contentlenght = Integer.valueOf(this.requestheader
-				.getHeader("Content-Lenght"));
+				.getHeader("Content-Length"));
+		final int quant = 0;
+		return data;
 	}
 
 	@Override
