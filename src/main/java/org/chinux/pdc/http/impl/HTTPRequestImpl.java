@@ -22,4 +22,9 @@ public class HTTPRequestImpl implements HTTPRequest {
 	public HTTPBaseRequestReader getBodyReader() {
 		return this.bodyReader;
 	}
+
+	@Override
+	public String toString() {
+		return this.URI;
+	}
 }
