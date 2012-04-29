@@ -14,7 +14,7 @@ public class HTTPRequestImpl implements HTTPRequest {
 	}
 
 	@Override
-	public HTTPRequestHeader getHeader() {
+	public HTTPRequestHeader getHeaders() {
 		return this.header;
 	}
 
@@ -23,8 +23,4 @@ public class HTTPRequestImpl implements HTTPRequest {
 		return this.bodyReader;
 	}
 
-	@Override
-	public String toString() {
-		return this.URI;
-	}
 }

@@ -7,7 +7,7 @@ import org.chinux.pdc.http.impl.HTTPResponseHeaderImpl;
 import org.chinux.util.TestUtils;
 import org.junit.Test;
 
-public class HTTPResponseImplTest {
+public class HTTPResponseHeaderImplTest {
 
 	@Test
 	public void ResponseImplTest() {

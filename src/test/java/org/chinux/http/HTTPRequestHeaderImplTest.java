@@ -7,7 +7,7 @@ import org.chinux.pdc.http.impl.HTTPRequestHeaderImpl;
 import org.chinux.util.TestUtils;
 import org.junit.Test;
 
-public class HTTPRequestImplTest {
+public class HTTPRequestHeaderImplTest {
 
 	@Test
 	public void GetNoParamTest() {

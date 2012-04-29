@@ -18,7 +18,7 @@ public class HTTPBaseRequestReader implements HTTPReader {
 
 	@Override
 	public byte[] processData(final byte[] data) {
-		final String method = this.requestheader.getHeader("METHOD");
+		final String method = this.requestheader.getMethod();
 
 		if (method.equals("HEAD") || method.equals("GET")) {
 			this.finished = true;

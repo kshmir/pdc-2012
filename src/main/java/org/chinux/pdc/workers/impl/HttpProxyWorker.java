@@ -1,5 +1,6 @@
 package org.chinux.pdc.workers.impl;
 
+import java.net.InetAddress;
 import java.nio.channels.SocketChannel;
 import java.util.HashMap;
 import java.util.Map;
@@ -196,8 +197,20 @@ public class HttpProxyWorker extends HttpBaseProxyWorker {
 			}
 		}
 
+		InetAddress address = null;
+		try {
+			if (eventOwner.request.getHeaders().getHeader("Host") == null) {
+				throw new Exception();
+			}
+
+			address = InetAddress.getByName(eventOwner.request.getHeaders()
+					.getHeader("Host"));
+		} catch (final Exception e) {
+			address = clientChannel.socket().getInetAddress();
+		}
+
 		final DataEvent e = new ClientDataEvent(answer.toString().getBytes(),
-				this.clientDataReceiver, null, eventOwner);
+				this.clientDataReceiver, address, eventOwner);
 
 		e.setCanClose(canClose);
 		e.setCanSend(canSend);

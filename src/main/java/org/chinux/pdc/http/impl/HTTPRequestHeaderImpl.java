@@ -20,11 +20,13 @@ public class HTTPRequestHeaderImpl implements HTTPRequestHeader {
 	private Map<String, String> headers;
 	private Map<String, String> parameters;
 	private String URI;
+	private String request;
 
 	public HTTPRequestHeaderImpl(final String request) {
+		this.request = request;
 		this.headers = new HashMap<String, String>();
 		this.parameters = new HashMap<String, String>();
-		final String firstLine = request.substring(0, request.indexOf('\n'));
+		final String firstLine = request.split("\n")[0];
 
 		Matcher match = headPattern.matcher(firstLine);
 		if (match.find()) {
@@ -83,5 +85,10 @@ public class HTTPRequestHeaderImpl implements HTTPRequestHeader {
 	public String getParameter(final String name) {
 		return this.parameters.containsKey(name) ? this.parameters.get(name)
 				: null;
+	}
+
+	@Override
+	public String toString() {
+		return this.request + "\n\n";
 	}
 }
