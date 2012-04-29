@@ -9,4 +9,7 @@ public interface HTTPResponse {
 	public int returnStatusCode();
 
 	public String getHeader(String name);
+
+	public String getResponse();
+
 }

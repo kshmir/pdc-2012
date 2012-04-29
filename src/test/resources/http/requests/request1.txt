@@ -1,5 +1,11 @@
 GET /kshmir/pdc-2012/issues/3 HTTP/1.1
 Host: github.com
+Accept: text/*;q=0.3, text/html;q=0.7, text/html;level=1, text/html;level=2;q=0.4, */*;q=0.5
+Accept-Charset: iso-8859-5, unicode-1-1;q=0.8
+Accept-Encoding: gzip;q=1.0, identity; q=0.5, *;q=0
+Accept-Language: da, en-gb;q=0.8, en;q=0.7
 Connection: keep-alive
 Cache-Control: max-age=0
 
+
+//si no tengo lo que me pido mando un 406 (not acceptable)
