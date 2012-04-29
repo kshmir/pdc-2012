@@ -1,4 +1,4 @@
-package org.chinux.http;
+package org.chinux.http.readers;
 
 import org.chinux.pdc.http.api.HTTPRequestHeader;
 import org.chinux.pdc.http.impl.HTTPBaseRequestReader;

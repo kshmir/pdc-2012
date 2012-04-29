@@ -1,4 +1,4 @@
-package org.chinux.http;
+package org.chinux.http.worker;
 
 import java.net.InetAddress;
 import java.net.Socket;

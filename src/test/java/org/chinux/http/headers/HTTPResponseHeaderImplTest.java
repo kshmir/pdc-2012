@@ -1,4 +1,4 @@
-package org.chinux.http;
+package org.chinux.http.headers;
 
 import junit.framework.Assert;
 
