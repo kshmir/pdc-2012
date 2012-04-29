@@ -25,6 +25,9 @@ public class HTTPBaseRequestReader implements HTTPReader {
 			return data;
 		} else if (method.equals("POST")) {
 			this.postereader = this.getPostReader();
+			if (this.postereader.isFinished()) {
+				this.finished = true;
+			}
 			return this.postereader.processData(data);
 		} else {
 			throw new RuntimeException();
