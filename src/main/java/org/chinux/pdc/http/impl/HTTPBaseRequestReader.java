@@ -5,7 +5,6 @@ import org.chinux.pdc.http.api.HTTPRequestHeader;
 
 public class HTTPBaseRequestReader implements HTTPReader {
 
-	private static HTTPBaseRequestReader singleton;
 	private HTTPRequestHeader requestheader;
 	private boolean finished;
 	private HTTPPostRequestReader postereader;
@@ -25,10 +24,11 @@ public class HTTPBaseRequestReader implements HTTPReader {
 			return data;
 		} else if (method.equals("POST")) {
 			this.postereader = this.getPostReader();
+			final byte[] aux = this.postereader.processData(data);
 			if (this.postereader.isFinished()) {
 				this.finished = true;
 			}
-			return this.postereader.processData(data);
+			return aux;
 		} else {
 			throw new RuntimeException();
 		}
