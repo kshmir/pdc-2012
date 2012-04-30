@@ -1,17 +1,17 @@
-package org.chinux.http;
+package org.chinux.http.headers;
 
 import junit.framework.Assert;
 
-import org.chinux.pdc.http.api.HTTPRequest;
-import org.chinux.pdc.http.impl.HTTPRequestImpl;
+import org.chinux.pdc.http.api.HTTPRequestHeader;
+import org.chinux.pdc.http.impl.HTTPRequestHeaderImpl;
 import org.chinux.util.TestUtils;
 import org.junit.Test;
 
-public class HTTPRequestImplTest {
+public class HTTPRequestHeaderImplTest {
 
 	@Test
 	public void GetNoParamTest() {
-		final HTTPRequest req = new HTTPRequestImpl(
+		final HTTPRequestHeader req = new HTTPRequestHeaderImpl(
 				TestUtils.stringFromFile("http/requests/request1.txt"));
 		Assert.assertEquals("GET", req.getMethod());
 		Assert.assertEquals("/kshmir/pdc-2012/issues/3", req.getRequestURI());
@@ -20,7 +20,7 @@ public class HTTPRequestImplTest {
 
 	@Test
 	public void GetParamTest() {
-		final HTTPRequest req = new HTTPRequestImpl(
+		final HTTPRequestHeader req = new HTTPRequestHeaderImpl(
 				TestUtils.stringFromFile("http/requests/request2.txt"));
 		Assert.assertEquals("GET", req.getMethod());
 		Assert.assertEquals(
@@ -32,12 +32,11 @@ public class HTTPRequestImplTest {
 
 	@Test
 	public void PostTest() {
-		final HTTPRequest req = new HTTPRequestImpl(
+		final HTTPRequestHeader req = new HTTPRequestHeaderImpl(
 				TestUtils.stringFromFile("http/requests/request3.txt"));
 		Assert.assertEquals("POST", req.getMethod());
 		Assert.assertEquals("/enlighten/calais.asmx/Enlighten",
 				req.getRequestURI());
 		Assert.assertEquals("123", req.getHeader("Content-Length"));
-		Assert.assertEquals("string", req.getParameter("content"));
 	}
 }

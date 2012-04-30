@@ -1,0 +1,5 @@
+HTTP/1.0 200 OK
+Date: Fri, 31 Dec 1999 23:59:59 GMT
+Content-Type: image/jpg
+Content-Length: 106611
+

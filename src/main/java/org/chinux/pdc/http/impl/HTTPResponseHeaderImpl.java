@@ -5,9 +5,9 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.chinux.pdc.http.api.HTTPResponse;
+import org.chinux.pdc.http.api.HTTPResponseHeader;
 
-public class HTTPResponseImpl implements HTTPResponse {
+public class HTTPResponseHeaderImpl implements HTTPResponseHeader {
 
 	private String response;
 
@@ -19,7 +19,7 @@ public class HTTPResponseImpl implements HTTPResponse {
 	private int statusCode;
 	private Map<String, String> headers;
 
-	public HTTPResponseImpl(final String response) {
+	public HTTPResponseHeaderImpl(final String response) {
 		this.response = response;
 		this.headers = new HashMap<String, String>();
 		final String firstLine = response.substring(0, response.indexOf('\n'));
