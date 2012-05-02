@@ -6,7 +6,7 @@ public interface HTTPResponse {
 	/**
 	 * @return HttpResponseHeader of the http resonse
 	 */
-	public HTTPResponseHeader getHeader();
+	public HTTPResponseHeader getHeaders();
 
 	/**
 	 * @return HttpReader of the http response

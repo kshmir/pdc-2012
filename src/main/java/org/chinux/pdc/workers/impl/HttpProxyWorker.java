@@ -3,7 +3,9 @@ package org.chinux.pdc.workers.impl;
 import java.net.InetAddress;
 import java.nio.channels.SocketChannel;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang.ArrayUtils;
@@ -11,9 +13,13 @@ import org.apache.commons.lang.StringUtils;
 import org.chinux.pdc.http.api.HTTPRequest;
 import org.chinux.pdc.http.api.HTTPRequestHeader;
 import org.chinux.pdc.http.api.HTTPResponse;
+import org.chinux.pdc.http.api.HTTPResponseHeader;
 import org.chinux.pdc.http.impl.HTTPBaseRequestReader;
+import org.chinux.pdc.http.impl.HTTPBaseResponseReader;
 import org.chinux.pdc.http.impl.HTTPRequestHeaderImpl;
 import org.chinux.pdc.http.impl.HTTPRequestImpl;
+import org.chinux.pdc.http.impl.HTTPResponseHeaderImpl;
+import org.chinux.pdc.http.impl.HTTPResponseImpl;
 import org.chinux.pdc.nio.events.api.DataEvent;
 import org.chinux.pdc.nio.events.impl.ClientDataEvent;
 import org.chinux.pdc.nio.events.impl.ServerDataEvent;
@@ -30,7 +36,9 @@ public class HttpProxyWorker extends HttpBaseProxyWorker {
 	 */
 	public static class HTTPEvent {
 		public HTTPRequest request;
+		public HTTPResponse response;
 		public SocketChannel client;
+		public StringBuilder builder = new StringBuilder();
 
 		public HTTPEvent(final HTTPRequest request, final SocketChannel channel) {
 			this.request = request;
@@ -78,11 +86,11 @@ public class HttpProxyWorker extends HttpBaseProxyWorker {
 		}
 	}
 
-	private Map<SocketChannel, StringBuilder> readingHeaderSockets = new HashMap<SocketChannel, StringBuilder>();
+	private Map<SocketChannel, StringBuilder> readingServerSockets = new HashMap<SocketChannel, StringBuilder>();
 
 	private Map<SocketChannel, HTTPEvent> readingDataSockets = new HashMap<SocketChannel, HTTPEvent>();
 
-	private Map<HTTPEvent, HTTPResponse> receivedRequests = new HashMap<HTTPEvent, HTTPResponse>();
+	private Set<HTTPEvent> receivedRequests = new HashSet<HTTPEvent>();
 
 	private DataReceiver<DataEvent> clientDataReceiver = null;
 
@@ -100,23 +108,87 @@ public class HttpProxyWorker extends HttpBaseProxyWorker {
 
 	@Override
 	protected DataEvent DoWork(final ClientDataEvent clientEvent) {
-		return null;
+		final HTTPEvent event = (HTTPEvent) clientEvent.getOwner();
+
+		final StringBuilder answer = new StringBuilder();
+
+		byte[] rawData = clientEvent.getData();
+
+		boolean canSend = false;
+		boolean canClose = false;
+
+		if (event.response == null) {
+			final StringBuilder pendingHeader = event.builder;
+
+			pendingHeader.append(new String(rawData));
+
+			if (this.headerCutPattern.matcher(pendingHeader.toString()).find()) {
+
+				final String[] headerAndBody = pendingHeader.toString().split(
+						"\\n\\n");
+				final String headerString = headerAndBody[0];
+				final HTTPResponseHeader header = new HTTPResponseHeaderImpl(
+						headerString);
+
+				// TODO: Call header filter!
+				canSend = true;
+
+				final HTTPResponse response = new HTTPResponseImpl(header,
+						new HTTPBaseResponseReader(header));
+
+				answer.append(header.toString());
+
+				event.response = response;
+
+				if (headerAndBody.length > 1) {
+					rawData = StringUtils.join(
+							ArrayUtils.subarray(headerAndBody, 1,
+									headerAndBody.length), "\n\n").getBytes();
+				} else {
+					rawData = new byte[] {};
+				}
+			}
+		}
+
+		if (event.response != null && rawData != null) {
+			final HTTPResponse response = event.response;
+
+			final byte[] data = response.getBodyReader().processData(rawData);
+
+			canSend = data != null;
+
+			if (canSend) {
+				answer.append(new String(data));
+			}
+
+			if (response.getBodyReader().isFinished()) {
+				canClose = true;
+			}
+		}
+
+		final DataEvent e = new ServerDataEvent(event.client, answer.toString()
+				.getBytes(), this.serverDataReceiver);
+
+		e.setCanClose(canClose);
+		e.setCanSend(canSend);
+
+		return e;
 	}
 
 	private Pattern headerCutPattern = Pattern.compile("\\n\\n",
 			Pattern.MULTILINE);
 
-	private boolean isReadingHeaders(final SocketChannel socketChannel) {
+	private boolean isReadingServerHeaders(final SocketChannel socketChannel) {
 
-		if ((!this.readingHeaderSockets.containsKey(socketChannel) && !this.readingDataSockets
+		if ((!this.readingServerSockets.containsKey(socketChannel) && !this.readingDataSockets
 				.containsKey(socketChannel))) {
 
-			this.readingHeaderSockets.put(socketChannel, new StringBuilder());
+			this.readingServerSockets.put(socketChannel, new StringBuilder());
 
 			return true;
 		}
 
-		return this.readingHeaderSockets.containsKey(socketChannel);
+		return this.readingServerSockets.containsKey(socketChannel);
 	}
 
 	private boolean isReadingData(final SocketChannel socketChannel) {
@@ -138,8 +210,8 @@ public class HttpProxyWorker extends HttpBaseProxyWorker {
 		HTTPEvent eventOwner = null;
 
 		// If we are already building the httpRequest... we build it
-		if (this.isReadingHeaders(clientChannel)) {
-			final StringBuilder pendingHeader = this.readingHeaderSockets
+		if (this.isReadingServerHeaders(clientChannel)) {
+			final StringBuilder pendingHeader = this.readingServerSockets
 					.get(clientChannel);
 
 			pendingHeader.append(new String(rawData));
@@ -156,8 +228,6 @@ public class HttpProxyWorker extends HttpBaseProxyWorker {
 				canSend = true;
 
 				answer.append(header.toString());
-
-				this.readingHeaderSockets.remove(clientChannel);
 
 				final HTTPEvent event = new HTTPEvent(new HTTPRequestImpl(
 						header, new HTTPBaseRequestReader(header)),
@@ -191,6 +261,7 @@ public class HttpProxyWorker extends HttpBaseProxyWorker {
 			}
 
 			eventOwner = event;
+
 			if (request.getBodyReader().isFinished()) {
 				canClose = true;
 				this.readingDataSockets.remove(clientChannel);
@@ -207,6 +278,12 @@ public class HttpProxyWorker extends HttpBaseProxyWorker {
 					.getHeader("Host"));
 		} catch (final Exception e) {
 			address = clientChannel.socket().getInetAddress();
+		}
+
+		// If the client doesn't send back this HTTPEvent, we must expire it
+		// later on.
+		if (!this.receivedRequests.contains(eventOwner)) {
+			this.receivedRequests.add(eventOwner);
 		}
 
 		final DataEvent e = new ClientDataEvent(answer.toString().getBytes(),

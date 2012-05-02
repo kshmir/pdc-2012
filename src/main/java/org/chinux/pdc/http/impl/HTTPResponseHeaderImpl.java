@@ -22,7 +22,7 @@ public class HTTPResponseHeaderImpl implements HTTPResponseHeader {
 	public HTTPResponseHeaderImpl(final String response) {
 		this.response = response;
 		this.headers = new HashMap<String, String>();
-		final String firstLine = response.substring(0, response.indexOf('\n'));
+		final String firstLine = response.split("\n")[0];
 
 		Matcher match = headPattern.matcher(firstLine);
 		if (match.find()) {
@@ -62,4 +62,8 @@ public class HTTPResponseHeaderImpl implements HTTPResponseHeader {
 		return this.response;
 	}
 
+	@Override
+	public String toString() {
+		return this.getResponse() + "\n\n";
+	}
 }

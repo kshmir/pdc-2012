@@ -12,6 +12,8 @@ import org.chinux.pdc.nio.events.impl.ClientDataEvent;
 import org.chinux.pdc.nio.events.impl.ServerDataEvent;
 import org.chinux.pdc.nio.receivers.api.DataReceiver;
 import org.chinux.pdc.workers.impl.HttpProxyWorker;
+import org.chinux.pdc.workers.impl.HttpProxyWorker.HTTPEvent;
+import org.chinux.util.TestUtils;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -21,6 +23,34 @@ public class HttpProxyWorkerTest {
 	final SocketChannel channel = Mockito.mock(SocketChannel.class);
 
 	final Socket socket = Mockito.mock(Socket.class);
+
+	@Test
+	public void testBasicGetResponse() throws UnknownHostException {
+		final String response = TestUtils
+				.stringFromFile("http/responses/response4.txt");
+
+		final InetAddress address = InetAddress.getLocalHost();
+		final HttpProxyWorker worker = new HttpProxyWorker();
+
+		final HTTPEvent event = new HTTPEvent(null, null);
+
+		final DataReceiver<DataEvent> clientReceiver = Mockito
+				.mock(DataReceiver.class);
+
+		worker.setClientDataReceiver(clientReceiver);
+
+		Mockito.when(this.channel.socket()).thenReturn(this.socket);
+		Mockito.when(this.socket.getInetAddress()).thenReturn(address);
+
+		final ClientDataEvent clientEvent = new ClientDataEvent(
+				response.getBytes(), event);
+
+		final ServerDataEvent answer = (ServerDataEvent) worker
+				.DoWork(clientEvent);
+
+		Assert.assertEquals(response, new String(answer.getData()));
+
+	}
 
 	@Test
 	public void testBasicGetRequest() throws UnknownHostException {
