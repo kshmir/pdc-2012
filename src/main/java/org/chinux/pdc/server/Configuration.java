@@ -67,8 +67,10 @@ public class Configuration {
 
 	@Override
 	public String toString() {
-		return this.blockedIPs.toString() + this.blockedMediaTypes
-				+ this.blockedURLs + this.maxResSize + this.l33t
-				+ this.rotateImages + this.blockAll;
+		return "BlockedIPs: " + this.blockedIPs + " BlockedMediaTypes: "
+				+ this.blockedMediaTypes + " BlockedURLs: " + this.blockedURLs
+				+ " MaxResSize: " + this.maxResSize + " L33t: " + this.l33t
+				+ " RotateImages: " + this.rotateImages + " BlockAll: "
+				+ this.blockAll + "\n";
 	}
 }
