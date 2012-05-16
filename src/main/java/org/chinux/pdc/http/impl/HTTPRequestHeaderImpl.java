@@ -49,7 +49,8 @@ public class HTTPRequestHeaderImpl implements HTTPRequestHeader {
 			String[] values = null;
 			while (match.find()) {
 				values = match.group(1).split("=");
-				this.parameters.put(values[0], values[1]);
+				this.parameters.put(values[0], (values.length > 1) ? values[1]
+						: "");
 			}
 		}
 	}
@@ -78,6 +79,6 @@ public class HTTPRequestHeaderImpl implements HTTPRequestHeader {
 
 	@Override
 	public String toString() {
-		return this.request + "\n\n";
+		return this.request + "\r\n\r\n";
 	}
 }

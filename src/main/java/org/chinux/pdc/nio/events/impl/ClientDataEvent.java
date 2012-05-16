@@ -25,8 +25,8 @@ public class ClientDataEvent extends DataEvent {
 	}
 
 	public ClientDataEvent(final byte[] data,
-			final DataReceiver<DataEvent> receiver,
-			final InetAddress address, final Object owner) {
+			final DataReceiver<DataEvent> receiver, final InetAddress address,
+			final Object owner) {
 		super(data, receiver);
 		this.address = address;
 		this.owner = owner;
@@ -38,7 +38,7 @@ public class ClientDataEvent extends DataEvent {
 	 * @return
 	 */
 	public InetAddress getAddress() {
-		return address;
+		return this.address;
 	}
 
 	/**
@@ -48,6 +48,13 @@ public class ClientDataEvent extends DataEvent {
 	 * @return
 	 */
 	public Object getOwner() {
-		return owner;
+		return this.owner;
 	}
+
+	@Override
+	public String toString() {
+		return "ClientDataEvent [address=" + this.address + ", owner="
+				+ this.owner + ", toString()=" + super.toString() + "]";
+	}
+
 }

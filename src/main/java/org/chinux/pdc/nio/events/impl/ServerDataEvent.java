@@ -32,6 +32,12 @@ public class ServerDataEvent extends DataEvent {
 	 * @return
 	 */
 	public SocketChannel getChannel() {
-		return channel;
+		return this.channel;
+	}
+
+	@Override
+	public String toString() {
+		return "ServerDataEvent [channel=" + this.channel + ", toString()="
+				+ super.toString() + "]";
 	}
 }

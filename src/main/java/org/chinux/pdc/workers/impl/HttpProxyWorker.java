@@ -8,8 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import org.apache.commons.lang.ArrayUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
 import org.chinux.pdc.http.api.HTTPRequest;
 import org.chinux.pdc.http.api.HTTPRequestHeader;
 import org.chinux.pdc.http.api.HTTPResponse;
@@ -26,6 +25,8 @@ import org.chinux.pdc.nio.events.impl.ServerDataEvent;
 import org.chinux.pdc.nio.receivers.api.DataReceiver;
 
 public class HttpProxyWorker extends HttpBaseProxyWorker {
+
+	private Logger logger = Logger.getLogger(this.getClass());
 
 	/**
 	 * Represents a unique httprequest sent by a client. When receiving a new
@@ -110,8 +111,21 @@ public class HttpProxyWorker extends HttpBaseProxyWorker {
 	protected DataEvent DoWork(final ClientDataEvent clientEvent) {
 		final HTTPEvent event = (HTTPEvent) clientEvent.getOwner();
 
+		this.logger.debug("Got clientEvent:" + clientEvent.toString());
+
+		// final DataEvent e = new ServerDataEvent(event.client,
+		// clientEvent.getData(), this.serverDataReceiver);
+		//
+		// if (clientEvent.canClose()) {
+		//
+		// e.setCanClose(true);
+		// }
+		// e.setCanSend(true);
+		// return e;
+
 		final StringBuilder answer = new StringBuilder();
 
+		System.out.println(clientEvent.getData().length);
 		byte[] rawData = clientEvent.getData();
 
 		boolean canSend = false;
@@ -120,12 +134,14 @@ public class HttpProxyWorker extends HttpBaseProxyWorker {
 		if (event.response == null) {
 			final StringBuilder pendingHeader = event.builder;
 
-			pendingHeader.append(new String(rawData));
+			final String rawString = new String(rawData);
+
+			pendingHeader.append(rawString);
 
 			if (this.headerCutPattern.matcher(pendingHeader.toString()).find()) {
 
 				final String[] headerAndBody = pendingHeader.toString().split(
-						"\\n\\n");
+						"\\r\\n\\r\\n", 2);
 				final String headerString = headerAndBody[0];
 				final HTTPResponseHeader header = new HTTPResponseHeaderImpl(
 						headerString);
@@ -141,9 +157,7 @@ public class HttpProxyWorker extends HttpBaseProxyWorker {
 				event.response = response;
 
 				if (headerAndBody.length > 1) {
-					rawData = StringUtils.join(
-							ArrayUtils.subarray(headerAndBody, 1,
-									headerAndBody.length), "\n\n").getBytes();
+					rawData = headerAndBody[1].getBytes();
 				} else {
 					rawData = new byte[] {};
 				}
@@ -166,16 +180,16 @@ public class HttpProxyWorker extends HttpBaseProxyWorker {
 			}
 		}
 
-		final DataEvent e = new ServerDataEvent(event.client, answer.toString()
-				.getBytes(), this.serverDataReceiver);
+		final DataEvent e = new ServerDataEvent(event.client,
+				clientEvent.getData(), this.serverDataReceiver);
 
 		e.setCanClose(canClose);
-		e.setCanSend(canSend);
+		e.setCanSend(true);
 
 		return e;
 	}
 
-	private Pattern headerCutPattern = Pattern.compile("\\n\\n",
+	private Pattern headerCutPattern = Pattern.compile("(\\r\\n\\r\\n)",
 			Pattern.MULTILINE);
 
 	private boolean isReadingServerHeaders(final SocketChannel socketChannel) {
@@ -209,17 +223,26 @@ public class HttpProxyWorker extends HttpBaseProxyWorker {
 
 		HTTPEvent eventOwner = null;
 
+		this.logger.debug("Got serverEvent:" + serverEvent.toString());
+
 		// If we are already building the httpRequest... we build it
 		if (this.isReadingServerHeaders(clientChannel)) {
+
+			this.logger.debug("Reading headers for clientChannel: "
+					+ clientChannel);
 			final StringBuilder pendingHeader = this.readingServerSockets
 					.get(clientChannel);
 
-			pendingHeader.append(new String(rawData));
+			final String rawString = new String(rawData);
+
+			pendingHeader.append(rawString);
+			this.logger.debug(pendingHeader);
 
 			if (this.headerCutPattern.matcher(pendingHeader.toString()).find()) {
 
 				final String[] headerAndBody = pendingHeader.toString().split(
-						"\\n\\n");
+						"\\r\\n\\r\\n", 2);
+
 				final String headerString = headerAndBody[0];
 				final HTTPRequestHeader header = new HTTPRequestHeaderImpl(
 						headerString);
@@ -238,9 +261,7 @@ public class HttpProxyWorker extends HttpBaseProxyWorker {
 				eventOwner = event;
 
 				if (headerAndBody.length > 1) {
-					rawData = StringUtils.join(
-							ArrayUtils.subarray(headerAndBody, 1,
-									headerAndBody.length), "\n\n").getBytes();
+					rawData = headerAndBody[1].getBytes();
 				} else {
 					rawData = new byte[] {};
 				}
@@ -249,6 +270,8 @@ public class HttpProxyWorker extends HttpBaseProxyWorker {
 
 		// We process all the reading data
 		if (this.isReadingData(clientChannel) && rawData != null) {
+			this.logger.debug("Reading data from clientChannel: "
+					+ clientChannel);
 			final HTTPEvent event = this.readingDataSockets.get(clientChannel);
 			final HTTPRequest request = event.request;
 
@@ -263,8 +286,12 @@ public class HttpProxyWorker extends HttpBaseProxyWorker {
 			eventOwner = event;
 
 			if (request.getBodyReader().isFinished()) {
+				this.logger.debug("Client channel IS finished!");
 				canClose = true;
 				this.readingDataSockets.remove(clientChannel);
+				this.readingServerSockets.remove(clientChannel);
+			} else {
+				this.logger.debug("Client channel is not finished!");
 			}
 		}
 
@@ -291,6 +318,8 @@ public class HttpProxyWorker extends HttpBaseProxyWorker {
 
 		e.setCanClose(canClose);
 		e.setCanSend(canSend);
+
+		this.logger.debug("Server answer event:" + e);
 
 		return e;
 	}

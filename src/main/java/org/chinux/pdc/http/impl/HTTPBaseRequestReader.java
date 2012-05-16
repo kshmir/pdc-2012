@@ -30,6 +30,7 @@ public class HTTPBaseRequestReader implements HTTPReader {
 			}
 			return aux;
 		} else {
+			// TODO: Handle unsupported method
 			throw new RuntimeException();
 		}
 	}
