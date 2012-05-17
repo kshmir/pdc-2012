@@ -20,9 +20,6 @@
 	</bean>
 
 
-<<<<<<< HEAD
-	
-
 	<bean id="clientDataReceiver" class="org.chinux.pdc.nio.receivers.impl.ASyncClientDataReceiver"
 		lazy-init="false">
 	</bean>
@@ -31,11 +28,6 @@
 		<property name="clientDataReceiver" ref="clientDataReceiver"/>
 		<property name="serverDataReceiver" ref="serverHandler"/>	
 	</bean>
-=======
-	<bean id="httpProxyWorker" class="org.chinux.pdc.workers.impl.HttpProxyWorker" />
-	
-	<bean id="configurationWorker" class="org.chinux.pdc.workers.impl.ConfigurationWorker" />
->>>>>>> github/issue/5
 
 	<bean id="eventDispatcher" class="org.chinux.pdc.nio.dispatchers.ASyncEventDispatcher"
 		lazy-init="false">
@@ -125,12 +117,4 @@
 			<ref bean="client" />
 		</constructor-arg>
 	</bean>
-<<<<<<< HEAD
-=======
-
-
-	<!-- <bean id="client" class="org.chinux.pdc.NIOAsyncClient" lazy-init="false"> 
-		<property name="worker" ref="mainWorker"></property> </bean> -->
-
->>>>>>> github/issue/5
 </beans>
