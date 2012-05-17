@@ -54,7 +54,7 @@ public class HttpProxyWorkerTest {
 
 	@Test
 	public void testBasicGetRequest() throws UnknownHostException {
-		final String get = "GET / HTTP/1.0\n\n";
+		final String get = "GET / HTTP/1.0\r\n\r\n";
 
 		final InetAddress address = InetAddress.getLocalHost();
 		final HttpProxyWorker worker = new HttpProxyWorker();
@@ -68,7 +68,7 @@ public class HttpProxyWorkerTest {
 
 	@Test
 	public void testBasicGetRequestWithHost() throws UnknownHostException {
-		final String get = "GET / HTTP/1.0\nHost: localhost\n\n";
+		final String get = "GET / HTTP/1.0\r\nHost: localhost\r\n\r\n";
 
 		final InetAddress address = InetAddress.getByName("localhost");
 		final HttpProxyWorker worker = new HttpProxyWorker();
@@ -83,7 +83,7 @@ public class HttpProxyWorkerTest {
 
 	@Test
 	public void testBasicPostRequestWithData() throws UnknownHostException {
-		final String get = "POST / HTTP/1.0\nHost: localhost\nContent-Length: 10\n\n0123456789\n";
+		final String get = "POST / HTTP/1.0\r\nHost: localhost\r\nContent-Length: 10\r\n\r\n0123456789\r\n";
 
 		final InetAddress address = InetAddress.getByName("localhost");
 		final HttpProxyWorker worker = new HttpProxyWorker();
@@ -98,8 +98,8 @@ public class HttpProxyWorkerTest {
 
 	@Test
 	public void testSplittedPostRequestWithData() throws UnknownHostException {
-		final String get = "POST / HTTP/1.0\nHost: localhost\n";
-		final String get2 = "Content-Length: 10\n\n0123456789\n";
+		final String get = "POST / HTTP/1.0\r\nHost: localhost\r\n";
+		final String get2 = "Content-Length: 10\r\n\r\n0123456789\r\n";
 
 		final InetAddress address = InetAddress.getByName("localhost");
 		final HttpProxyWorker worker = new HttpProxyWorker();
