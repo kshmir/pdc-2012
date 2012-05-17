@@ -1,10 +1,18 @@
 HTTP/1.0 200 OK
-Date: Fri, 31 Dec 1999 23:59:59 GMT
-Content-Type: text/html
+Allow: GET, HEAD, PUT
+Content-Encoding: gzip
 Content-Length: 1354
+Content-Location: /index.htm
+Content-MD5: Q2hlY2sgSW50ZWdyaXR5IQ==
+Content-Range: bytes 21010-47021/47022
+Content-Type: text/html; charset=ISO-8859-4
+Location: http://www.w3.org/pub/WWW/People.html
+Via: 1.0 chinoproxy, 1.1 nowhere.com (Apache/1.1)
 
 <html>
 <body>
 <h1>Hello World!</h1>
 </body>
 </html>
+
+*An Allow header field MUST be present in a 405 (Method Not Allowed) response. A proxy MUST NOT modify the Allow header field.

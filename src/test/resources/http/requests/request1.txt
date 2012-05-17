@@ -1,5 +1,14 @@
 GET /kshmir/pdc-2012/issues/3 HTTP/1.1
-Host: github.com
 Connection: keep-alive
-Cache-Control: max-age=0
+Content-Length: 3495
+Content-MD5: Q2hlY2sgSW50ZWdyaXR5IQ==
+Content-Type: text/html; charset=ISO-8859-4
+Expect: 100-continue
+Host: en.wikipedia.org
+Max-Forwards: 10
 
+Estos son los headers que me parece que quedan. Abajo algunos comentarios sobre los que tengo dudas si dejar o no
+*The Connection general-header field allows the sender to specify options that are desired for 
+that particular connection and MUST NOT be communicated by proxies over further connections.
+*The Expect mechanism is hop-by-hop: that is, an HTTP/1.1 proxy MUST return a 417 (Expectation Failed)
+status if it receives a request with an expectation that it cannot meet

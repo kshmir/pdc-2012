@@ -1,0 +1,17 @@
+HTTP/1.1 200 OK
+Server: nginx/1.0.5
+Date: Wed, 02 May 2012 04:29:04 GMT
+Content-Type: text/html
+Content-Length: 151
+Last-Modified: Mon, 04 Oct 2004 15:04:06 GMT
+Connection: keep-alive
+Accept-Ranges: bytes
+
+<html>
+<head>
+<title>Welcome to nginx!</title>
+</head>
+<body bgcolor="white" text="black">
+<center><h1>Welcome to nginx!</h1></center>
+</body>
+</html>

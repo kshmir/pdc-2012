@@ -35,7 +35,7 @@ public class TestUtils {
 
 			String line;
 			while ((line = reader.readLine()) != null) {
-				builder.append(line).append("\n");
+				builder.append(line).append("\r\n");
 			}
 
 		} catch (final FileNotFoundException e) {

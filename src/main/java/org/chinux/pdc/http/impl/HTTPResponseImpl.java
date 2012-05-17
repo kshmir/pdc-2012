@@ -1,57 +1,25 @@
 package org.chinux.pdc.http.impl;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import org.chinux.pdc.http.api.HTTPResponse;
+import org.chinux.pdc.http.api.HTTPResponseHeader;
 
 public class HTTPResponseImpl implements HTTPResponse {
+	private HTTPBaseResponseReader bodyReader;
+	private HTTPResponseHeader header;
 
-	private static Pattern headPattern = Pattern
-			.compile("([\\w-/\\w]+) ([\\w-/]+) ([\\w-/]+)");
-
-	private static Pattern headerPattern = Pattern.compile("([\\w-]+): (.+)");
-
-	private int statusCode;
-	private Map<String, String> headers;
-
-	public HTTPResponseImpl(final String response) {
-		this.headers = new HashMap<String, String>();
-		final String firstLine = response.substring(0, response.indexOf('\n'));
-
-		Matcher match = headPattern.matcher(firstLine);
-		if (match.find()) {
-			this.statusCode = Integer.valueOf(match.group(2));
-		}
-
-		headerPattern = Pattern.compile("([\\w-]+): (.+)");
-		match = headerPattern.matcher(response);
-		while (match.find()) {
-			this.headers.put(match.group(1).toLowerCase(), match.group(2));
-		}
+	public HTTPResponseImpl(final HTTPResponseHeader header,
+			final HTTPBaseResponseReader bodyReader) {
+		this.header = header;
+		this.bodyReader = bodyReader;
 	}
 
 	@Override
-	public void addHeader(final String name, final String value) {
-		this.headers.put(name, value);
+	public HTTPBaseResponseReader getBodyReader() {
+		return this.bodyReader;
 	}
 
 	@Override
-	public boolean containsHeader(final String name) {
-		return this.headers.containsKey(name);
+	public HTTPResponseHeader getHeaders() {
+		return this.header;
 	}
-
-	@Override
-	public int returnStatusCode() {
-		return this.statusCode;
-	}
-
-	@Override
-	public String getHeader(final String name) {
-		return this.headers.containsKey(name.toLowerCase()) ? this.headers
-				.get(name.toLowerCase()) : null;
-	}
-
 }

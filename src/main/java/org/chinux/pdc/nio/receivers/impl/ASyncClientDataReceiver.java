@@ -28,11 +28,11 @@ public class ASyncClientDataReceiver extends ClientDataReceiver {
 		final InetAddress host = event.getAddress();
 
 		final InetSocketAddress socketHost = new InetSocketAddress(host,
-				connectionPort);
+				this.connectionPort);
 
 		SocketChannel socketChannel;
-		synchronized (clientIPMap) {
-			socketChannel = clientIPMap.get(event.getOwner());
+		synchronized (this.clientIPMap) {
+			socketChannel = this.clientIPMap.get(event.getOwner());
 
 			if (socketChannel == null) {
 				try {
@@ -43,15 +43,15 @@ public class ASyncClientDataReceiver extends ClientDataReceiver {
 					e.printStackTrace();
 				}
 
-				clientIPMap.put(event.getOwner(), socketChannel);
+				this.clientIPMap.put(event.getOwner(), socketChannel);
 
 				// Queue a channel registration since the caller is not the
 				// selecting thread. As part of the registration we'll register
 				// an interest in connection events. These are raised when a
 				// channel
 				// is ready to complete connection establishment.
-				synchronized (changeRequests) {
-					changeRequests.add(new ChangeRequest(socketChannel,
+				synchronized (this.changeRequests) {
+					this.changeRequests.add(new ChangeRequest(socketChannel,
 							ChangeRequest.REGISTER, SelectionKey.OP_CONNECT,
 							event.getOwner()));
 				}
@@ -59,18 +59,19 @@ public class ASyncClientDataReceiver extends ClientDataReceiver {
 			}
 		}
 
-		synchronized (pendingData) {
-			ArrayList<ByteBuffer> queue = pendingData.get(event.getOwner());
+		synchronized (this.pendingData) {
+			ArrayList<ByteBuffer> queue = this.pendingData
+					.get(event.getOwner());
 			if (queue == null) {
 				queue = new ArrayList<ByteBuffer>();
-				pendingData.put(event.getOwner(), queue);
+				this.pendingData.put(event.getOwner(), queue);
 			}
 			queue.add(ByteBuffer.wrap(event.getData()));
 		}
 
 		// Finally, wake up our selecting thread so it can make the required
 		// changes
-		selector.wakeup();
+		this.selector.wakeup();
 	}
 
 	@Override
@@ -80,18 +81,18 @@ public class ASyncClientDataReceiver extends ClientDataReceiver {
 
 	@Override
 	public void handlePendingChanges() throws ClosedChannelException {
-		synchronized (changeRequests) {
-			if (!changeRequests.isEmpty()) {
-				final ChangeRequest change = changeRequests.remove(0);
+		synchronized (this.changeRequests) {
+			if (!this.changeRequests.isEmpty()) {
+				final ChangeRequest change = this.changeRequests.remove(0);
 
 				SelectionKey key;
 				switch (change.type) {
 				case ChangeRequest.CHANGEOPS:
-					key = change.socket.keyFor(selector);
+					key = change.socket.keyFor(this.selector);
 					key.interestOps(change.ops);
 					break;
 				case ChangeRequest.REGISTER:
-					key = change.socket.register(selector, change.ops);
+					key = change.socket.register(this.selector, change.ops);
 					key.attach(change.attachment);
 					break;
 				}
