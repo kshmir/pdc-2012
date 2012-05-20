@@ -26,7 +26,7 @@ public class HttpBaseResponseReaderTest {
 	}
 
 	@Test
-	public void processDataImageLTest() {
+	public void processDataImageTest() {
 		final HTTPResponse requestheader2 = new HTTPResponseImpl(
 				TestUtils.stringFromFile("http/responses/response3.txt"));
 		final HTTPBaseResponseReader requestreader2 = new HTTPBaseResponseReader(
