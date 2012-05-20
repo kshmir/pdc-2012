@@ -1,15 +1,15 @@
 package org.chinux.pdc.http.impl;
 
 import org.chinux.pdc.http.api.HTTPReader;
-import org.chinux.pdc.http.api.HTTPRequest;
+import org.chinux.pdc.http.api.HTTPRequestHeader;
 
 public class HTTPBaseRequestReader implements HTTPReader {
 
-	private HTTPRequest requestheader;
+	private HTTPRequestHeader requestheader;
 	private boolean finished;
 	private HTTPPostRequestReader postereader;
 
-	public HTTPBaseRequestReader(final HTTPRequest requestheader) {
+	public HTTPBaseRequestReader(final HTTPRequestHeader requestheader) {
 		this.requestheader = requestheader;
 		this.finished = false;
 		this.postereader = null;
@@ -30,6 +30,7 @@ public class HTTPBaseRequestReader implements HTTPReader {
 			}
 			return aux;
 		} else {
+			// TODO: Handle unsupported method
 			throw new RuntimeException();
 		}
 	}

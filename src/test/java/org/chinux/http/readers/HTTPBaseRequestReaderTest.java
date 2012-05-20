@@ -1,8 +1,8 @@
-package org.chinux.http;
+package org.chinux.http.readers;
 
-import org.chinux.pdc.http.api.HTTPRequest;
+import org.chinux.pdc.http.api.HTTPRequestHeader;
 import org.chinux.pdc.http.impl.HTTPBaseRequestReader;
-import org.chinux.pdc.http.impl.HTTPRequestImpl;
+import org.chinux.pdc.http.impl.HTTPRequestHeaderImpl;
 import org.chinux.util.TestUtils;
 import org.junit.Assert;
 import org.junit.Test;
@@ -14,7 +14,7 @@ public class HTTPBaseRequestReaderTest {
 	@Test
 	public void processDataGETTest() {
 
-		final HTTPRequest requestheader1 = new HTTPRequestImpl(
+		final HTTPRequestHeader requestheader1 = new HTTPRequestHeaderImpl(
 				TestUtils.stringFromFile("http/requests/request1.txt"));
 		final HTTPBaseRequestReader requestreader1 = new HTTPBaseRequestReader(
 				requestheader1);
@@ -28,7 +28,8 @@ public class HTTPBaseRequestReaderTest {
 	public void processDataHEADTest() {
 
 		final String request2 = "HEAD / HTTP/1.1\r\n";
-		final HTTPRequestImpl requestheader2 = new HTTPRequestImpl(request2);
+		final HTTPRequestHeader requestheader2 = new HTTPRequestHeaderImpl(
+				request2);
 		final HTTPBaseRequestReader requestreader2 = new HTTPBaseRequestReader(
 				requestheader2);
 		Assert.assertFalse(requestreader2.isFinished());
@@ -39,7 +40,7 @@ public class HTTPBaseRequestReaderTest {
 
 	@Test
 	public void processDataPOSTTest() {
-		final HTTPRequest requestheader3 = new HTTPRequestImpl(
+		final HTTPRequestHeader requestheader3 = new HTTPRequestHeaderImpl(
 				TestUtils.stringFromFile("http/requests/request4.txt"));
 		final HTTPBaseRequestReader requestreader3 = new HTTPBaseRequestReader(
 				requestheader3);

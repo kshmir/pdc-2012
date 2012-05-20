@@ -1,10 +1,11 @@
 package org.chinux.http;
 
-import org.chinux.pdc.http.api.HTTPResponse;
+import org.chinux.pdc.http.api.HTTPResponseHeader;
 import org.chinux.pdc.http.impl.HTTPBaseResponseReader;
-import org.chinux.pdc.http.impl.HTTPResponseImpl;
+import org.chinux.pdc.http.impl.HTTPResponseHeaderImpl;
 import org.chinux.util.TestUtils;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class HttpBaseResponseReaderTest {
@@ -15,7 +16,7 @@ public class HttpBaseResponseReaderTest {
 
 	@Test
 	public void processDataHTMLTest() {
-		final HTTPResponse requestheader1 = new HTTPResponseImpl(
+		final HTTPResponseHeader requestheader1 = new HTTPResponseHeaderImpl(
 				TestUtils.stringFromFile("http/responses/response2.txt"));
 		final HTTPBaseResponseReader requestreader1 = new HTTPBaseResponseReader(
 				requestheader1);
@@ -25,9 +26,18 @@ public class HttpBaseResponseReaderTest {
 		Assert.assertTrue(requestreader1.isFinished());
 	}
 
+	// Esto está siendo dependiente de la implementación, conviene comparar
+	// contra imágenes ya guardadas.
+	// Y no hardcodear el content-length
+	@Ignore
 	@Test
+<<<<<<< HEAD
 	public void processDataImageTest() {
 		final HTTPResponse requestheader2 = new HTTPResponseImpl(
+=======
+	public void processDataImageLTest() {
+		final HTTPResponseHeader requestheader2 = new HTTPResponseHeaderImpl(
+>>>>>>> github/development
 				TestUtils.stringFromFile("http/responses/response3.txt"));
 		final HTTPBaseResponseReader requestreader2 = new HTTPBaseResponseReader(
 				requestheader2);

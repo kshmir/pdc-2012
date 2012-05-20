@@ -25,7 +25,7 @@ public class ASyncEventDispatcher<T extends DataEvent> implements Runnable,
 	}
 
 	/**
-	 * This loop receives all the data and handles all the bussiness logic.
+	 * This loop receives all the data and handles all the business logic.
 	 */
 	@Override
 	public void run() {
@@ -41,8 +41,7 @@ public class ASyncEventDispatcher<T extends DataEvent> implements Runnable,
 				}
 				dataEvent = this.events.poll();
 			}
-
-			final T event = worker.DoWork(dataEvent);
+			final T event = this.worker.DoWork(dataEvent);
 
 			if (event.canSend()) {
 				event.getReceiver().receiveEvent(event);

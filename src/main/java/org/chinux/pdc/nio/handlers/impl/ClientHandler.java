@@ -15,6 +15,7 @@ import org.chinux.pdc.nio.events.impl.ClientDataEvent;
 import org.chinux.pdc.nio.handlers.api.NIOClientHandler;
 import org.chinux.pdc.nio.receivers.api.ClientDataReceiver;
 import org.chinux.pdc.nio.receivers.impl.ASyncClientDataReceiver;
+import org.chinux.pdc.nio.util.NIOUtil;
 
 public class ClientHandler implements NIOClientHandler {
 
@@ -24,28 +25,30 @@ public class ClientHandler implements NIOClientHandler {
 	private Map<Object, ArrayList<ByteBuffer>> pendingData;
 
 	public ClientHandler(final EventDispatcher<DataEvent> dispatcher) {
-		this(dispatcher, null);
+		this(dispatcher, new ASyncClientDataReceiver());
 	}
 
 	public ClientHandler(final EventDispatcher<DataEvent> dispatcher,
-			ClientDataReceiver receiver) {
-		if (receiver == null) {
-			receiver = new ASyncClientDataReceiver();
-		}
+			final ClientDataReceiver receiver) {
+
+		this.setReceiver(receiver);
 		this.dispatcher = dispatcher;
+		this.readBuffer = ByteBuffer.allocate(1024);
+		this.pendingData = this.receiver.getPendingData();
+	}
+
+	public void setReceiver(final ClientDataReceiver receiver) {
 		this.receiver = receiver;
-		readBuffer = ByteBuffer.allocate(1024);
-		pendingData = receiver.getPendingData();
 	}
 
 	@Override
 	public void setSelector(final Selector selector) {
-		receiver.setSelector(selector);
+		this.receiver.setSelector(selector);
 	}
 
 	@Override
 	public void setConnectionPort(final int externalPort) {
-		receiver.setConnectionPort(externalPort);
+		this.receiver.setConnectionPort(externalPort);
 	}
 
 	@Override
@@ -53,7 +56,7 @@ public class ClientHandler implements NIOClientHandler {
 		final SocketChannel socketChannel = (SocketChannel) key.channel();
 
 		// Clear out our read buffer so it's ready for new data
-		readBuffer.clear();
+		this.readBuffer.clear();
 
 		final ByteBuffer readBuffer = ByteBuffer.allocate(1024);
 
@@ -72,22 +75,30 @@ public class ClientHandler implements NIOClientHandler {
 		if (numRead == -1) {
 			// Remote entity shut the socket down cleanly. Do the
 			// same from our end and cancel the channel.
+
+			// TODO: Handle this
 			key.channel().close();
 			key.cancel();
-			return;
 		}
-		// Hand the data off to our worker thread
-		final byte[] data = (numRead > 0) ? readBuffer.array() : new byte[] {};
 
-		dispatcher.processData(new ClientDataEvent(data, key.attachment()));
+		// Hand the data off to our worker thread
+		final byte[] data = NIOUtil.readBuffer(readBuffer, numRead);
+
+		final ClientDataEvent event = new ClientDataEvent(data,
+				key.attachment());
+
+		if (numRead == -1) {
+			event.setCanClose(true);
+		}
+		this.dispatcher.processData(event);
 	}
 
 	@Override
 	public void handleWrite(final SelectionKey key) throws IOException {
 		final SocketChannel socketChannel = (SocketChannel) key.channel();
 
-		synchronized (pendingData) {
-			final ArrayList<ByteBuffer> queue = pendingData.get(key
+		synchronized (this.pendingData) {
+			final ArrayList<ByteBuffer> queue = this.pendingData.get(key
 					.attachment());
 
 			// Write until there's not more data ...
@@ -124,7 +135,7 @@ public class ClientHandler implements NIOClientHandler {
 
 	@Override
 	public void handlePendingChanges() throws ClosedChannelException {
-		receiver.handlePendingChanges();
+		this.receiver.handlePendingChanges();
 	}
 
 }

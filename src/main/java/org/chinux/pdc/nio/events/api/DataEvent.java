@@ -10,6 +10,12 @@ import org.chinux.pdc.nio.receivers.api.DataReceiver;
  */
 public abstract class DataEvent {
 
+	@Override
+	public String toString() {
+		return "DataEvent [receiver=" + this.receiver + ", canSend="
+				+ this.canSend + ", canClose=" + this.canClose + "]";
+	}
+
 	private DataReceiver<DataEvent> receiver;
 	private byte[] data;
 
@@ -29,26 +35,26 @@ public abstract class DataEvent {
 	}
 
 	public void setCanClose(final boolean closeable) {
-		canClose = closeable;
+		this.canClose = closeable;
 	}
 
 	public void setCanSend(final boolean sendable) {
-		canSend = sendable;
+		this.canSend = sendable;
 	}
 
 	public byte[] getData() {
-		return data;
+		return this.data;
 	}
 
 	public boolean canSend() {
-		return canSend;
+		return this.canSend;
 	}
 
 	public boolean canClose() {
-		return canClose;
+		return this.canClose;
 	}
 
 	public DataReceiver<DataEvent> getReceiver() {
-		return receiver;
+		return this.receiver;
 	}
 }

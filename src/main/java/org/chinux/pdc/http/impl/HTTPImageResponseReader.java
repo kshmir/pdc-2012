@@ -9,18 +9,18 @@ import java.io.InputStream;
 import javax.imageio.ImageIO;
 
 import org.chinux.pdc.http.api.HTTPReader;
-import org.chinux.pdc.http.api.HTTPResponse;
+import org.chinux.pdc.http.api.HTTPResponseHeader;
 
 public class HTTPImageResponseReader implements HTTPReader {
 
-	private HTTPResponse responseheader;
+	private HTTPResponseHeader responseheader;
 	private boolean finished;
 	private Integer currlenght;
 	private byte[] image;
 	private int index;
 	private final int MAXSIZE = 1000000;
 
-	public HTTPImageResponseReader(final HTTPResponse responseheader) {
+	public HTTPImageResponseReader(final HTTPResponseHeader responseheader) {
 		this.responseheader = responseheader;
 		this.finished = false;
 		this.currlenght = 0;

@@ -1,15 +1,16 @@
 package org.chinux.pdc.http.api;
 
+import org.chinux.pdc.http.impl.HTTPBaseResponseReader;
+
 public interface HTTPResponse {
+	/**
+	 * @return HttpResponseHeader of the http resonse
+	 */
+	public HTTPResponseHeader getHeaders();
 
-	public void addHeader(String name, String value);
-
-	public boolean containsHeader(String name);
-
-	public int returnStatusCode();
-
-	public String getHeader(String name);
-
-	public String getResponse();
+	/**
+	 * @return HttpReader of the http response
+	 */
+	public HTTPBaseResponseReader getBodyReader();
 
 }
