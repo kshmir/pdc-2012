@@ -19,6 +19,8 @@ public class ASyncClientDataReceiver extends ClientDataReceiver {
 	@Override
 	public void receiveEvent(final DataEvent dataEvent) {
 
+		this.log.debug("Receiving data event " + dataEvent);
+
 		if (!(dataEvent instanceof ClientDataEvent)) {
 			throw new RuntimeException("Must receive a NIOClientDataEvent!");
 		}
@@ -55,7 +57,6 @@ public class ASyncClientDataReceiver extends ClientDataReceiver {
 							ChangeRequest.REGISTER, SelectionKey.OP_CONNECT,
 							event.getOwner()));
 				}
-
 			}
 		}
 
@@ -81,8 +82,10 @@ public class ASyncClientDataReceiver extends ClientDataReceiver {
 
 	@Override
 	public void handlePendingChanges() throws ClosedChannelException {
+
 		synchronized (this.changeRequests) {
 			if (!this.changeRequests.isEmpty()) {
+				this.log.debug("Handling pending changes...");
 				final ChangeRequest change = this.changeRequests.remove(0);
 
 				SelectionKey key;

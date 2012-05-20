@@ -9,6 +9,7 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.spi.SelectorProvider;
 import java.util.Iterator;
 
+import org.apache.log4j.Logger;
 import org.chinux.pdc.nio.handlers.api.NIOServerHandler;
 
 public class NIOServer implements Runnable {
@@ -16,13 +17,14 @@ public class NIOServer implements Runnable {
 	private InetAddress host;
 	private int port;
 	private Selector selector;
+	private Logger log = Logger.getLogger(this.getClass());
 
 	private NIOServerHandler handler;
 
 	public NIOServer(final int destPort) throws IOException {
-		host = InetAddress.getByName("0.0.0.0");
-		port = destPort;
-		selector = initSelector(host, port);
+		this.host = InetAddress.getByName("0.0.0.0");
+		this.port = destPort;
+		this.selector = this.initSelector(this.host, this.port);
 	}
 
 	private Selector initSelector(final InetAddress host, final int port)
@@ -48,7 +50,7 @@ public class NIOServer implements Runnable {
 
 	public void setHandler(final NIOServerHandler handler) {
 		this.handler = handler;
-		this.handler.setSelector(selector);
+		this.handler.setSelector(this.selector);
 	}
 
 	@Override
@@ -58,13 +60,13 @@ public class NIOServer implements Runnable {
 			try {
 
 				// Process any pending changes
-				handler.handlePendingChanges();
+				this.handler.handlePendingChanges();
 
 				// Wait for an event one of the registered channels
-				selector.select();
+				this.selector.select();
 
 				// Iterate over the set of keys for which events are available
-				final Iterator<SelectionKey> selectedKeys = selector
+				final Iterator<SelectionKey> selectedKeys = this.selector
 						.selectedKeys().iterator();
 				while (selectedKeys.hasNext()) {
 					final SelectionKey key = selectedKeys.next();
@@ -76,11 +78,14 @@ public class NIOServer implements Runnable {
 
 					// Check what event is available and deal with it
 					if (key.isAcceptable()) {
-						handler.handleAccept(key);
+						this.log.debug("Accepting new key");
+						this.handler.handleAccept(key);
 					} else if (key.isReadable()) {
-						handler.handleRead(key);
+						this.log.debug("Reading from key");
+						this.handler.handleRead(key);
 					} else if (key.isWritable()) {
-						handler.handleWrite(key);
+						this.log.debug("Writing to key");
+						this.handler.handleWrite(key);
 					}
 				}
 			} catch (final Exception e) {
