@@ -28,6 +28,10 @@ public class HTTPBaseResponseReader implements HTTPReader {
 		// && this.responseheader.getHeader("Transfer-Encoding").equals(
 		// "chunked");
 
+		if (contenttype == null) {
+			return data;
+		}
+
 		final Pattern pat = Pattern.compile("image/(.*)");
 		final Matcher match = pat.matcher(contenttype);
 		// if (contentChunked) {

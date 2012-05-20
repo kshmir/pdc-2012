@@ -1,5 +1,6 @@
 package org.chinux.pdc.http.impl;
 
+import org.apache.log4j.Logger;
 import org.chinux.pdc.http.api.HTTPReader;
 import org.chinux.pdc.http.api.HTTPRequestHeader;
 
@@ -8,6 +9,7 @@ public class HTTPBaseRequestReader implements HTTPReader {
 	private HTTPRequestHeader requestheader;
 	private boolean finished;
 	private HTTPPostRequestReader postereader;
+	private Logger log = Logger.getLogger(this.getClass());
 
 	public HTTPBaseRequestReader(final HTTPRequestHeader requestheader) {
 		this.requestheader = requestheader;
@@ -30,7 +32,7 @@ public class HTTPBaseRequestReader implements HTTPReader {
 			}
 			return aux;
 		} else {
-			// TODO: Handle unsupported method
+			this.log.error("Method unsupported: " + method);
 			throw new RuntimeException();
 		}
 	}
