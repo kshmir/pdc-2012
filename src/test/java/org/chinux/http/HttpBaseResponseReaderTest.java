@@ -31,13 +31,8 @@ public class HttpBaseResponseReaderTest {
 	// Y no hardcodear el content-length
 	@Ignore
 	@Test
-<<<<<<< HEAD
-	public void processDataImageTest() {
-		final HTTPResponse requestheader2 = new HTTPResponseImpl(
-=======
 	public void processDataImageLTest() {
 		final HTTPResponseHeader requestheader2 = new HTTPResponseHeaderImpl(
->>>>>>> github/development
 				TestUtils.stringFromFile("http/responses/response3.txt"));
 		final HTTPBaseResponseReader requestreader2 = new HTTPBaseResponseReader(
 				requestheader2);

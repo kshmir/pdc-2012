@@ -29,7 +29,7 @@
 		<property name="serverDataReceiver" ref="serverHandler"/>	
 	</bean>
 	
-	<bean id="configurationWorker" class="org.chinux.pdc.workers.impl.ConfigurationWorker" />
+	<bean id="configurationWorker" class="org.chinux.pdc.workers.impl.ConfigurationWorker"/>
 
 	<bean id="eventDispatcher" class="org.chinux.pdc.nio.dispatchers.ASyncEventDispatcher"
 		lazy-init="false">
@@ -64,9 +64,9 @@
 
 	<bean id="configServerHandler" class="org.chinux.pdc.nio.handlers.impl.ServerHandler"
 		lazy-init="false">
-				<constructor-arg>
-					<ref bean="workerEventDispatcher"/>
-				</constructor-arg>
+		<constructor-arg>
+			<ref bean="workerEventDispatcher"/>
+		</constructor-arg>
 	</bean>
 
 	<bean id="configServer" class="org.chinux.pdc.nio.services.NIOServer"
