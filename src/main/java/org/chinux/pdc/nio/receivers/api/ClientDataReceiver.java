@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
 import org.chinux.pdc.nio.events.api.DataEvent;
 import org.chinux.pdc.nio.services.util.ChangeRequest;
 
@@ -21,8 +22,10 @@ public abstract class ClientDataReceiver implements DataReceiver<DataEvent> {
 	protected List<ChangeRequest> changeRequests = new ArrayList<ChangeRequest>();
 	protected Map<Object, SocketChannel> clientIPMap = new HashMap<Object, SocketChannel>();
 
+	protected Logger log = Logger.getLogger(this.getClass());
+
 	public Map<Object, ArrayList<ByteBuffer>> getPendingData() {
-		return pendingData;
+		return this.pendingData;
 	}
 
 	public abstract void handlePendingChanges() throws ClosedChannelException;

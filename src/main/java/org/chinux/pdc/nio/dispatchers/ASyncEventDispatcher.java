@@ -3,6 +3,7 @@ package org.chinux.pdc.nio.dispatchers;
 import java.util.Deque;
 import java.util.LinkedList;
 
+import org.apache.log4j.Logger;
 import org.chinux.pdc.nio.events.api.DataEvent;
 import org.chinux.pdc.workers.api.Worker;
 
@@ -12,6 +13,8 @@ public class ASyncEventDispatcher<T extends DataEvent> implements Runnable,
 	private Deque<T> events = new LinkedList<T>();
 	private Worker<T> worker;
 
+	private Logger log = Logger.getLogger(this.getClass());
+
 	public ASyncEventDispatcher(final Worker<T> worker) {
 		this.worker = worker;
 	}
@@ -19,6 +22,7 @@ public class ASyncEventDispatcher<T extends DataEvent> implements Runnable,
 	@Override
 	public void processData(final T event) {
 		synchronized (this.events) {
+			this.log.debug("Process data from event " + event.toString());
 			this.events.addLast(event);
 			this.events.notify();
 		}
@@ -41,8 +45,9 @@ public class ASyncEventDispatcher<T extends DataEvent> implements Runnable,
 				}
 				dataEvent = this.events.poll();
 			}
+			this.log.debug("Do work from event" + dataEvent.toString());
 			final T event = this.worker.DoWork(dataEvent);
-
+			this.log.debug("Got event" + event.toString());
 			if (event.canSend()) {
 				event.getReceiver().receiveEvent(event);
 			}

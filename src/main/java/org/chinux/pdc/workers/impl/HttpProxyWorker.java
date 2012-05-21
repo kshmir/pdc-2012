@@ -215,6 +215,8 @@ public class HttpProxyWorker extends HttpBaseProxyWorker {
 		e.setCanClose(canClose);
 		e.setCanSend(canSend);
 
+		this.logger.debug(new String(e.getData()));
+
 		return e;
 	}
 
@@ -351,6 +353,7 @@ public class HttpProxyWorker extends HttpBaseProxyWorker {
 		e.setCanSend(canSend);
 
 		this.logger.debug("Server answer event:" + e);
+		this.logger.debug(new String(e.getData()));
 
 		return e;
 	}
