@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang.StringUtils;
 import org.chinux.pdc.http.api.HTTPResponseHeader;
 
 public class HTTPResponseHeaderImpl implements HTTPResponseHeader {
@@ -18,11 +19,12 @@ public class HTTPResponseHeaderImpl implements HTTPResponseHeader {
 
 	private int statusCode;
 	private Map<String, String> headers;
+	private String headerLine;
 
 	public HTTPResponseHeaderImpl(final String response) {
 		this.response = response;
 		this.headers = new HashMap<String, String>();
-		final String firstLine = response.split("\r\n")[0];
+		final String firstLine = this.headerLine = response.split("\r\n")[0];
 
 		Matcher match = headPattern.matcher(firstLine);
 		if (match.find()) {
@@ -38,7 +40,12 @@ public class HTTPResponseHeaderImpl implements HTTPResponseHeader {
 
 	@Override
 	public void addHeader(final String name, final String value) {
-		this.headers.put(name, value);
+		this.headers.put(name.toLowerCase(), value);
+	}
+
+	@Override
+	public void removeHeader(final String name) {
+		this.headers.remove(name.toLowerCase());
 	}
 
 	@Override
@@ -64,6 +71,15 @@ public class HTTPResponseHeaderImpl implements HTTPResponseHeader {
 
 	@Override
 	public String toString() {
-		return this.getResponse() + "\r\n\r\n";
+		final StringBuilder builder = new StringBuilder();
+
+		builder.append(this.headerLine).append("\r\n");
+
+		for (final String string : this.headers.keySet()) {
+			builder.append(StringUtils.capitalize(string)).append(": ")
+					.append(this.headers.get(string)).append("\r\n");
+		}
+
+		return builder.toString() + "\r\n";
 	}
 }

@@ -12,4 +12,6 @@ public interface HTTPResponseHeader {
 
 	public String getResponse();
 
+	public void removeHeader(String name);
+
 }

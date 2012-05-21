@@ -54,7 +54,8 @@ public class NIOSCBasicTest {
 				new Worker<DataEvent>() {
 					@Override
 					public DataEvent DoWork(final DataEvent dataEvent) {
-						receivedString = new String(dataEvent.getData()).trim();
+						NIOSCBasicTest.this.receivedString = new String(
+								dataEvent.getData()).trim();
 						return dataEvent;
 					}
 				});
@@ -81,17 +82,18 @@ public class NIOSCBasicTest {
 
 		service.awaitTermination(1, TimeUnit.MILLISECONDS);
 
-		final DataEvent event = new ClientDataEvent(toSendString.getBytes(),
-				InetAddress.getLocalHost(), clientHandler);
+		final DataEvent event = new ClientDataEvent(
+				this.toSendString.getBytes(), InetAddress.getLocalHost(),
+				clientHandler);
 
 		clientReceiver.receiveEvent(event);
 
 		// 1ms should be enough to receive the data
-		service.awaitTermination(10, TimeUnit.MILLISECONDS);
+		service.awaitTermination(30, TimeUnit.MILLISECONDS);
 
 		service.shutdownNow();
 
 		// We got the string, yay!
-		Assert.assertEquals(toSendString, receivedString);
+		Assert.assertEquals(this.toSendString, this.receivedString);
 	}
 }

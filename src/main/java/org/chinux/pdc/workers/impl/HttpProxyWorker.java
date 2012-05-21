@@ -1,7 +1,9 @@
 package org.chinux.pdc.workers.impl;
 
+import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.nio.channels.SocketChannel;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -108,7 +110,8 @@ public class HttpProxyWorker extends HttpBaseProxyWorker {
 	}
 
 	@Override
-	protected DataEvent DoWork(final ClientDataEvent clientEvent) {
+	protected DataEvent DoWork(final ClientDataEvent clientEvent)
+			throws UnsupportedEncodingException {
 		final HTTPEvent event = (HTTPEvent) clientEvent.getOwner();
 
 		this.logger.debug("Got clientEvent:" + clientEvent.toString());
@@ -147,12 +150,27 @@ public class HttpProxyWorker extends HttpBaseProxyWorker {
 						headerString);
 
 				// TODO: Call header filter!
+				final String contenttype = header.getHeader("Content-Type");
+
+				final boolean mustParseChunked = header
+						.getHeader("Transfer-Encoding") != null
+						&& header.getHeader("Transfer-Encoding").equals(
+								"chunked")
+						&& (contenttype != null && (contenttype
+								.startsWith("image/") || contenttype
+								.equals("text/plain")));
+
+				if (mustParseChunked) {
+					header.removeHeader("transfer-encoding");
+				}
 				canSend = true;
 
 				final HTTPResponse response = new HTTPResponseImpl(header,
-						new HTTPBaseResponseReader(header));
+						new HTTPBaseResponseReader(header, mustParseChunked));
 
-				answer.append(header.toString());
+				if (!mustParseChunked) {
+					answer.append(header.toString());
+				}
 
 				event.response = response;
 
@@ -161,10 +179,14 @@ public class HttpProxyWorker extends HttpBaseProxyWorker {
 				} else {
 					rawData = new byte[] {};
 				}
+			} else {
+				this.logger.debug("Header not done");
 			}
 		}
 
 		if (event.response != null && rawData != null) {
+			this.logger.debug("Reading data");
+			this.logger.debug(new String(rawData));
 			final HTTPResponse response = event.response;
 
 			final byte[] data = response.getBodyReader().processData(rawData);
@@ -180,11 +202,18 @@ public class HttpProxyWorker extends HttpBaseProxyWorker {
 			}
 		}
 
-		final DataEvent e = new ServerDataEvent(event.client,
-				clientEvent.getData(), this.serverDataReceiver);
+		if (!Arrays.equals(clientEvent.getData(),
+				answer.toString().getBytes("US-ASCII"))) {
+			this.logger.debug("Different output!");
+		} else {
+			this.logger.debug("Same output!");
+		}
+
+		final DataEvent e = new ServerDataEvent(event.client, answer.toString()
+				.getBytes(), this.serverDataReceiver);
 
 		e.setCanClose(canClose);
-		e.setCanSend(true);
+		e.setCanSend(canSend);
 
 		return e;
 	}
@@ -236,7 +265,6 @@ public class HttpProxyWorker extends HttpBaseProxyWorker {
 			final String rawString = new String(rawData);
 
 			pendingHeader.append(rawString);
-			this.logger.debug(pendingHeader);
 
 			if (this.headerCutPattern.matcher(pendingHeader.toString()).find()) {
 
@@ -248,9 +276,12 @@ public class HttpProxyWorker extends HttpBaseProxyWorker {
 						headerString);
 
 				// TODO: Call header filter!
+
 				canSend = true;
 
 				answer.append(header.toString());
+
+				this.logger.debug(header.toString());
 
 				final HTTPEvent event = new HTTPEvent(new HTTPRequestImpl(
 						header, new HTTPBaseRequestReader(header)),

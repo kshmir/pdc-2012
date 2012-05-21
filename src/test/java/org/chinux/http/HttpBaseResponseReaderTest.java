@@ -19,7 +19,7 @@ public class HttpBaseResponseReaderTest {
 		final HTTPResponseHeader requestheader1 = new HTTPResponseHeaderImpl(
 				TestUtils.stringFromFile("http/responses/response2.txt"));
 		final HTTPBaseResponseReader requestreader1 = new HTTPBaseResponseReader(
-				requestheader1);
+				requestheader1, false);
 		Assert.assertFalse(requestreader1.isFinished());
 		final byte[] ans1 = requestreader1.processData(this.data.getBytes());
 		Assert.assertTrue(String.valueOf(new String(ans1)).equals(this.data));
@@ -35,7 +35,7 @@ public class HttpBaseResponseReaderTest {
 		final HTTPResponseHeader requestheader2 = new HTTPResponseHeaderImpl(
 				TestUtils.stringFromFile("http/responses/response3.txt"));
 		final HTTPBaseResponseReader requestreader2 = new HTTPBaseResponseReader(
-				requestheader2);
+				requestheader2, false);
 		Assert.assertFalse(requestreader2.isFinished());
 		final byte[] ans1 = requestreader2.processData(this.image);
 		Assert.assertTrue(ans1 == this.image);

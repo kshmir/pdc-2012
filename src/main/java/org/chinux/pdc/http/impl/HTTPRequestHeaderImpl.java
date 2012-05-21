@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang.StringUtils;
 import org.chinux.pdc.http.api.HTTPRequestHeader;
 
 public class HTTPRequestHeaderImpl implements HTTPRequestHeader {
@@ -21,6 +22,7 @@ public class HTTPRequestHeaderImpl implements HTTPRequestHeader {
 	private Map<String, String> parameters;
 	private String URI;
 	private String request;
+	private String version;
 
 	public HTTPRequestHeaderImpl(final String request) {
 		this.request = request;
@@ -32,12 +34,16 @@ public class HTTPRequestHeaderImpl implements HTTPRequestHeader {
 		if (match.find()) {
 			this.method = match.group(1);
 			this.URI = match.group(2);
+			this.version = match.group(3);
 		}
 
 		match = headerPattern.matcher(request);
 		while (match.find()) {
 			this.headers.put(match.group(1).toLowerCase(), match.group(2));
 		}
+
+		this.headers.put("accept-encoding", "identity"); // No gzip or deflate
+		// support
 
 		if (this.method.equals("GET")) {
 			if (!this.URI.contains("?")) {
@@ -53,12 +59,23 @@ public class HTTPRequestHeaderImpl implements HTTPRequestHeader {
 						: "");
 			}
 		}
+
+	}
+
+	@Override
+	public void addHeader(final String name, final String value) {
+		this.headers.put(name.toLowerCase(), value);
 	}
 
 	@Override
 	public String getHeader(final String name) {
 		return this.headers.containsKey(name.toLowerCase()) ? this.headers
 				.get(name.toLowerCase()) : null;
+	}
+
+	@Override
+	public void removeHeader(final String name) {
+		this.headers.remove(name.toLowerCase());
 	}
 
 	@Override
@@ -79,6 +96,18 @@ public class HTTPRequestHeaderImpl implements HTTPRequestHeader {
 
 	@Override
 	public String toString() {
-		return this.request + "\r\n\r\n";
+
+		final StringBuilder builder = new StringBuilder();
+
+		builder.append(this.method).append(" ");
+		builder.append(this.URI).append(" ");
+		builder.append(this.version).append("\r\n");
+
+		for (final String string : this.headers.keySet()) {
+			builder.append(StringUtils.capitalize(string)).append(": ")
+					.append(this.headers.get(string)).append("\r\n");
+		}
+
+		return builder.toString() + "\r\n";
 	}
 }
