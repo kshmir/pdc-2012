@@ -1,17 +1,18 @@
 package org.chinux.pdc.http.impl;
 
+import org.apache.log4j.Logger;
 import org.chinux.pdc.http.api.HTTPReader;
 import org.chinux.pdc.http.api.HTTPResponseHeader;
+import org.chinux.pdc.http.util.ChunkedInputStream;
 
 public class HTTPChunkedResponseReader implements HTTPReader {
 
 	private HTTPResponseHeader responseHeader;
 	private boolean isFinished = false;
 
-	private int buffer_i;
-	private byte[] buffer;
-
-	private final Integer currentLen = null;
+	private StringBuilder builder = new StringBuilder();
+	private ChunkedInputStream inputStream = new ChunkedInputStream();
+	private Logger log = Logger.getLogger(this.getClass());
 
 	public HTTPChunkedResponseReader(final HTTPResponseHeader responseHeader) {
 		this.responseHeader = responseHeader;
@@ -19,28 +20,19 @@ public class HTTPChunkedResponseReader implements HTTPReader {
 
 	@Override
 	public byte[] processData(final byte[] data) {
-		final String parsed = new String(data);
+		this.inputStream.write(data);
 
-		final int i = 0;
+		byte[] answer;
 
-		String lenNumber = "";
-		while (i < parsed.length()) {
-
-			if (this.currentLen == null || this.currentLen == 0) {
-				final char nextChar = parsed.charAt(i);
-				if (Character.isDigit(nextChar)) {
-					lenNumber = lenNumber + nextChar;
-				} else if (this.currentLen == null) {
-					throw new RuntimeException(
-							"Expected a number at the beggining");
-				}
-
-			} else {
-				// this.buffer[buffer_i]
+		while ((answer = this.inputStream.read()) != null) {
+			if (answer.length == 0) {
+				return null;
 			}
+			this.builder.append(new String(answer));
 		}
 
-		return data;
+		this.isFinished = true;
+		return this.builder.toString().getBytes();
 	}
 
 	@Override
