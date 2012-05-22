@@ -3,8 +3,8 @@ package org.chinux.pdc.http.impl;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 
 import javax.imageio.ImageIO;
 
@@ -50,16 +50,23 @@ public class HTTPImageResponseReader implements HTTPReader {
 	}
 
 	public byte[] flip() {
-		final InputStream in = new ByteArrayInputStream(this.image);
+		final ByteArrayInputStream in = new ByteArrayInputStream(this.image);
 		BufferedImage img = null;
+		final ByteArrayOutputStream out = new ByteArrayOutputStream();
 		try {
 			img = ImageIO.read(in);
 		} catch (final IOException e) {
 			e.printStackTrace();
 		}
 		final BufferedImage flipped = this.verticalflip(img);
-		return flipped.toString().getBytes();
+		try {
+			ImageIO.write(flipped, "png", out);
 
+		} catch (final IOException e) {
+			e.printStackTrace();
+		}
+		this.finished = true;
+		return out.toByteArray();
 	}
 
 	public BufferedImage verticalflip(final BufferedImage img) {
