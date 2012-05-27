@@ -4,6 +4,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -30,7 +32,8 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 
 	@Override
 	public DataEvent DoWork(final DataEvent dataEvent) {
-		this.data = new String(dataEvent.getData()).split("\r")[0];
+		this.data = Charset.defaultCharset().decode(dataEvent.getData())
+				.toString().split("\r")[0];
 		this.users = new HashMap<String, String>();
 		final String command = this.data.split(" ")[0];
 		ServerDataEvent event;
@@ -86,7 +89,7 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 		}
 
 		event = new ServerDataEvent(((ServerDataEvent) dataEvent).getChannel(),
-				resp, dataEvent.getReceiver());
+				ByteBuffer.wrap(resp), dataEvent.getReceiver());
 		event.setCanClose(true);
 		event.setCanSend(true);
 		return event;
@@ -143,7 +146,7 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 					.getBytes();
 		}
 		event = new ServerDataEvent(((ServerDataEvent) dataEvent).getChannel(),
-				resp, dataEvent.getReceiver());
+				ByteBuffer.wrap(resp), dataEvent.getReceiver());
 		event.setCanClose(true);
 		event.setCanSend(true);
 		return event;
@@ -166,7 +169,7 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 			resp = "Enter password: ".getBytes();
 		}
 		event = new ServerDataEvent(((ServerDataEvent) dataEvent).getChannel(),
-				resp, dataEvent.getReceiver());
+				ByteBuffer.wrap(resp), dataEvent.getReceiver());
 		event.setCanClose(true);
 		event.setCanSend(true);
 		return event;

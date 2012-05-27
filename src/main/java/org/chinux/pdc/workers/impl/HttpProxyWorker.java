@@ -1,9 +1,12 @@
 package org.chinux.pdc.workers.impl;
 
-import java.io.UnsupportedEncodingException;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.net.InetAddress;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.channels.SocketChannel;
-import java.util.Arrays;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -14,13 +17,9 @@ import org.apache.log4j.Logger;
 import org.chinux.pdc.http.api.HTTPRequest;
 import org.chinux.pdc.http.api.HTTPRequestHeader;
 import org.chinux.pdc.http.api.HTTPResponse;
-import org.chinux.pdc.http.api.HTTPResponseHeader;
 import org.chinux.pdc.http.impl.HTTPBaseRequestReader;
-import org.chinux.pdc.http.impl.HTTPBaseResponseReader;
 import org.chinux.pdc.http.impl.HTTPRequestHeaderImpl;
 import org.chinux.pdc.http.impl.HTTPRequestImpl;
-import org.chinux.pdc.http.impl.HTTPResponseHeaderImpl;
-import org.chinux.pdc.http.impl.HTTPResponseImpl;
 import org.chinux.pdc.nio.events.api.DataEvent;
 import org.chinux.pdc.nio.events.impl.ClientDataEvent;
 import org.chinux.pdc.nio.events.impl.ServerDataEvent;
@@ -28,7 +27,11 @@ import org.chinux.pdc.nio.receivers.api.DataReceiver;
 
 public class HttpProxyWorker extends HttpBaseProxyWorker {
 
+	private static Charset isoCharset = Charset.forName("ISO-8859-1");
 	private Logger logger = Logger.getLogger(this.getClass());
+	private final ByteArrayOutputStream answer = new ByteArrayOutputStream();
+	public static Pattern headerCutPattern = Pattern.compile("(\\r\\n\\r\\n)",
+			Pattern.MULTILINE);
 
 	/**
 	 * Represents a unique httprequest sent by a client. When receiving a new
@@ -41,7 +44,10 @@ public class HttpProxyWorker extends HttpBaseProxyWorker {
 		public HTTPRequest request;
 		public HTTPResponse response;
 		public SocketChannel client;
+		public Charset dataCharset = isoCharset; // Por ahora re va
 		public StringBuilder builder = new StringBuilder();
+		public boolean canSend;
+		public boolean canClose;
 
 		public HTTPEvent(final HTTPRequest request, final SocketChannel channel) {
 			this.request = request;
@@ -111,125 +117,30 @@ public class HttpProxyWorker extends HttpBaseProxyWorker {
 
 	@Override
 	protected DataEvent DoWork(final ClientDataEvent clientEvent)
-			throws UnsupportedEncodingException {
+			throws IOException {
 		final HTTPEvent event = (HTTPEvent) clientEvent.getOwner();
 
-		this.logger.debug("Got clientEvent:" + clientEvent.toString());
+		final HTTPResponseEventHandler eventHandler = new HTTPResponseEventHandler(
+				event);
 
-		// final DataEvent e = new ServerDataEvent(event.client,
-		// clientEvent.getData(), this.serverDataReceiver);
-		//
-		// if (clientEvent.canClose()) {
-		//
-		// e.setCanClose(true);
-		// }
-		// e.setCanSend(true);
-		// return e;
+		eventHandler.handle(this.answer, clientEvent);
 
-		final StringBuilder answer = new StringBuilder();
+		final DataEvent e = new ServerDataEvent(event.client,
+				ByteBuffer.wrap(this.answer.toByteArray().clone()),
+				this.serverDataReceiver);
 
-		System.out.println(clientEvent.getData().length);
-		byte[] rawData = clientEvent.getData();
+		e.setCanClose(event.canClose);
+		e.setCanSend(event.canSend);
 
-		boolean canSend = false;
-		boolean canClose = false;
-
-		if (event.response == null) {
-			final StringBuilder pendingHeader = event.builder;
-
-			final String rawString = new String(rawData);
-
-			pendingHeader.append(rawString);
-
-			if (this.headerCutPattern.matcher(pendingHeader.toString()).find()) {
-
-				final String[] headerAndBody = pendingHeader.toString().split(
-						"\\r\\n\\r\\n", 2);
-				final String headerString = headerAndBody[0];
-				final HTTPResponseHeader header = new HTTPResponseHeaderImpl(
-						headerString);
-
-				// TODO: Call header filter!
-				final String contenttype = header.getHeader("Content-Type");
-
-				final boolean mustParseChunked = header
-						.getHeader("Transfer-Encoding") != null
-						&& header.getHeader("Transfer-Encoding").equals(
-								"chunked")
-						&& (contenttype != null && (contenttype
-								.startsWith("image/") || contenttype
-								.equals("text/plain")));
-
-				if (mustParseChunked) {
-					header.removeHeader("transfer-encoding");
-				}
-				canSend = true;
-
-				final HTTPResponse response = new HTTPResponseImpl(header,
-						new HTTPBaseResponseReader(header, mustParseChunked));
-
-				if (!mustParseChunked) {
-					answer.append(header.toString());
-				}
-
-				event.response = response;
-
-				if (headerAndBody.length > 1) {
-					rawData = headerAndBody[1].getBytes();
-				} else {
-					rawData = new byte[] {};
-				}
-			} else {
-				this.logger.debug("Header not done");
-			}
-		}
-
-		if (event.response != null && rawData != null) {
-			this.logger.debug("Reading data");
-			this.logger.debug(new String(rawData));
-			final HTTPResponse response = event.response;
-
-			final byte[] data = response.getBodyReader().processData(rawData);
-
-			canSend = data != null;
-
-			if (canSend) {
-				answer.append(new String(data));
-			}
-
-			if (response.getBodyReader().isFinished()) {
-				canClose = true;
-			}
-		}
-
-		if (!Arrays.equals(clientEvent.getData(),
-				answer.toString().getBytes("US-ASCII"))) {
-			this.logger.debug("Different output!");
-		} else {
-			this.logger.debug("Same output!");
-		}
-
-		final DataEvent e = new ServerDataEvent(event.client, answer.toString()
-				.getBytes(), this.serverDataReceiver);
-
-		e.setCanClose(canClose);
-		e.setCanSend(canSend);
-
-		this.logger.debug(new String(e.getData()));
+		this.logger.debug(clientEvent.getData());
 
 		return e;
 	}
 
-	private Pattern headerCutPattern = Pattern.compile("(\\r\\n\\r\\n)",
-			Pattern.MULTILINE);
-
 	private boolean isReadingServerHeaders(final SocketChannel socketChannel) {
-
 		if ((!this.readingServerSockets.containsKey(socketChannel) && !this.readingDataSockets
 				.containsKey(socketChannel))) {
-
 			this.readingServerSockets.put(socketChannel, new StringBuilder());
-
 			return true;
 		}
 
@@ -241,13 +152,15 @@ public class HttpProxyWorker extends HttpBaseProxyWorker {
 	}
 
 	@Override
-	protected DataEvent DoWork(final ServerDataEvent serverEvent) {
+	protected DataEvent DoWork(final ServerDataEvent serverEvent)
+			throws IOException {
 
 		final SocketChannel clientChannel = serverEvent.getChannel();
 
-		final StringBuilder answer = new StringBuilder();
+		this.answer.reset();
 
-		byte[] rawData = serverEvent.getData();
+		ByteBuffer rawData = ByteBuffer.wrap(serverEvent.getData().array()
+				.clone());
 
 		boolean canClose = false;
 		boolean canSend = false;
@@ -264,7 +177,7 @@ public class HttpProxyWorker extends HttpBaseProxyWorker {
 			final StringBuilder pendingHeader = this.readingServerSockets
 					.get(clientChannel);
 
-			final String rawString = new String(rawData);
+			final String rawString = isoCharset.decode(rawData).toString();
 
 			pendingHeader.append(rawString);
 
@@ -281,7 +194,8 @@ public class HttpProxyWorker extends HttpBaseProxyWorker {
 
 				canSend = true;
 
-				answer.append(header.toString());
+				this.answer.write(isoCharset.encode(
+						CharBuffer.wrap(header.toString())).array());
 
 				this.logger.debug(header.toString());
 
@@ -294,9 +208,10 @@ public class HttpProxyWorker extends HttpBaseProxyWorker {
 				eventOwner = event;
 
 				if (headerAndBody.length > 1) {
-					rawData = headerAndBody[1].getBytes();
+					rawData = ByteBuffer.wrap(isoCharset.encode(
+							CharBuffer.wrap(headerAndBody[1])).array());
 				} else {
-					rawData = new byte[] {};
+					rawData = ByteBuffer.allocate(0);
 				}
 			}
 		}
@@ -308,19 +223,24 @@ public class HttpProxyWorker extends HttpBaseProxyWorker {
 			final HTTPEvent event = this.readingDataSockets.get(clientChannel);
 			final HTTPRequest request = event.request;
 
-			final byte[] data = request.getBodyReader().processData(rawData);
+			final ByteBuffer data = request.getBodyReader()
+					.processData(rawData);
 
 			canSend = data != null;
 
-			if (canSend) {
-				answer.append(new String(data));
+			try {
+				if (canSend) {
+					this.answer.write(data.array());
+				}
+			} catch (final Exception e1) {
+				e1.printStackTrace();
 			}
 
 			eventOwner = event;
 
+			canClose = true;
 			if (request.getBodyReader().isFinished()) {
 				this.logger.debug("Client channel IS finished!");
-				canClose = true;
 				this.readingDataSockets.remove(clientChannel);
 				this.readingServerSockets.remove(clientChannel);
 			} else {
@@ -333,7 +253,6 @@ public class HttpProxyWorker extends HttpBaseProxyWorker {
 			if (eventOwner.request.getHeaders().getHeader("Host") == null) {
 				throw new Exception();
 			}
-
 			address = InetAddress.getByName(eventOwner.request.getHeaders()
 					.getHeader("Host"));
 		} catch (final Exception e) {
@@ -346,14 +265,14 @@ public class HttpProxyWorker extends HttpBaseProxyWorker {
 			this.receivedRequests.add(eventOwner);
 		}
 
-		final DataEvent e = new ClientDataEvent(answer.toString().getBytes(),
-				this.clientDataReceiver, address, eventOwner);
+		final DataEvent e = new ClientDataEvent(ByteBuffer.wrap(this.answer
+				.toByteArray()), this.clientDataReceiver, address, eventOwner);
 
 		e.setCanClose(canClose);
 		e.setCanSend(canSend);
 
 		this.logger.debug("Server answer event:" + e);
-		this.logger.debug(new String(e.getData()));
+		this.logger.debug(serverEvent.getData());
 
 		return e;
 	}

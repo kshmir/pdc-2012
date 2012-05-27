@@ -1,6 +1,7 @@
 package org.chinux.pdc.nio.events.impl;
 
 import java.net.InetAddress;
+import java.nio.ByteBuffer;
 
 import org.chinux.pdc.nio.events.api.DataEvent;
 import org.chinux.pdc.nio.receivers.api.DataReceiver;
@@ -15,16 +16,16 @@ public class ClientDataEvent extends DataEvent {
 	private InetAddress address;
 	private Object owner;
 
-	public ClientDataEvent(final byte[] data, final Object owner) {
+	public ClientDataEvent(final ByteBuffer data, final Object owner) {
 		this(data, null, null, owner);
 	}
 
-	public ClientDataEvent(final byte[] data, final InetAddress address,
+	public ClientDataEvent(final ByteBuffer data, final InetAddress address,
 			final Object owner) {
 		this(data, null, address, owner);
 	}
 
-	public ClientDataEvent(final byte[] data,
+	public ClientDataEvent(final ByteBuffer data,
 			final DataReceiver<DataEvent> receiver, final InetAddress address,
 			final Object owner) {
 		super(data, receiver);

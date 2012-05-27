@@ -1,5 +1,7 @@
 package org.chinux.pdc.nio.events.api;
 
+import java.nio.ByteBuffer;
+
 import org.chinux.pdc.nio.receivers.api.DataReceiver;
 
 /**
@@ -17,17 +19,19 @@ public abstract class DataEvent {
 	}
 
 	private DataReceiver<DataEvent> receiver;
-	private byte[] data;
+	private ByteBuffer data;
 
 	private boolean canSend;
 	private boolean canClose;
 
-	public DataEvent(final byte[] data, final DataReceiver<DataEvent> receiver) {
+	public DataEvent(final ByteBuffer data,
+			final DataReceiver<DataEvent> receiver) {
 		this(data, receiver, false, false);
 	}
 
-	public DataEvent(final byte[] data, final DataReceiver<DataEvent> receiver,
-			final boolean canSend, final boolean canClose) {
+	public DataEvent(final ByteBuffer data,
+			final DataReceiver<DataEvent> receiver, final boolean canSend,
+			final boolean canClose) {
 		this.receiver = receiver;
 		this.data = data;
 		this.canSend = canSend;
@@ -42,7 +46,7 @@ public abstract class DataEvent {
 		this.canSend = sendable;
 	}
 
-	public byte[] getData() {
+	public ByteBuffer getData() {
 		return this.data;
 	}
 

@@ -1,5 +1,7 @@
 package org.chinux.pdc.http.impl;
 
+import java.nio.ByteBuffer;
+
 import org.apache.log4j.Logger;
 import org.chinux.pdc.http.api.HTTPReader;
 import org.chinux.pdc.http.api.HTTPResponseHeader;
@@ -19,20 +21,23 @@ public class HTTPChunkedResponseReader implements HTTPReader {
 	}
 
 	@Override
-	public byte[] processData(final byte[] data) {
-		this.inputStream.write(data);
+	public ByteBuffer processData(final ByteBuffer data) {
+		return data;
+		// TODO: Fix this
 
-		byte[] answer;
-
-		while ((answer = this.inputStream.read()) != null) {
-			if (answer.length == 0) {
-				return null;
-			}
-			this.builder.append(new String(answer));
-		}
-
-		this.isFinished = true;
-		return this.builder.toString().getBytes();
+		// this.inputStream.write(data.array());
+		//
+		// byte[] answer;
+		//
+		// while ((answer = this.inputStream.read()) != null) {
+		// if (answer.length == 0) {
+		// return null;
+		// }
+		// this.builder.append(new String(answer));
+		// }
+		//
+		// this.isFinished = true;
+		// return this.builder.toString().getBytes();
 	}
 
 	@Override

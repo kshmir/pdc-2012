@@ -52,7 +52,7 @@ public class ServerHandler implements NIOServerHandler, DataReceiver<DataEvent> 
 		final ServerDataEvent event = (ServerDataEvent) dataEvent;
 
 		final SocketChannel socket = event.getChannel();
-		final byte[] data = event.getData();
+		final ByteBuffer data = event.getData();
 
 		synchronized (this.changeRequests) {
 			// Indicate we want the interest ops set changed
@@ -66,7 +66,7 @@ public class ServerHandler implements NIOServerHandler, DataReceiver<DataEvent> 
 					queue = new ArrayList<ByteBuffer>();
 					this.pendingData.put(socket, queue);
 				}
-				queue.add(ByteBuffer.wrap(data));
+				queue.add(data);
 			}
 		}
 
@@ -140,7 +140,7 @@ public class ServerHandler implements NIOServerHandler, DataReceiver<DataEvent> 
 			// return;
 		}
 		// Hand the data off to our worker thread
-		final byte[] data = NIOUtil.readBuffer(readBuffer, numRead);
+		final ByteBuffer data = NIOUtil.readBuffer(readBuffer, numRead);
 
 		this.dispatcher.processData(new ServerDataEvent(socketChannel, data,
 				this));

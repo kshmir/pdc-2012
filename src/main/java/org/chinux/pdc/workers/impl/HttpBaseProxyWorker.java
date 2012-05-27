@@ -1,5 +1,6 @@
 package org.chinux.pdc.workers.impl;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
 import org.chinux.pdc.nio.events.api.DataEvent;
@@ -10,12 +11,13 @@ import org.chinux.pdc.workers.api.Worker;
 public abstract class HttpBaseProxyWorker implements Worker<DataEvent> {
 
 	protected abstract DataEvent DoWork(ClientDataEvent clientEvent)
-			throws UnsupportedEncodingException;
+			throws UnsupportedEncodingException, IOException;
 
-	protected abstract DataEvent DoWork(ServerDataEvent clientEvent);
+	protected abstract DataEvent DoWork(ServerDataEvent clientEvent)
+			throws IOException;
 
 	@Override
-	public DataEvent DoWork(final DataEvent dataEvent) {
+	public DataEvent DoWork(final DataEvent dataEvent) throws IOException {
 		if (dataEvent instanceof ClientDataEvent) {
 			try {
 				return this.DoWork((ClientDataEvent) dataEvent);

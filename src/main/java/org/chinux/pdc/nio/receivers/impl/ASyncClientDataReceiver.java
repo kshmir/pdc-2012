@@ -67,7 +67,7 @@ public class ASyncClientDataReceiver extends ClientDataReceiver {
 				queue = new ArrayList<ByteBuffer>();
 				this.pendingData.put(event.getOwner(), queue);
 			}
-			queue.add(ByteBuffer.wrap(event.getData()));
+			queue.add(event.getData());
 		}
 
 		// Finally, wake up our selecting thread so it can make the required

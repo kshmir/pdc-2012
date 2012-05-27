@@ -82,7 +82,7 @@ public class ClientHandler implements NIOClientHandler {
 		}
 
 		// Hand the data off to our worker thread
-		final byte[] data = NIOUtil.readBuffer(readBuffer, numRead);
+		final ByteBuffer data = NIOUtil.readBuffer(readBuffer, numRead);
 
 		final ClientDataEvent event = new ClientDataEvent(data,
 				key.attachment());
@@ -106,6 +106,7 @@ public class ClientHandler implements NIOClientHandler {
 				final ByteBuffer buf = queue.get(0);
 				socketChannel.write(buf);
 				if (buf.remaining() > 0) {
+					System.out.println("GETTING OUT!");
 					// ... or the socket's buffer fills up
 					break;
 				}
@@ -113,6 +114,7 @@ public class ClientHandler implements NIOClientHandler {
 			}
 
 			if (queue.isEmpty()) {
+				System.out.println("GETTING OUT!2");
 				key.interestOps(SelectionKey.OP_READ);
 			}
 		}
@@ -126,7 +128,8 @@ public class ClientHandler implements NIOClientHandler {
 		try {
 			socketChannel.finishConnect();
 		} catch (final IOException e) {
-			e.printStackTrace(); // TODO: Handle this
+			e.printStackTrace();
+			// TODO: Handle this
 		}
 
 		// Register an interest in writing on this channel
