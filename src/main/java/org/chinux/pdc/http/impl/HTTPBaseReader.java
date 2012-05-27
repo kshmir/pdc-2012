@@ -7,15 +7,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.apache.log4j.Logger;
 import org.chinux.pdc.http.api.HTTPReader;
-import org.chinux.pdc.workers.impl.HTTPEvent;
 
-public class HTTPBaseResponseReader implements HTTPReader {
+public class HTTPBaseReader implements HTTPReader {
 
 	private boolean finished;
-	private Logger log = Logger.getLogger(this.getClass());
-	private HTTPEvent event;
 	private Map<HTTPReader, Integer> priorityMap = new HashMap<HTTPReader, Integer>();
 	private Set<HTTPReader> readers = new TreeSet<HTTPReader>(
 			new Comparator<HTTPReader>() {
@@ -31,15 +27,14 @@ public class HTTPBaseResponseReader implements HTTPReader {
 					if (arg0 == null) {
 						return -1;
 					}
-					return HTTPBaseResponseReader.this.priorityMap.get(arg0)
+					return HTTPBaseReader.this.priorityMap.get(arg0)
 							.compareTo(
-									HTTPBaseResponseReader.this.priorityMap
+									HTTPBaseReader.this.priorityMap
 											.get(arg1));
 				}
 			});
 
-	public HTTPBaseResponseReader(final HTTPEvent event) {
-		this.event = event;
+	public HTTPBaseReader() {
 		this.finished = true;
 	}
 

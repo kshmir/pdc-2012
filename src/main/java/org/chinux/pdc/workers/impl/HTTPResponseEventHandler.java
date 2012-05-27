@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
 import org.apache.log4j.Logger;
 import org.chinux.pdc.http.api.HTTPResponse;
 import org.chinux.pdc.http.api.HTTPResponseHeader;
-import org.chinux.pdc.http.impl.HTTPBaseResponseReader;
+import org.chinux.pdc.http.impl.HTTPBaseReader;
 import org.chinux.pdc.http.impl.HTTPResponseHeaderImpl;
 import org.chinux.pdc.http.impl.HTTPResponseImpl;
 import org.chinux.pdc.nio.events.impl.ClientDataEvent;
@@ -24,9 +24,9 @@ public class HTTPResponseEventHandler {
 	private static Pattern headerCutPattern = Pattern.compile("(\\r\\n\\r\\n)",
 			Pattern.MULTILINE);
 
-	private HTTPEvent event;
+	private HTTPProxyEvent event;
 
-	public HTTPResponseEventHandler(final HTTPEvent event) {
+	public HTTPResponseEventHandler(final HTTPProxyEvent event) {
 		this.event = event;
 	}
 
@@ -124,7 +124,7 @@ public class HTTPResponseEventHandler {
 		this.event.setCanSend(true);
 
 		final HTTPResponse response = new HTTPResponseImpl(header,
-				new HTTPBaseResponseReader(this.event));
+				new HTTPBaseReader());
 
 		try {
 			stream.write(isoCharset.encode(CharBuffer.wrap(header.toString()))

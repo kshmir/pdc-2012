@@ -4,17 +4,17 @@ import org.chinux.pdc.http.api.HTTPResponse;
 import org.chinux.pdc.http.api.HTTPResponseHeader;
 
 public class HTTPResponseImpl implements HTTPResponse {
-	private HTTPBaseResponseReader bodyReader;
+	private HTTPBaseReader bodyReader;
 	private HTTPResponseHeader header;
 
 	public HTTPResponseImpl(final HTTPResponseHeader header,
-			final HTTPBaseResponseReader bodyReader) {
+			final HTTPBaseReader bodyReader) {
 		this.header = header;
 		this.bodyReader = bodyReader;
 	}
 
 	@Override
-	public HTTPBaseResponseReader getBodyReader() {
+	public HTTPBaseReader getBodyReader() {
 		return this.bodyReader;
 	}
 

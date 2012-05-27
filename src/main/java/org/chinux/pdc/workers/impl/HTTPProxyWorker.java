@@ -20,7 +20,7 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 	private final ByteArrayOutputStream answer = new ByteArrayOutputStream();
 	private ByteBuffer rawData;
 
-	private Set<HTTPEvent> receivedRequests = new HashSet<HTTPEvent>();
+	private Set<HTTPProxyEvent> receivedRequests = new HashSet<HTTPProxyEvent>();
 
 	private DataReceiver<DataEvent> clientDataReceiver = null;
 
@@ -40,7 +40,7 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 	@Override
 	protected DataEvent DoWork(final ClientDataEvent clientEvent)
 			throws IOException {
-		final HTTPEvent event = (HTTPEvent) clientEvent.getOwner();
+		final HTTPProxyEvent event = (HTTPProxyEvent) clientEvent.getOwner();
 
 		final HTTPResponseEventHandler eventHandler = new HTTPResponseEventHandler(
 				event);
@@ -65,7 +65,7 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 
 		final HTTPRequestEventHandler handler = this.getRequestEventHandler();
 
-		final HTTPEvent httpEvent = handler.handle(serverEvent);
+		final HTTPProxyEvent httpEvent = handler.handle(serverEvent);
 
 		final DataEvent e = new ClientDataEvent(ByteBuffer.wrap(this.answer
 				.toByteArray()), this.clientDataReceiver,

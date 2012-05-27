@@ -1,4 +1,4 @@
-package org.chinux.pdc.http.impl;
+package org.chinux.pdc.http.impl.readers;
 
 import java.nio.ByteBuffer;
 

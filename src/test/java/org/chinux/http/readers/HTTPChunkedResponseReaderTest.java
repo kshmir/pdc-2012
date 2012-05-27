@@ -3,8 +3,8 @@ package org.chinux.http.readers;
 import java.nio.ByteBuffer;
 
 import org.chinux.pdc.http.api.HTTPResponseHeader;
-import org.chinux.pdc.http.impl.HTTPChunkedResponseReader;
 import org.chinux.pdc.http.impl.HTTPResponseHeaderImpl;
+import org.chinux.pdc.http.impl.readers.HTTPChunkedResponseReader;
 import org.chinux.util.TestUtils;
 import org.junit.Assert;
 import org.junit.Ignore;

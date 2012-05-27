@@ -16,7 +16,7 @@ import org.chinux.pdc.server.ConfigurationProvider;
  * 
  * @author cris
  */
-public class HTTPEvent {
+public class HTTPProxyEvent {
 	private HTTPRequest request;
 	private HTTPResponse response;
 	private SocketChannel socketChannel;
@@ -31,7 +31,7 @@ public class HTTPEvent {
 	private boolean canClose;
 	private InetAddress address;
 
-	public HTTPEvent(final HTTPRequest request, final SocketChannel channel) {
+	public HTTPProxyEvent(final HTTPRequest request, final SocketChannel channel) {
 		this.request = request;
 		this.socketChannel = channel;
 	}
@@ -55,7 +55,7 @@ public class HTTPEvent {
 		if (this.getClass() != obj.getClass()) {
 			return false;
 		}
-		final HTTPEvent other = (HTTPEvent) obj;
+		final HTTPProxyEvent other = (HTTPProxyEvent) obj;
 		if (this.getSocketChannel() == null) {
 			if (other.getSocketChannel() != null) {
 				return false;

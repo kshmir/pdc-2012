@@ -12,7 +12,7 @@ import org.chinux.pdc.nio.events.api.DataEvent;
 import org.chinux.pdc.nio.events.impl.ClientDataEvent;
 import org.chinux.pdc.nio.events.impl.ServerDataEvent;
 import org.chinux.pdc.nio.receivers.api.DataReceiver;
-import org.chinux.pdc.workers.impl.HTTPEvent;
+import org.chinux.pdc.workers.impl.HTTPProxyEvent;
 import org.chinux.pdc.workers.impl.HTTPProxyWorker;
 import org.chinux.util.TestUtils;
 import org.junit.Ignore;
@@ -36,7 +36,7 @@ public class HttpProxyWorkerTest {
 		final InetAddress address = InetAddress.getLocalHost();
 		final HTTPProxyWorker worker = new HTTPProxyWorker();
 
-		final HTTPEvent event = new HTTPEvent(null, null);
+		final HTTPProxyEvent event = new HTTPProxyEvent(null, null);
 
 		final DataReceiver<DataEvent> clientReceiver = Mockito
 				.mock(DataReceiver.class);

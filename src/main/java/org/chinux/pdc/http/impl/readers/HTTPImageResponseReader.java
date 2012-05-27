@@ -1,4 +1,4 @@
-package org.chinux.pdc.http.impl;
+package org.chinux.pdc.http.impl.readers;
 
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;

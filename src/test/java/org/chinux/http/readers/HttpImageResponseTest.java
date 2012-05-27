@@ -15,8 +15,8 @@ import java.nio.ByteBuffer;
 import javax.imageio.ImageIO;
 
 import org.chinux.pdc.http.api.HTTPResponseHeader;
-import org.chinux.pdc.http.impl.HTTPImageResponseReader;
 import org.chinux.pdc.http.impl.HTTPResponseHeaderImpl;
+import org.chinux.pdc.http.impl.readers.HTTPImageResponseReader;
 import org.chinux.pdc.http.util.ImageResponseUtils;
 import org.chinux.util.TestUtils;
 import org.junit.Assert;

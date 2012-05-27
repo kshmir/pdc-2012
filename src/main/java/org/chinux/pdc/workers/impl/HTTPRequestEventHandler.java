@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
 import org.apache.log4j.Logger;
 import org.chinux.pdc.http.api.HTTPRequest;
 import org.chinux.pdc.http.api.HTTPRequestHeader;
-import org.chinux.pdc.http.impl.HTTPBaseRequestReader;
+import org.chinux.pdc.http.impl.HTTPBaseReader;
 import org.chinux.pdc.http.impl.HTTPRequestHeaderImpl;
 import org.chinux.pdc.http.impl.HTTPRequestImpl;
 import org.chinux.pdc.nio.events.impl.ServerDataEvent;
@@ -47,14 +47,14 @@ public class HTTPRequestEventHandler {
 
 	private Map<SocketChannel, StringBuilder> readingServerSockets = new HashMap<SocketChannel, StringBuilder>();
 
-	private Map<SocketChannel, HTTPEvent> readingDataSockets = new HashMap<SocketChannel, HTTPEvent>();
+	private Map<SocketChannel, HTTPProxyEvent> readingDataSockets = new HashMap<SocketChannel, HTTPProxyEvent>();
 
 	public HTTPRequestEventHandler(final ByteArrayOutputStream answerStream) {
 		this.answer = answerStream;
 	}
 
 	private InetAddress getEventAddress(final SocketChannel clientChannel,
-			final HTTPEvent httpEvent) {
+			final HTTPProxyEvent httpEvent) {
 		InetAddress address = null;
 		try {
 			if (httpEvent.getRequest().getHeaders().getHeader("Host") == null) {
@@ -68,10 +68,10 @@ public class HTTPRequestEventHandler {
 		return address;
 	}
 
-	private HTTPEvent readRequestData(final SocketChannel clientChannel) {
-		HTTPEvent httpEvent;
+	private HTTPProxyEvent readRequestData(final SocketChannel clientChannel) {
+		HTTPProxyEvent httpEvent;
 		this.logger.debug("Reading data from clientChannel: " + clientChannel);
-		final HTTPEvent event = this.readingDataSockets.get(clientChannel);
+		final HTTPProxyEvent event = this.readingDataSockets.get(clientChannel);
 		final HTTPRequest request = event.getRequest();
 
 		final ByteBuffer data = request.getBodyReader().processData(
@@ -106,8 +106,9 @@ public class HTTPRequestEventHandler {
 	 * @return
 	 * @throws IOException
 	 */
-	private HTTPEvent readEventRequestHeader(final SocketChannel clientChannel,
-			HTTPEvent eventOwner) throws IOException {
+	private HTTPProxyEvent readEventRequestHeader(
+			final SocketChannel clientChannel, HTTPProxyEvent eventOwner)
+			throws IOException {
 		final StringBuilder pendingHeader = this.readingServerSockets
 				.get(clientChannel);
 
@@ -129,8 +130,9 @@ public class HTTPRequestEventHandler {
 
 			this.logger.debug(header.toString());
 
-			final HTTPEvent event = new HTTPEvent(new HTTPRequestImpl(header,
-					new HTTPBaseRequestReader(header)), clientChannel);
+			final HTTPProxyEvent event = new HTTPProxyEvent(
+					new HTTPRequestImpl(header, new HTTPBaseReader()),
+					clientChannel);
 
 			this.readingDataSockets.put(clientChannel, event);
 
@@ -148,9 +150,9 @@ public class HTTPRequestEventHandler {
 		return eventOwner;
 	}
 
-	public HTTPEvent handle(final ServerDataEvent serverEvent)
+	public HTTPProxyEvent handle(final ServerDataEvent serverEvent)
 			throws IOException {
-		HTTPEvent httpEvent = null;
+		HTTPProxyEvent httpEvent = null;
 
 		this.answer.reset();
 
@@ -172,7 +174,8 @@ public class HTTPRequestEventHandler {
 		}
 
 		if (httpEvent != null) {
-			httpEvent.setAddress(this.getEventAddress(clientChannel, httpEvent));
+			httpEvent
+					.setAddress(this.getEventAddress(clientChannel, httpEvent));
 		}
 
 		return httpEvent;
