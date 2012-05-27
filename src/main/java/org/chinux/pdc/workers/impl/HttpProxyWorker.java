@@ -30,6 +30,7 @@ public class HttpProxyWorker extends HttpBaseProxyWorker {
 	private static Charset isoCharset = Charset.forName("ISO-8859-1");
 	private Logger logger = Logger.getLogger(this.getClass());
 	private final ByteArrayOutputStream answer = new ByteArrayOutputStream();
+	private ByteBuffer rawData;
 	public static Pattern headerCutPattern = Pattern.compile("(\\r\\n\\r\\n)",
 			Pattern.MULTILINE);
 
@@ -137,7 +138,7 @@ public class HttpProxyWorker extends HttpBaseProxyWorker {
 		return e;
 	}
 
-	private boolean isReadingServerHeaders(final SocketChannel socketChannel) {
+	private boolean isReadingRequestHeaders(final SocketChannel socketChannel) {
 		if ((!this.readingServerSockets.containsKey(socketChannel) && !this.readingDataSockets
 				.containsKey(socketChannel))) {
 			this.readingServerSockets.put(socketChannel, new StringBuilder());
@@ -147,7 +148,7 @@ public class HttpProxyWorker extends HttpBaseProxyWorker {
 		return this.readingServerSockets.containsKey(socketChannel);
 	}
 
-	private boolean isReadingData(final SocketChannel socketChannel) {
+	private boolean isReadingRequestData(final SocketChannel socketChannel) {
 		return this.readingDataSockets.containsKey(socketChannel);
 	}
 
@@ -159,121 +160,141 @@ public class HttpProxyWorker extends HttpBaseProxyWorker {
 
 		this.answer.reset();
 
-		ByteBuffer rawData = ByteBuffer.wrap(serverEvent.getData().array()
-				.clone());
+		HTTPEvent httpEvent = null;
 
-		boolean canClose = false;
-		boolean canSend = false;
-
-		HTTPEvent eventOwner = null;
+		this.rawData = ByteBuffer.wrap(serverEvent.getData().array().clone());
 
 		this.logger.debug("Got serverEvent:" + serverEvent.toString());
 
 		// If we are already building the httpRequest... we build it
-		if (this.isReadingServerHeaders(clientChannel)) {
-
-			this.logger.debug("Reading headers for clientChannel: "
-					+ clientChannel);
-			final StringBuilder pendingHeader = this.readingServerSockets
-					.get(clientChannel);
-
-			final String rawString = isoCharset.decode(rawData).toString();
-
-			pendingHeader.append(rawString);
-
-			if (this.headerCutPattern.matcher(pendingHeader.toString()).find()) {
-
-				final String[] headerAndBody = pendingHeader.toString().split(
-						"\\r\\n\\r\\n", 2);
-
-				final String headerString = headerAndBody[0];
-				final HTTPRequestHeader header = new HTTPRequestHeaderImpl(
-						headerString);
-
-				// TODO: Call header filter!
-
-				canSend = true;
-
-				this.answer.write(isoCharset.encode(
-						CharBuffer.wrap(header.toString())).array());
-
-				this.logger.debug(header.toString());
-
-				final HTTPEvent event = new HTTPEvent(new HTTPRequestImpl(
-						header, new HTTPBaseRequestReader(header)),
-						clientChannel);
-
-				this.readingDataSockets.put(clientChannel, event);
-
-				eventOwner = event;
-
-				if (headerAndBody.length > 1) {
-					rawData = ByteBuffer.wrap(isoCharset.encode(
-							CharBuffer.wrap(headerAndBody[1])).array());
-				} else {
-					rawData = ByteBuffer.allocate(0);
-				}
-			}
+		if (this.isReadingRequestHeaders(clientChannel)) {
+			httpEvent = this.readEventRequestHeader(clientChannel, httpEvent);
 		}
 
 		// We process all the reading data
-		if (this.isReadingData(clientChannel) && rawData != null) {
-			this.logger.debug("Reading data from clientChannel: "
-					+ clientChannel);
-			final HTTPEvent event = this.readingDataSockets.get(clientChannel);
-			final HTTPRequest request = event.request;
-
-			final ByteBuffer data = request.getBodyReader()
-					.processData(rawData);
-
-			canSend = data != null;
-
-			try {
-				if (canSend) {
-					this.answer.write(data.array());
-				}
-			} catch (final Exception e1) {
-				e1.printStackTrace();
-			}
-
-			eventOwner = event;
-
-			canClose = true;
-			if (request.getBodyReader().isFinished()) {
-				this.logger.debug("Client channel IS finished!");
-				this.readingDataSockets.remove(clientChannel);
-				this.readingServerSockets.remove(clientChannel);
-			} else {
-				this.logger.debug("Client channel is not finished!");
-			}
+		if (this.isReadingRequestData(clientChannel) && this.rawData != null) {
+			httpEvent = this.readRequestData(clientChannel);
 		}
 
+		final InetAddress address = this.getEventAddress(clientChannel,
+				httpEvent);
+
+		// If the client doesn't send back this HTTPEvent, we must expire it
+		// later on.
+		if (!this.receivedRequests.contains(httpEvent)) {
+			this.receivedRequests.add(httpEvent);
+		}
+
+		final DataEvent e = new ClientDataEvent(ByteBuffer.wrap(this.answer
+				.toByteArray()), this.clientDataReceiver, address, httpEvent);
+
+		if (httpEvent != null) {
+			e.setCanClose(httpEvent.canClose);
+			e.setCanSend(httpEvent.canSend);
+		} else {
+			e.setCanClose(false);
+			e.setCanSend(false);
+		}
+
+		this.logger.debug("Server answer event:" + e);
+
+		return e;
+	}
+
+	private InetAddress getEventAddress(final SocketChannel clientChannel,
+			final HTTPEvent httpEvent) {
 		InetAddress address = null;
 		try {
-			if (eventOwner.request.getHeaders().getHeader("Host") == null) {
+			if (httpEvent.request.getHeaders().getHeader("Host") == null) {
 				throw new Exception();
 			}
-			address = InetAddress.getByName(eventOwner.request.getHeaders()
+			address = InetAddress.getByName(httpEvent.request.getHeaders()
 					.getHeader("Host"));
 		} catch (final Exception e) {
 			address = clientChannel.socket().getInetAddress();
 		}
+		return address;
+	}
 
-		// If the client doesn't send back this HTTPEvent, we must expire it
-		// later on.
-		if (!this.receivedRequests.contains(eventOwner)) {
-			this.receivedRequests.add(eventOwner);
+	private HTTPEvent readRequestData(final SocketChannel clientChannel) {
+		HTTPEvent httpEvent;
+		this.logger.debug("Reading data from clientChannel: " + clientChannel);
+		final HTTPEvent event = this.readingDataSockets.get(clientChannel);
+		final HTTPRequest request = event.request;
+
+		final ByteBuffer data = request.getBodyReader().processData(
+				this.rawData);
+
+		event.canSend = data != null;
+
+		try {
+			if (event.canSend) {
+				this.answer.write(data.array());
+			}
+		} catch (final Exception e1) {
+			e1.printStackTrace();
 		}
 
-		final DataEvent e = new ClientDataEvent(ByteBuffer.wrap(this.answer
-				.toByteArray()), this.clientDataReceiver, address, eventOwner);
+		httpEvent = event;
 
-		e.setCanClose(canClose);
-		e.setCanSend(canSend);
+		event.canClose = true;
+		if (request.getBodyReader().isFinished()) {
+			this.readingDataSockets.remove(clientChannel);
+			this.readingServerSockets.remove(clientChannel);
+		}
+		return httpEvent;
+	}
 
-		this.logger.debug("Server answer event:" + e);
-		this.logger.debug(serverEvent.getData());
+	/**
+	 * Reads the current data and tries to build a new HTTPEvent after parsing a
+	 * Request Header
+	 * 
+	 * @param clientChannel
+	 * @param eventOwner
+	 * @return
+	 * @throws IOException
+	 */
+	private HTTPEvent readEventRequestHeader(final SocketChannel clientChannel,
+			HTTPEvent eventOwner) throws IOException {
+		final StringBuilder pendingHeader = this.readingServerSockets
+				.get(clientChannel);
 
-		return e;
+		final String rawString = isoCharset.decode(this.rawData).toString();
+
+		pendingHeader.append(rawString);
+
+		if (headerCutPattern.matcher(pendingHeader.toString()).find()) {
+
+			final String[] headerAndBody = pendingHeader.toString().split(
+					"\\r\\n\\r\\n", 2);
+
+			final String headerString = headerAndBody[0];
+			final HTTPRequestHeader header = new HTTPRequestHeaderImpl(
+					headerString);
+
+			// TODO: Call header filter!
+
+			this.answer.write(isoCharset.encode(
+					CharBuffer.wrap(header.toString())).array());
+
+			this.logger.debug(header.toString());
+
+			final HTTPEvent event = new HTTPEvent(new HTTPRequestImpl(header,
+					new HTTPBaseRequestReader(header)), clientChannel);
+
+			this.readingDataSockets.put(clientChannel, event);
+
+			eventOwner = event;
+
+			eventOwner.canSend = true;
+
+			if (headerAndBody.length > 1) {
+				this.rawData = ByteBuffer.wrap(isoCharset.encode(
+						CharBuffer.wrap(headerAndBody[1])).array());
+			} else {
+				this.rawData = ByteBuffer.allocate(0);
+			}
+		}
+		return eventOwner;
 	}
 }
