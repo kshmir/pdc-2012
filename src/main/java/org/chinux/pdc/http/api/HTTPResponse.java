@@ -12,5 +12,4 @@ public interface HTTPResponse {
 	 * @return HttpReader of the http response
 	 */
 	public HTTPBaseReader getBodyReader();
-
 }

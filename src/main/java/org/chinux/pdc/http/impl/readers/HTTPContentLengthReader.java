@@ -2,6 +2,7 @@ package org.chinux.pdc.http.impl.readers;
 
 import java.nio.ByteBuffer;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.chinux.pdc.http.api.HTTPReader;
 
 public class HTTPContentLengthReader implements HTTPReader {
@@ -18,9 +19,15 @@ public class HTTPContentLengthReader implements HTTPReader {
 
 	@Override
 	public ByteBuffer processData(final ByteBuffer data) {
+		final int oldlength = this.currlenght;
 		this.currlenght += data.array().length;
-		if (this.currlenght >= lengthToRead) {
+		if (this.currlenght >= this.lengthToRead) {
 			this.finished = true;
+			if (this.currlenght > this.lengthToRead) {
+				return ByteBuffer.wrap(ArrayUtils.subarray(data.array(), 0,
+						this.lengthToRead - oldlength));
+			}
+
 		}
 		return data;
 	}

@@ -13,6 +13,7 @@ import org.chinux.pdc.http.api.HTTPResponseHeader;
 import org.chinux.pdc.http.impl.HTTPBaseReader;
 import org.chinux.pdc.http.impl.HTTPResponseHeaderImpl;
 import org.chinux.pdc.http.impl.HTTPResponseImpl;
+import org.chinux.pdc.http.impl.readers.HTTPContentLengthReader;
 import org.chinux.pdc.nio.events.impl.ClientDataEvent;
 
 public class HTTPResponseEventHandler {
@@ -126,6 +127,8 @@ public class HTTPResponseEventHandler {
 		final HTTPResponse response = new HTTPResponseImpl(header,
 				new HTTPBaseReader());
 
+		this.applyReadersToResponse(response);
+
 		try {
 			stream.write(isoCharset.encode(CharBuffer.wrap(header.toString()))
 					.array());
@@ -142,5 +145,16 @@ public class HTTPResponseEventHandler {
 			rawData = ByteBuffer.allocate(0);
 		}
 		return rawData;
+	}
+
+	// Loads the readers to the HTTPResponse based on the event we have
+	public void applyReadersToResponse(final HTTPResponse response) {
+		// Si tiene content-length usamos el content-length reader
+		if (response.getHeaders().getHeader("content-length") != null) {
+			final Integer length = Integer.valueOf(response.getHeaders()
+					.getHeader("content-length"));
+			response.getBodyReader().addResponseReader(
+					new HTTPContentLengthReader(length), 100);
+		}
 	}
 }
