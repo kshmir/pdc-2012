@@ -13,7 +13,7 @@ import org.chinux.pdc.nio.events.impl.ClientDataEvent;
 import org.chinux.pdc.nio.events.impl.ServerDataEvent;
 import org.chinux.pdc.nio.receivers.api.DataReceiver;
 import org.chinux.pdc.workers.impl.HTTPEvent;
-import org.chinux.pdc.workers.impl.HttpProxyWorker;
+import org.chinux.pdc.workers.impl.HTTPProxyWorker;
 import org.chinux.util.TestUtils;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -34,7 +34,7 @@ public class HttpProxyWorkerTest {
 				.stringFromFile("http/responses/response4.txt");
 
 		final InetAddress address = InetAddress.getLocalHost();
-		final HttpProxyWorker worker = new HttpProxyWorker();
+		final HTTPProxyWorker worker = new HTTPProxyWorker();
 
 		final HTTPEvent event = new HTTPEvent(null, null);
 
@@ -62,7 +62,7 @@ public class HttpProxyWorkerTest {
 		final String get = "GET / HTTP/1.0\r\n\r\n";
 
 		final InetAddress address = InetAddress.getLocalHost();
-		final HttpProxyWorker worker = new HttpProxyWorker();
+		final HTTPProxyWorker worker = new HTTPProxyWorker();
 		final ClientDataEvent answer = this.testWorkerRequest(get, address,
 				worker);
 
@@ -77,7 +77,7 @@ public class HttpProxyWorkerTest {
 		final String get = "GET / HTTP/1.0\r\nHost: localhost\r\n\r\n";
 
 		final InetAddress address = InetAddress.getByName("localhost");
-		final HttpProxyWorker worker = new HttpProxyWorker();
+		final HTTPProxyWorker worker = new HTTPProxyWorker();
 
 		final ClientDataEvent answer = this.testWorkerRequest(get, address,
 				worker);
@@ -93,7 +93,7 @@ public class HttpProxyWorkerTest {
 		final String get = "POST / HTTP/1.0\r\nHost: localhost\r\nContent-Length: 10\r\n\r\n0123456789\r\n";
 
 		final InetAddress address = InetAddress.getByName("localhost");
-		final HttpProxyWorker worker = new HttpProxyWorker();
+		final HTTPProxyWorker worker = new HTTPProxyWorker();
 
 		final ClientDataEvent answer = this.testWorkerRequest(get, address,
 				worker);
@@ -110,7 +110,7 @@ public class HttpProxyWorkerTest {
 		final String get2 = "Content-Length: 10\r\n\r\n0123456789\r\n";
 
 		final InetAddress address = InetAddress.getByName("localhost");
-		final HttpProxyWorker worker = new HttpProxyWorker();
+		final HTTPProxyWorker worker = new HTTPProxyWorker();
 
 		final ClientDataEvent a = this.testWorkerRequest(get, address, worker);
 
@@ -125,7 +125,7 @@ public class HttpProxyWorkerTest {
 	}
 
 	private ClientDataEvent testWorkerRequest(final String get,
-			final InetAddress address, final HttpProxyWorker worker)
+			final InetAddress address, final HTTPProxyWorker worker)
 			throws IOException {
 		final DataReceiver<DataEvent> clientReceiver = Mockito
 				.mock(DataReceiver.class);

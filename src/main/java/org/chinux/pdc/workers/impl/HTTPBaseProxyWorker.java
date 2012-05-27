@@ -8,7 +8,7 @@ import org.chinux.pdc.nio.events.impl.ClientDataEvent;
 import org.chinux.pdc.nio.events.impl.ServerDataEvent;
 import org.chinux.pdc.workers.api.Worker;
 
-public abstract class HttpBaseProxyWorker implements Worker<DataEvent> {
+public abstract class HTTPBaseProxyWorker implements Worker<DataEvent> {
 
 	protected abstract DataEvent DoWork(ClientDataEvent clientEvent)
 			throws UnsupportedEncodingException, IOException;

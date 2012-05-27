@@ -42,7 +42,8 @@ public class HTTPRequestHeaderImpl implements HTTPRequestHeader {
 			this.headers.put(match.group(1).toLowerCase(), match.group(2));
 		}
 
-		this.headers.put("accept-encoding", "identity"); // No gzip or deflate
+		this.headers.put("accept-encoding", "identity"); // No gzip or
+		// deflate
 		// support
 
 		if (this.method.equals("GET")) {

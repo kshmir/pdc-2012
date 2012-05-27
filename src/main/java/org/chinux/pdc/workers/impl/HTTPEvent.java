@@ -6,6 +6,8 @@ import java.nio.charset.Charset;
 
 import org.chinux.pdc.http.api.HTTPRequest;
 import org.chinux.pdc.http.api.HTTPResponse;
+import org.chinux.pdc.server.Configuration;
+import org.chinux.pdc.server.ConfigurationProvider;
 
 /**
  * Represents a unique httprequest sent by a client. When receiving a new
@@ -20,6 +22,10 @@ public class HTTPEvent {
 	private SocketChannel socketChannel;
 	private Charset dataCharset = Charset.forName("ISO-8859-1"); // Por ahora re
 																	// va
+
+	private Configuration eventConfiguration = ConfigurationProvider
+			.getConfiguration();
+
 	private StringBuilder builder = new StringBuilder();
 	private boolean canSend;
 	private boolean canClose;
@@ -128,5 +134,9 @@ public class HTTPEvent {
 
 	public void setResponse(final HTTPResponse response) {
 		this.response = response;
+	}
+	
+	public Configuration getEventConfiguration() {
+		return eventConfiguration;
 	}
 }

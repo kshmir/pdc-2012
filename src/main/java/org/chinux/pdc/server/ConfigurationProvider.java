@@ -11,7 +11,7 @@ public class ConfigurationProvider {
 
 	private static Configuration configuration = null;
 
-	public static Configuration getConfiguration() {
+	public static synchronized Configuration getConfiguration() {
 		if (configuration == null) {
 			try {
 				final FileInputStream fis = new FileInputStream(
@@ -55,7 +55,8 @@ public class ConfigurationProvider {
 		return configuration;
 	}
 
-	public static void setConfiguration(final Configuration newConfiguration) {
+	public static synchronized void setConfiguration(
+			final Configuration newConfiguration) {
 		configuration = newConfiguration;
 	}
 }

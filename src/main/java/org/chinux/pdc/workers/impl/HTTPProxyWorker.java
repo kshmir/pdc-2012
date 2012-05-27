@@ -13,7 +13,7 @@ import org.chinux.pdc.nio.events.impl.ClientDataEvent;
 import org.chinux.pdc.nio.events.impl.ServerDataEvent;
 import org.chinux.pdc.nio.receivers.api.DataReceiver;
 
-public class HttpProxyWorker extends HttpBaseProxyWorker {
+public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 
 	private static Charset isoCharset = Charset.forName("ISO-8859-1");
 	private Logger logger = Logger.getLogger(this.getClass());
