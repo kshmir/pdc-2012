@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
+import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 import org.chinux.pdc.http.api.HTTPResponse;
@@ -13,13 +14,15 @@ import org.chinux.pdc.http.impl.HTTPBaseResponseReader;
 import org.chinux.pdc.http.impl.HTTPResponseHeaderImpl;
 import org.chinux.pdc.http.impl.HTTPResponseImpl;
 import org.chinux.pdc.nio.events.impl.ClientDataEvent;
-import org.chinux.pdc.workers.impl.HttpProxyWorker.HTTPEvent;
 
 public class HTTPResponseEventHandler {
 
 	private static Charset isoCharset = Charset.forName("ISO-8859-1");
 	private static Logger logger = Logger
 			.getLogger(HTTPResponseEventHandler.class);
+
+	private static Pattern headerCutPattern = Pattern.compile("(\\r\\n\\r\\n)",
+			Pattern.MULTILINE);
 
 	private HTTPEvent event;
 
@@ -36,7 +39,7 @@ public class HTTPResponseEventHandler {
 				.clone());
 
 		if (this.noHeaderYetParsed()) {
-			final StringBuilder pendingHeader = this.event.builder;
+			final StringBuilder pendingHeader = this.event.getBuilder();
 
 			final String rawString = isoCharset.decode(rawData).toString();
 
@@ -59,31 +62,30 @@ public class HTTPResponseEventHandler {
 	}
 
 	private boolean matchesHeader(final StringBuilder pendingHeader) {
-		return HttpProxyWorker.headerCutPattern.matcher(
-				pendingHeader.toString()).find();
+		return headerCutPattern.matcher(pendingHeader.toString()).find();
 	}
 
 	private boolean noHeaderYetParsed() {
 		// No response is handled if there is no response built yet for this
 		// event
-		return this.event.response == null;
+		return this.event.getResponse() == null;
 	}
 
 	private boolean canProcessData(final ByteBuffer rawData) {
 		// Data can be processed then there is rawdata after a response header
 		// built
-		return this.event.response != null && rawData != null;
+		return this.event.getResponse() != null && rawData != null;
 	}
 
 	private void processData(final ByteArrayOutputStream stream,
 			final ByteBuffer rawData) {
-		final HTTPResponse response = this.event.response;
+		final HTTPResponse response = this.event.getResponse();
 
 		final ByteBuffer data = response.getBodyReader().processData(rawData);
 
-		this.event.canSend = data != null;
+		this.event.setCanSend(data != null);
 
-		if (this.event.canSend) {
+		if (this.event.canSend()) {
 			try {
 				stream.write(data.array());
 			} catch (final IOException e) {
@@ -92,7 +94,7 @@ public class HTTPResponseEventHandler {
 		}
 
 		if (response.getBodyReader().isFinished()) {
-			this.event.canClose = true;
+			this.event.setCanClose(true);
 		}
 	}
 
@@ -119,7 +121,7 @@ public class HTTPResponseEventHandler {
 		// if (mustParseChunked) {
 		// header.removeHeader("transfer-encoding");
 		// }
-		this.event.canSend = true;
+		this.event.setCanSend(true);
 
 		final HTTPResponse response = new HTTPResponseImpl(header,
 				new HTTPBaseResponseReader(this.event));
@@ -131,7 +133,7 @@ public class HTTPResponseEventHandler {
 			e.printStackTrace();
 		}
 
-		this.event.response = response;
+		this.event.setResponse(response);
 
 		if (headerAndBody.length > 1) {
 			rawData = ByteBuffer.wrap(isoCharset
