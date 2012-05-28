@@ -2,6 +2,8 @@ package org.chinux.nio;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -54,8 +56,9 @@ public class NIOSCBasicTest {
 				new Worker<DataEvent>() {
 					@Override
 					public DataEvent DoWork(final DataEvent dataEvent) {
-						NIOSCBasicTest.this.receivedString = new String(
-								dataEvent.getData()).trim();
+						NIOSCBasicTest.this.receivedString = Charset
+								.defaultCharset().decode(dataEvent.getData())
+								.toString().trim();
 						return dataEvent;
 					}
 				});
@@ -83,8 +86,8 @@ public class NIOSCBasicTest {
 		service.awaitTermination(1, TimeUnit.MILLISECONDS);
 
 		final DataEvent event = new ClientDataEvent(
-				this.toSendString.getBytes(), InetAddress.getLocalHost(),
-				clientHandler);
+				ByteBuffer.wrap(this.toSendString.getBytes()),
+				InetAddress.getLocalHost(), clientHandler);
 
 		clientReceiver.receiveEvent(event);
 

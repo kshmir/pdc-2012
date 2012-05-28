@@ -1,6 +1,6 @@
 package org.chinux.pdc.http.api;
 
-import org.chinux.pdc.http.impl.HTTPBaseRequestReader;
+import org.chinux.pdc.http.impl.HTTPBaseReader;
 
 public interface HTTPRequest {
 	/**
@@ -11,5 +11,5 @@ public interface HTTPRequest {
 	/**
 	 * @return HttpReader of the httprequest
 	 */
-	public HTTPBaseRequestReader getBodyReader();
+	public HTTPBaseReader getBodyReader();
 }

@@ -1,5 +1,7 @@
 package org.chinux.pdc.http.api;
 
+import java.nio.ByteBuffer;
+
 public interface HTTPReader {
 
 	/**
@@ -10,11 +12,16 @@ public interface HTTPReader {
 	 * @return null if nothing can be send yet. Or the byte array if something
 	 *         can be sent.
 	 */
-	public byte[] processData(byte[] data);
+	public ByteBuffer processData(ByteBuffer data);
 
 	/**
 	 * @return true if the http request is done.
 	 */
 	public boolean isFinished();
 
+	/**
+	 * @return true if the reader requires the header to be held and not sent
+	 *         until all the request is processed
+	 */
+	public boolean modifiesHeaders();
 }

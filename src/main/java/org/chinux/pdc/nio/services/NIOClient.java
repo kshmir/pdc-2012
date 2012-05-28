@@ -29,7 +29,6 @@ public class NIOClient implements Runnable {
 
 	@Override
 	public void run() {
-
 		while (true) {
 			try {
 				// Process any pending changes

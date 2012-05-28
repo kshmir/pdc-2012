@@ -5,14 +5,13 @@ import java.nio.ByteBuffer;
 import org.apache.commons.lang.ArrayUtils;
 
 public class NIOUtil {
-	public static byte[] readBuffer(final ByteBuffer readBuffer,
+	public static ByteBuffer readBuffer(final ByteBuffer readBuffer,
 			final int numRead) {
-		final byte[] data;
 		if (numRead > 0) {
-			data = ArrayUtils.subarray(readBuffer.array(), 0, numRead);
+			return ByteBuffer.wrap(ArrayUtils.subarray(readBuffer.array(), 0,
+					numRead));
 		} else {
-			data = new byte[] {};
+			return ByteBuffer.allocate(0);
 		}
-		return data;
 	}
 }

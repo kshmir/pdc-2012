@@ -1,5 +1,7 @@
 package org.chinux.workers;
 
+import java.nio.ByteBuffer;
+
 import junit.framework.Assert;
 
 import org.chinux.pdc.nio.events.api.DataEvent;
@@ -15,15 +17,15 @@ public class EchoWorkerTest {
 	public void doWorkTest() {
 		final EchoWorker worker = new EchoWorker();
 
-		final byte[] data = "data".getBytes();
+		final ByteBuffer data = ByteBuffer.wrap("data".getBytes());
 
 		final DataEvent event = new DataEvent(data, null) {
+
 		};
 
 		final DataEvent echoEvent = worker.DoWork(event);
 
-		Assert.assertEquals(new String(event.getData()),
-				new String(echoEvent.getData()));
+		Assert.assertEquals(event.getData(), echoEvent.getData());
 		Assert.assertEquals(true, echoEvent.canSend());
 	}
 }

@@ -1,10 +1,11 @@
-package org.chinux.pdc.http.impl;
+package org.chinux.pdc.http.impl.readers;
 
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import javax.imageio.ImageIO;
 
@@ -29,19 +30,21 @@ public class HTTPImageResponseReader implements HTTPReader {
 	}
 
 	@Override
-	public byte[] processData(final byte[] data) {
-		final Integer contentlenght = Integer.valueOf(this.responseheader
-				.getHeader("Content-Length"));
-		this.currlenght += data.length;
-		int i = 0;
-		while (i < data.length) {
-			this.image[this.index++] = data[i++];
-		}
-		if (this.currlenght >= contentlenght) {
-			this.finished = true;
-			return this.flip();
-		}
+	public ByteBuffer processData(final ByteBuffer data) {
 		return data;
+		// TODO: Fix this.
+		// final Integer contentlenght = Integer.valueOf(this.responseheader
+		// .getHeader("Content-Length"));
+		// this.currlenght += data.length;
+		// int i = 0;
+		// while (i < data.length) {
+		// this.image[this.index++] = data[i++];
+		// }
+		// if (this.currlenght >= contentlenght) {
+		// this.finished = true;
+		// return this.flip();
+		// }
+		// return data;
 	}
 
 	@Override
@@ -78,6 +81,11 @@ public class HTTPImageResponseReader implements HTTPReader {
 		g.drawImage(img, 0, 0, w, h, 0, h, w, 0, null);
 		g.dispose();
 		return dimg;
+	}
+
+	@Override
+	public boolean modifiesHeaders() {
+		return true; // Supongo...
 	}
 
 }
