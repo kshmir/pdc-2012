@@ -14,37 +14,57 @@ import org.chinux.pdc.http.api.HTTPResponseHeader;
 
 public class HTTPImageResponseReader implements HTTPReader {
 
-	private HTTPResponseHeader responseheader;
+	private HTTPResponseHeader responseHeader;
 	private boolean finished;
-	private Integer currlenght;
-	private byte[] image;
-	private int index;
-	private final int MAXSIZE = 1000000;
+	private ByteArrayOutputStream stream = new ByteArrayOutputStream();
+	private Integer bytesToRead = null;
 
 	public HTTPImageResponseReader(final HTTPResponseHeader responseheader) {
-		this.responseheader = responseheader;
+		this.responseHeader = responseheader;
 		this.finished = false;
-		this.currlenght = 0;
-		this.index = 0;
-		this.image = new byte[this.MAXSIZE];
+	}
+
+	private int getBytesToRead() {
+		if (this.responseHeader.getHeader("content-length") != null
+				&& this.bytesToRead == null) {
+			this.bytesToRead = Integer.valueOf(this.responseHeader
+					.getHeader("content-length"));
+		}
+		return this.bytesToRead;
+	}
+
+	private boolean is300Response() {
+		return this.responseHeader.returnStatusCode() >= 300
+				&& this.responseHeader.returnStatusCode() <= 399;
 	}
 
 	@Override
 	public ByteBuffer processData(final ByteBuffer data) {
-		return data;
-		// TODO: Fix this.
-		// final Integer contentlenght = Integer.valueOf(this.responseheader
-		// .getHeader("Content-Length"));
-		// this.currlenght += data.length;
-		// int i = 0;
-		// while (i < data.length) {
-		// this.image[this.index++] = data[i++];
-		// }
-		// if (this.currlenght >= contentlenght) {
-		// this.finished = true;
-		// return this.flip();
-		// }
-		// return data;
+
+		if (this.is300Response() || this.getBytesToRead() == 0) {
+
+			if (data.array().length == 0) {
+				this.finished = true;
+			}
+			return data;
+		}
+
+		try {
+			this.stream.write(data.array());
+		} catch (final IOException e) {
+			e.printStackTrace();
+		}
+
+		if (this.stream.size() >= this.getBytesToRead()) {
+
+			this.finished = true;
+			final ByteBuffer buffer = this.flip(this.stream);
+			this.responseHeader.addHeader("content-length",
+					String.valueOf(buffer.array().length));
+			return buffer;
+		} else {
+			return null;
+		}
 	}
 
 	@Override
@@ -52,8 +72,9 @@ public class HTTPImageResponseReader implements HTTPReader {
 		return this.finished;
 	}
 
-	public byte[] flip() {
-		final ByteArrayInputStream in = new ByteArrayInputStream(this.image);
+	public ByteBuffer flip(final ByteArrayOutputStream buff) {
+		final ByteArrayInputStream in = new ByteArrayInputStream(
+				buff.toByteArray());
 		BufferedImage img = null;
 		final ByteArrayOutputStream out = new ByteArrayOutputStream();
 		try {
@@ -61,6 +82,7 @@ public class HTTPImageResponseReader implements HTTPReader {
 		} catch (final IOException e) {
 			e.printStackTrace();
 		}
+
 		final BufferedImage flipped = this.verticalflip(img);
 		try {
 			ImageIO.write(flipped, "png", out);
@@ -69,7 +91,7 @@ public class HTTPImageResponseReader implements HTTPReader {
 			e.printStackTrace();
 		}
 		this.finished = true;
-		return out.toByteArray();
+		return ByteBuffer.wrap(out.toByteArray());
 	}
 
 	public BufferedImage verticalflip(final BufferedImage img) {

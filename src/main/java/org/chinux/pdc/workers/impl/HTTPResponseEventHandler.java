@@ -15,6 +15,7 @@ import org.chinux.pdc.http.impl.HTTPResponseHeaderImpl;
 import org.chinux.pdc.http.impl.HTTPResponseImpl;
 import org.chinux.pdc.http.impl.readers.HTTPChunkedResponseReader;
 import org.chinux.pdc.http.impl.readers.HTTPContentLengthReader;
+import org.chinux.pdc.http.impl.readers.HTTPImageResponseReader;
 import org.chinux.pdc.nio.events.impl.ClientDataEvent;
 
 public class HTTPResponseEventHandler {
@@ -115,6 +116,8 @@ public class HTTPResponseEventHandler {
 		final HTTPResponse response = new HTTPResponseImpl(header,
 				new HTTPBaseReader(header));
 
+		logger.debug(header.toString());
+
 		this.applyReadersToResponse(response);
 
 		try {
@@ -146,6 +149,11 @@ public class HTTPResponseEventHandler {
 			// CRLF ended
 		}
 
+		if (this.hasImageMIME(response)) {
+			response.getBodyReader().addResponseReader(
+					new HTTPImageResponseReader(response.getHeaders()), 50);
+		}
+
 		if (this.mustDecodeChunked(response)) {
 			response.getBodyReader().addResponseReader(
 					new HTTPChunkedResponseReader(response.getHeaders()), 0);
@@ -166,6 +174,7 @@ public class HTTPResponseEventHandler {
 		if (contenttype == null) {
 			return false;
 		}
+
 		return contenttype.startsWith("image/");
 	}
 
