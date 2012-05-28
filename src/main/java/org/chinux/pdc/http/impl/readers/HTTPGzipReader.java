@@ -1,6 +1,7 @@
 package org.chinux.pdc.http.impl.readers;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.zip.GZIPInputStream;
@@ -12,7 +13,7 @@ public class HTTPGzipReader implements HTTPReader {
 
 	private HTTPResponseHeader responseHeader;
 	private boolean isFinished = false;
-	private ByteArrayInputStream stream;
+	private ByteArrayOutputStream stream = new ByteArrayOutputStream();
 	GZIPInputStream gzipInputStream = null;
 
 	public HTTPGzipReader(final HTTPResponseHeader responseHeader) {
@@ -30,14 +31,19 @@ public class HTTPGzipReader implements HTTPReader {
 		} catch (final IOException e) {
 			e.printStackTrace();
 		}
-		final byte[] out = new byte[2048];
+		final byte[] buffer = new byte[1024];
 		try {
-			gzipInputStream.read(out);
+			while (gzipInputStream.read(buffer) != -1) {
+				this.stream.write(buffer);
+			}
 		} catch (final IOException e) {
 			e.printStackTrace();
 		}
-
 		this.isFinished = true;
+		final byte[] out = this.stream.toByteArray();
+		this.responseHeader.removeHeader("content-encoding");
+		this.responseHeader.addHeader("content-length",
+				String.valueOf(out.length));
 		return ByteBuffer.wrap(out);
 	}
 
@@ -48,7 +54,7 @@ public class HTTPGzipReader implements HTTPReader {
 
 	@Override
 	public boolean modifiesHeaders() {
-		return false;
+		return true;
 	}
 
 }

@@ -148,6 +148,9 @@ public class HTTPRequestEventHandler {
 			final HTTPRequestHeader header = new HTTPRequestHeaderImpl(
 					headerString);
 
+			header.removeHeader("Accept-Encoding");
+			header.addHeader("Accept-Encoding", "identity");
+
 			// TODO: Filtering
 
 			logger.debug(header.toString());
