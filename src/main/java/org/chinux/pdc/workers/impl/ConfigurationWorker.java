@@ -28,7 +28,7 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 	private String username = null;
 	private Map<String, String> users;
 	private Pattern ipPattern = Pattern
-			.compile("(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)");
+			.compile("(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/(0|8|16|24|32)");
 
 	@Override
 	public DataEvent DoWork(final DataEvent dataEvent) {

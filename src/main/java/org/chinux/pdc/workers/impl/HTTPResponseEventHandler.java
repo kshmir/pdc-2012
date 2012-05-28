@@ -8,8 +8,10 @@ import java.nio.charset.Charset;
 import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
+import org.chinux.pdc.FilterException;
 import org.chinux.pdc.http.api.HTTPResponse;
 import org.chinux.pdc.http.api.HTTPResponseHeader;
+import org.chinux.pdc.http.impl.HTTPBaseFilter;
 import org.chinux.pdc.http.impl.HTTPBaseReader;
 import org.chinux.pdc.http.impl.HTTPResponseHeaderImpl;
 import org.chinux.pdc.http.impl.HTTPResponseImpl;
@@ -60,6 +62,17 @@ public class HTTPResponseEventHandler {
 
 		if (this.canProcessData(rawData)) {
 			this.processData(stream, rawData);
+		}
+
+		// TODO remove try-catch
+		if (!HTTPBaseFilter.getBaseResponseFilter().isValid(this.event)) {
+			try {
+				throw new FilterException(HTTPBaseFilter
+						.getBaseResponseFilter().getErrorResponse(this.event)
+						.toString());
+			} catch (final FilterException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 

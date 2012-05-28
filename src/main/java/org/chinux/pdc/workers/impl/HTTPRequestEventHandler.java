@@ -12,8 +12,10 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
+import org.chinux.pdc.FilterException;
 import org.chinux.pdc.http.api.HTTPRequest;
 import org.chinux.pdc.http.api.HTTPRequestHeader;
+import org.chinux.pdc.http.impl.HTTPBaseFilter;
 import org.chinux.pdc.http.impl.HTTPBaseReader;
 import org.chinux.pdc.http.impl.HTTPRequestHeaderImpl;
 import org.chinux.pdc.http.impl.HTTPRequestImpl;
@@ -148,16 +150,25 @@ public class HTTPRequestEventHandler {
 			final HTTPRequestHeader header = new HTTPRequestHeaderImpl(
 					headerString);
 
-			// TODO: Filtering
-
-			this.outputBuffer.write(isoCharset.encode(
-					CharBuffer.wrap(header.toString())).array());
-
 			logger.debug(header.toString());
 
 			final HTTPProxyEvent event = new HTTPProxyEvent(
 					new HTTPRequestImpl(header, new HTTPBaseReader(header)),
 					clientChannel);
+
+			// TODO remove try-catch
+			if (!HTTPBaseFilter.getBaseRequestFilter().isValid(event)) {
+				try {
+					throw new FilterException(HTTPBaseFilter
+							.getBaseRequestFilter().getErrorResponse(event)
+							.toString());
+				} catch (final FilterException e) {
+					e.printStackTrace();
+				}
+			} else {
+				this.outputBuffer.write(isoCharset.encode(
+						CharBuffer.wrap(header.toString())).array());
+			}
 
 			this.readingDataSockets.put(clientChannel, event);
 
