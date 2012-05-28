@@ -1,6 +1,6 @@
 package org.chinux.pdc.http.api;
 
-public interface HTTPRequestHeader {
+public interface HTTPRequestHeader extends HTTPMessageHeader {
 
 	/**
 	 * Returns all the values of the specified request header as a String

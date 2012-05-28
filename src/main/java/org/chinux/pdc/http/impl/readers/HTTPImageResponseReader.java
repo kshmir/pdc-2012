@@ -83,4 +83,9 @@ public class HTTPImageResponseReader implements HTTPReader {
 		return dimg;
 	}
 
+	@Override
+	public boolean modifiesHeaders() {
+		return true; // Supongo...
+	}
+
 }

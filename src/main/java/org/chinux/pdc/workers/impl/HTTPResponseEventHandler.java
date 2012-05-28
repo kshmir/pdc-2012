@@ -13,6 +13,7 @@ import org.chinux.pdc.http.api.HTTPResponseHeader;
 import org.chinux.pdc.http.impl.HTTPBaseReader;
 import org.chinux.pdc.http.impl.HTTPResponseHeaderImpl;
 import org.chinux.pdc.http.impl.HTTPResponseImpl;
+import org.chinux.pdc.http.impl.readers.HTTPChunkedResponseReader;
 import org.chinux.pdc.http.impl.readers.HTTPContentLengthReader;
 import org.chinux.pdc.nio.events.impl.ClientDataEvent;
 
@@ -125,7 +126,7 @@ public class HTTPResponseEventHandler {
 		this.event.setCanSend(true);
 
 		final HTTPResponse response = new HTTPResponseImpl(header,
-				new HTTPBaseReader());
+				new HTTPBaseReader(header));
 
 		this.applyReadersToResponse(response);
 
@@ -148,13 +149,42 @@ public class HTTPResponseEventHandler {
 	}
 
 	// Loads the readers to the HTTPResponse based on the event we have
-	public void applyReadersToResponse(final HTTPResponse response) {
+	private void applyReadersToResponse(final HTTPResponse response) {
 		// Si tiene content-length usamos el content-length reader
-		if (response.getHeaders().getHeader("content-length") != null) {
-			final Integer length = Integer.valueOf(response.getHeaders()
-					.getHeader("content-length"));
+		if (this.hasContentLength(response) || this.mustDecodeChunked(response)) {
 			response.getBodyReader().addResponseReader(
-					new HTTPContentLengthReader(length), 100);
+					new HTTPContentLengthReader(response.getHeaders()), 100);
+		} else if (!this.hasContentLength(response)
+				&& !this.mustDecodeChunked(response)) {
+			// CRLF ended
 		}
+
+		if (this.mustDecodeChunked(response)) {
+			response.getBodyReader().addResponseReader(
+					new HTTPChunkedResponseReader(response.getHeaders()), 0);
+		}
+	}
+
+	private boolean hasContentLength(final HTTPResponse response) {
+		return response.getHeaders().getHeader("content-length") != null;
+	}
+
+	private boolean mustDecodeChunked(final HTTPResponse response) {
+		return this.hasEncodingChunked(response) && this.hasImageMIME(response);
+	}
+
+	private boolean hasImageMIME(final HTTPResponse response) {
+		final String contenttype = response.getHeaders().getHeader(
+				"Content-Type");
+		if (contenttype == null) {
+			return false;
+		}
+		return contenttype.startsWith("image/");
+	}
+
+	private boolean hasEncodingChunked(final HTTPResponse response) {
+		return response.getHeaders().getHeader("transfer-encoding") != null
+				&& response.getHeaders().getHeader("transfer-encoding")
+						.equals("chunked");
 	}
 }

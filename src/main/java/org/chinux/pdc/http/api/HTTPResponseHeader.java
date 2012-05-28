@@ -1,6 +1,6 @@
 package org.chinux.pdc.http.api;
 
-public interface HTTPResponseHeader {
+public interface HTTPResponseHeader extends HTTPMessageHeader {
 
 	public void addHeader(String name, String value);
 

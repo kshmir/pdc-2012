@@ -26,7 +26,44 @@ public class HTTPRequestEventHandler {
 			.getLogger(HTTPResponseEventHandler.class);
 	private static Pattern headerCutPattern = Pattern.compile("(\\r\\n\\r\\n)",
 			Pattern.MULTILINE);
+
 	private ByteArrayOutputStream answer;
+	private ByteBuffer rawData;
+
+	private Map<SocketChannel, StringBuilder> readingServerSockets = new HashMap<SocketChannel, StringBuilder>();
+
+	private Map<SocketChannel, HTTPProxyEvent> readingDataSockets = new HashMap<SocketChannel, HTTPProxyEvent>();
+
+	public HTTPProxyEvent handle(final ServerDataEvent serverEvent)
+			throws IOException {
+		HTTPProxyEvent httpEvent = null;
+
+		this.answer.reset();
+
+		final SocketChannel clientChannel = serverEvent.getChannel();
+
+		this.rawData = ByteBuffer.wrap(serverEvent.getData().array().clone());
+
+		// If we are already building the httpRequest... we build it
+		if (this.isReadingRequestHeaders(clientChannel)) {
+			httpEvent = this.readEventRequestHeader(clientChannel, httpEvent);
+		}
+
+		// TODO: if httpEvent != null we must filter it and send the given error
+		// if we find any.
+
+		// We process all the reading data
+		if (this.isReadingRequestData(clientChannel)) {
+			httpEvent = this.readRequestData(clientChannel);
+		}
+
+		if (httpEvent != null) {
+			httpEvent
+					.setAddress(this.getEventAddress(clientChannel, httpEvent));
+		}
+
+		return httpEvent;
+	}
 
 	private boolean isReadingRequestHeaders(final SocketChannel socketChannel) {
 		if ((!this.readingServerSockets.containsKey(socketChannel) && !this.readingDataSockets
@@ -38,16 +75,10 @@ public class HTTPRequestEventHandler {
 		return this.readingServerSockets.containsKey(socketChannel);
 	}
 
-	private ByteBuffer rawData;
-
 	private boolean isReadingRequestData(final SocketChannel socketChannel) {
 		return this.readingDataSockets.containsKey(socketChannel)
 				&& this.rawData != null;
 	}
-
-	private Map<SocketChannel, StringBuilder> readingServerSockets = new HashMap<SocketChannel, StringBuilder>();
-
-	private Map<SocketChannel, HTTPProxyEvent> readingDataSockets = new HashMap<SocketChannel, HTTPProxyEvent>();
 
 	public HTTPRequestEventHandler(final ByteArrayOutputStream answerStream) {
 		this.answer = answerStream;
@@ -100,11 +131,6 @@ public class HTTPRequestEventHandler {
 	/**
 	 * Reads the current data and tries to build a new HTTPEvent after parsing a
 	 * Request Header
-	 * 
-	 * @param clientChannel
-	 * @param eventOwner
-	 * @return
-	 * @throws IOException
 	 */
 	private HTTPProxyEvent readEventRequestHeader(
 			final SocketChannel clientChannel, HTTPProxyEvent eventOwner)
@@ -131,7 +157,7 @@ public class HTTPRequestEventHandler {
 			this.logger.debug(header.toString());
 
 			final HTTPProxyEvent event = new HTTPProxyEvent(
-					new HTTPRequestImpl(header, new HTTPBaseReader()),
+					new HTTPRequestImpl(header, new HTTPBaseReader(header)),
 					clientChannel);
 
 			this.readingDataSockets.put(clientChannel, event);
@@ -150,34 +176,8 @@ public class HTTPRequestEventHandler {
 		return eventOwner;
 	}
 
-	public HTTPProxyEvent handle(final ServerDataEvent serverEvent)
-			throws IOException {
-		HTTPProxyEvent httpEvent = null;
-
-		this.answer.reset();
-
-		final SocketChannel clientChannel = serverEvent.getChannel();
-
-		this.rawData = ByteBuffer.wrap(serverEvent.getData().array().clone());
-
-		// If we are already building the httpRequest... we build it
-		if (this.isReadingRequestHeaders(clientChannel)) {
-			httpEvent = this.readEventRequestHeader(clientChannel, httpEvent);
-		}
-
-		// TODO: if httpEvent != null we must filter it and send the given error
-		// if we find any.
-
-		// We process all the reading data
-		if (this.isReadingRequestData(clientChannel)) {
-			httpEvent = this.readRequestData(clientChannel);
-		}
-
-		if (httpEvent != null) {
-			httpEvent
-					.setAddress(this.getEventAddress(clientChannel, httpEvent));
-		}
-
-		return httpEvent;
+	private void applyReadersToRequest(final HTTPProxyEvent event) {
+		final HTTPRequest request = event.getRequest();
 	}
+
 }

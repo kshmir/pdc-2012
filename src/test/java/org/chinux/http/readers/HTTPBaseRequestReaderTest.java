@@ -21,7 +21,7 @@ public class HTTPBaseRequestReaderTest {
 
 		final HTTPRequestHeader requestheader1 = new HTTPRequestHeaderImpl(
 				TestUtils.stringFromFile("http/requests/request1.txt"));
-		final HTTPReader requestreader1 = new HTTPBaseReader();
+		final HTTPReader requestreader1 = new HTTPBaseReader(requestheader1);
 		Assert.assertFalse(requestreader1.isFinished());
 		final byte[] ans1 = requestreader1.processData(
 				ByteBuffer.wrap(this.data.getBytes())).array();
@@ -36,7 +36,7 @@ public class HTTPBaseRequestReaderTest {
 		final String request2 = "HEAD / HTTP/1.1\r\n";
 		final HTTPRequestHeader requestheader2 = new HTTPRequestHeaderImpl(
 				request2);
-		final HTTPReader requestreader2 = new HTTPBaseReader();
+		final HTTPReader requestreader2 = new HTTPBaseReader(requestheader2);
 		Assert.assertFalse(requestreader2.isFinished());
 		final byte[] ans2 = requestreader2.processData(
 				ByteBuffer.wrap(this.data.getBytes())).array();
@@ -49,7 +49,7 @@ public class HTTPBaseRequestReaderTest {
 	public void processDataPOSTTest() {
 		final HTTPRequestHeader requestheader3 = new HTTPRequestHeaderImpl(
 				TestUtils.stringFromFile("http/requests/request4.txt"));
-		final HTTPReader requestreader3 = new HTTPBaseReader();
+		final HTTPReader requestreader3 = new HTTPBaseReader(requestheader3);
 		Assert.assertFalse(requestreader3.isFinished());
 		final byte[] ans3 = requestreader3.processData(
 				ByteBuffer.wrap(this.data.getBytes())).array();

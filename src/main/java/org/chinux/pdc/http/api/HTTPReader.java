@@ -19,4 +19,9 @@ public interface HTTPReader {
 	 */
 	public boolean isFinished();
 
+	/**
+	 * @return true if the reader requires the header to be held and not sent
+	 *         until all the request is processed
+	 */
+	public boolean modifiesHeaders();
 }

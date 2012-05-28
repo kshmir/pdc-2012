@@ -1,19 +1,21 @@
 package org.chinux.pdc.http.impl.readers;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import org.apache.log4j.Logger;
 import org.chinux.pdc.http.api.HTTPReader;
 import org.chinux.pdc.http.api.HTTPResponseHeader;
-import org.chinux.pdc.http.util.ChunkedInputStream;
+import org.chinux.pdc.http.util.ChunkedInputTransformer;
 
 public class HTTPChunkedResponseReader implements HTTPReader {
 
 	private HTTPResponseHeader responseHeader;
 	private boolean isFinished = false;
 
-	private StringBuilder builder = new StringBuilder();
-	private ChunkedInputStream inputStream = new ChunkedInputStream();
+	private ByteArrayOutputStream stream = new ByteArrayOutputStream();
+	private ChunkedInputTransformer chunkedTransformer = new ChunkedInputTransformer();
 	private Logger log = Logger.getLogger(this.getClass());
 
 	public HTTPChunkedResponseReader(final HTTPResponseHeader responseHeader) {
@@ -22,27 +24,40 @@ public class HTTPChunkedResponseReader implements HTTPReader {
 
 	@Override
 	public ByteBuffer processData(final ByteBuffer data) {
-		return data;
-		// TODO: Fix this
 
-		// this.inputStream.write(data.array());
-		//
-		// byte[] answer;
-		//
-		// while ((answer = this.inputStream.read()) != null) {
-		// if (answer.length == 0) {
-		// return null;
-		// }
-		// this.builder.append(new String(answer));
-		// }
-		//
-		// this.isFinished = true;
-		// return this.builder.toString().getBytes();
+		this.log.info("Getting data...");
+		this.chunkedTransformer.write(data.array());
+
+		ByteBuffer answer;
+
+		while ((answer = this.chunkedTransformer.read()) != null) {
+			if (answer.array().length == 0) {
+				return null;
+			}
+			try {
+				this.stream.write(answer.array());
+			} catch (final IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+		this.isFinished = true;
+
+		final byte[] bytea = this.stream.toByteArray();
+		this.responseHeader.removeHeader("transfer-encoding");
+		this.responseHeader.addHeader("content-length",
+				String.valueOf(bytea.length));
+		return ByteBuffer.wrap(bytea);
 	}
 
 	@Override
 	public boolean isFinished() {
 		return this.isFinished;
+	}
+
+	@Override
+	public boolean modifiesHeaders() {
+		return true;
 	}
 
 }

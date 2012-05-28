@@ -4,26 +4,52 @@ import java.nio.ByteBuffer;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.chinux.pdc.http.api.HTTPReader;
+import org.chinux.pdc.http.api.HTTPRequestHeader;
+import org.chinux.pdc.http.api.HTTPResponseHeader;
 
 public class HTTPContentLengthReader implements HTTPReader {
 
-	private int lengthToRead;
+	private Integer lengthToRead;
 	private boolean finished;
-	private Integer currlenght;
+	private Integer currlength;
+	private HTTPResponseHeader respHeader;
+	private HTTPRequestHeader reqHeader;
 
-	public HTTPContentLengthReader(final int lengthToRead) {
-		this.lengthToRead = lengthToRead;
+	public HTTPContentLengthReader(final HTTPRequestHeader reqHeader) {
+		this();
+		this.reqHeader = reqHeader;
+	}
+
+	public HTTPContentLengthReader(final HTTPResponseHeader respHeader) {
+		this();
+		this.respHeader = respHeader;
+	}
+
+	private HTTPContentLengthReader() {
 		this.finished = false;
-		this.currlenght = 0;
+		this.currlength = 0;
+	}
+
+	private int getLengthToRead() {
+		if (this.lengthToRead == null) {
+			if (this.respHeader != null) {
+				this.lengthToRead = Integer.valueOf(this.respHeader
+						.getHeader("content-length"));
+			} else {
+				this.lengthToRead = Integer.valueOf(this.reqHeader
+						.getHeader("content-length"));
+			}
+		}
+		return this.lengthToRead;
 	}
 
 	@Override
 	public ByteBuffer processData(final ByteBuffer data) {
-		final int oldlength = this.currlenght;
-		this.currlenght += data.array().length;
-		if (this.currlenght >= this.lengthToRead) {
+		final int oldlength = this.currlength;
+		this.currlength += data.array().length;
+		if (this.currlength >= this.getLengthToRead()) {
 			this.finished = true;
-			if (this.currlenght > this.lengthToRead) {
+			if (this.currlength > this.getLengthToRead()) {
 				return ByteBuffer.wrap(ArrayUtils.subarray(data.array(), 0,
 						this.lengthToRead - oldlength));
 			}
@@ -37,4 +63,8 @@ public class HTTPContentLengthReader implements HTTPReader {
 		return this.finished;
 	}
 
+	@Override
+	public boolean modifiesHeaders() {
+		return false;
+	}
 }
