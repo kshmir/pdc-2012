@@ -77,7 +77,12 @@ public class ASyncClientDataReceiver extends ClientDataReceiver {
 
 	@Override
 	public void closeConnection(final DataEvent dataEvent) {
-		// TODO Make this
+
+		if (dataEvent instanceof ClientDataEvent) {
+			final ClientDataEvent clientEvent = (ClientDataEvent) dataEvent;
+			this.changeRequests.add(new ChangeRequest(this.clientIPMap
+					.get(clientEvent.getOwner()), ChangeRequest.CLOSE, 0));
+		}
 	}
 
 	@Override
@@ -90,6 +95,13 @@ public class ASyncClientDataReceiver extends ClientDataReceiver {
 
 				SelectionKey key;
 				switch (change.type) {
+				case ChangeRequest.CLOSE:
+					try {
+						change.socket.close();
+					} catch (final IOException e) {
+						e.printStackTrace();
+					}
+					break;
 				case ChangeRequest.CHANGEOPS:
 					key = change.socket.keyFor(this.selector);
 					key.interestOps(change.ops);
