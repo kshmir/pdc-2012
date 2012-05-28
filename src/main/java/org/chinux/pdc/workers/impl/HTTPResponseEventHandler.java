@@ -15,7 +15,9 @@ import org.chinux.pdc.http.impl.HTTPResponseHeaderImpl;
 import org.chinux.pdc.http.impl.HTTPResponseImpl;
 import org.chinux.pdc.http.impl.readers.HTTPChunkedResponseReader;
 import org.chinux.pdc.http.impl.readers.HTTPContentLengthReader;
+import org.chinux.pdc.http.impl.readers.HTTPGzipReader;
 import org.chinux.pdc.http.impl.readers.HTTPImageResponseReader;
+import org.chinux.pdc.http.impl.readers.HTTPL33tEncoder;
 import org.chinux.pdc.nio.events.impl.ClientDataEvent;
 
 public class HTTPResponseEventHandler {
@@ -148,7 +150,7 @@ public class HTTPResponseEventHandler {
 			response.getBodyReader().addResponseReader(
 					new HTTPContentLengthReader(response.getHeaders()), 100);
 		} else if (!this.hasContentLength(response)
-				&& !this.mustDecodeChunked(response)) {
+				&& !this.hasEncodingChunked(response)) {
 			// CRLF ended
 		}
 
@@ -161,6 +163,33 @@ public class HTTPResponseEventHandler {
 			response.getBodyReader().addResponseReader(
 					new HTTPChunkedResponseReader(response.getHeaders()), 0);
 		}
+
+		if (this.isGzipped(response)) {
+			response.getBodyReader().addResponseReader(
+					new HTTPGzipReader(response.getHeaders()), 20);
+		}
+
+		/* for l33t translation */
+		if (this.isTextPlain(response)) {
+			response.getBodyReader().addResponseReader(
+					new HTTPL33tEncoder(response.getHeaders()), 50);
+		}
+	}
+
+	private boolean isGzipped(final HTTPResponse response) {
+		if (response.getHeaders().getHeader("Content-Encoding") != null) {
+			return response.getHeaders().getHeader("Content-Encoding")
+					.contains("gzip");
+		}
+		return false;
+	}
+
+	private boolean isTextPlain(final HTTPResponse response) {
+		if (response.getHeaders().getHeader("Content-Type") != null) {
+			return response.getHeaders().getHeader("Content-Type")
+					.contains("text/plain");
+		}
+		return false;
 	}
 
 	private boolean hasContentLength(final HTTPResponse response) {

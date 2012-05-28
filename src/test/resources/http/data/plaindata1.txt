@@ -1,0 +1,21 @@
+15.4 Location Headers and Spoofing
+
+If a single server supports multiple organizations that do not trust one another, then it MUST check the values of Location and Content- Location headers in responses that are generated under control of said organizations to make sure that they do not attempt to invalidate resources over which they have no authority.
+
+15.5 Content-Disposition Issues
+
+RFC 1806 [35], from which the often implemented Content-Disposition (see section 19.5.1) header in HTTP is derived, has a number of very serious security considerations. Content-Disposition is not part of the HTTP standard, but since it is widely implemented, we are documenting its use and risks for implementors. See RFC 2183 [49] (which updates RFC 1806) for details.
+
+15.6 Authentication Credentials and Idle Clients
+
+Existing HTTP clients and user agents typically retain authentication information indefinitely. HTTP/1.1. does not provide a method for a server to direct clients to discard these cached credentials. This is a significant defect that requires further extensions to HTTP. Circumstances under which credential caching can interfere with the application's security model include but are not limited to:
+
+      - Clients which have been idle for an extended period following
+        which the server might wish to cause the client to reprompt the
+        user for credentials.
+      - Applications which include a session termination indication
+        (such as a `logout' or `commit' button on a page) after which
+        the server side of the application `knows' that there is no
+        further reason for the client to retain the credentials.
+This is currently under separate study. There are a number of work- arounds to parts of this problem, and we encourage the use of password protection in screen savers, idle time-outs, and other methods which mitigate the security problems inherent in this problem. In particular, user agents which cache credentials are encouraged to provide a readily accessible mechanism for discarding cached credentials under user control.
+
