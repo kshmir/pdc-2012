@@ -111,8 +111,6 @@ public class HTTPResponseEventHandler {
 		final HTTPResponseHeader header = new HTTPResponseHeaderImpl(
 				headerString);
 
-		this.event.setCanSend(true);
-
 		final HTTPResponse response = new HTTPResponseImpl(header,
 				new HTTPBaseReader(header));
 
@@ -120,14 +118,19 @@ public class HTTPResponseEventHandler {
 
 		this.applyReadersToResponse(response);
 
-		try {
-			stream.write(isoCharset.encode(CharBuffer.wrap(header.toString()))
-					.array());
-		} catch (final IOException e) {
-			e.printStackTrace();
-		}
-
 		this.event.setResponse(response);
+
+		this.event.setCanSend(!this.event.getResponse().getBodyReader()
+				.modifiesHeaders());
+
+		if (this.event.canSend()) {
+			try {
+				stream.write(isoCharset.encode(
+						CharBuffer.wrap(header.toString())).array());
+			} catch (final IOException e) {
+				e.printStackTrace();
+			}
+		}
 
 		if (headerAndBody.length > 1) {
 			rawData = ByteBuffer.wrap(isoCharset.encode(headerAndBody[1])

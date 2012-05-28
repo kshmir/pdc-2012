@@ -56,7 +56,6 @@ public class HTTPImageResponseReader implements HTTPReader {
 		}
 
 		if (this.stream.size() >= this.getBytesToRead()) {
-
 			this.finished = true;
 			final ByteBuffer buffer = this.flip(this.stream);
 			this.responseHeader.addHeader("content-length",
