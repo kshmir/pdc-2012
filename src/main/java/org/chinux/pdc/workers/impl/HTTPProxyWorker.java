@@ -3,6 +3,7 @@ package org.chinux.pdc.workers.impl;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
 import java.util.HashSet;
 import java.util.Set;
@@ -10,6 +11,7 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 import org.chinux.pdc.nio.events.api.DataEvent;
 import org.chinux.pdc.nio.events.impl.ClientDataEvent;
+import org.chinux.pdc.nio.events.impl.ErrorDataEvent;
 import org.chinux.pdc.nio.events.impl.ServerDataEvent;
 import org.chinux.pdc.nio.receivers.api.DataReceiver;
 
@@ -22,8 +24,8 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 	private Set<HTTPProxyEvent> receivedRequests = new HashSet<HTTPProxyEvent>();
 
 	private DataReceiver<DataEvent> clientDataReceiver = null;
-
 	private DataReceiver<DataEvent> serverDataReceiver = null;
+
 	private HTTPRequestEventHandler requestEventHandler;
 
 	public void setClientDataReceiver(
@@ -36,22 +38,37 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 		this.serverDataReceiver = serverDataReceiver;
 	}
 
+	private boolean clientDisconnectedForEvent(final HTTPProxyEvent event) {
+		return !event.getSocketChannel().isConnected();
+	}
+
 	@Override
 	protected DataEvent DoWork(final ClientDataEvent clientEvent)
 			throws IOException {
 		final HTTPProxyEvent event = (HTTPProxyEvent) clientEvent.getOwner();
 
-		final HTTPResponseEventHandler eventHandler = new HTTPResponseEventHandler(
-				event);
+		DataEvent e = null;
+		if (this.clientDisconnectedForEvent(event)) {
+			e = new ClientDataEvent(null, this.clientDataReceiver, null, event,
+					null);
+			e.setCanClose(true);
+			e.setCanSend(false);
 
-		eventHandler.handle(this.outputBuffer, clientEvent);
+		} else {
 
-		final DataEvent e = new ServerDataEvent(event.getSocketChannel(),
-				ByteBuffer.wrap(this.outputBuffer.toByteArray().clone()),
-				this.serverDataReceiver);
+			final HTTPResponseEventHandler eventHandler = new HTTPResponseEventHandler(
+					event);
 
-		e.setCanClose(event.canClose());
-		e.setCanSend(event.canSend());
+			eventHandler.handle(this.outputBuffer, clientEvent);
+
+			e = new ServerDataEvent(event.getSocketChannel(),
+					ByteBuffer.wrap(this.outputBuffer.toByteArray().clone()),
+					this.serverDataReceiver);
+
+			e.setCanClose(event.canClose());
+			e.setCanSend(event.canSend());
+
+		}
 
 		this.logger.debug(clientEvent.getData());
 
@@ -69,7 +86,8 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 		final DataEvent e = new ClientDataEvent(
 				ByteBuffer.wrap(this.outputBuffer.toByteArray()),
 				this.clientDataReceiver,
-				(httpEvent != null) ? httpEvent.getAddress() : null, httpEvent);
+				(httpEvent != null) ? httpEvent.getAddress() : null, httpEvent,
+				(httpEvent != null) ? httpEvent.getSocketChannel() : null);
 
 		// If the client doesn't send back this HTTPEvent, we must expire it
 		// later on.
@@ -78,7 +96,7 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 		}
 
 		if (httpEvent != null) {
-			e.setCanClose(httpEvent.canClose());
+			e.setCanClose(false && httpEvent.canClose());
 			e.setCanSend(httpEvent.canSend());
 		} else {
 			e.setCanClose(false);
@@ -96,6 +114,23 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 					this.outputBuffer);
 		}
 		return this.requestEventHandler;
+	}
+
+	@Override
+	protected DataEvent DoWork(final ErrorDataEvent errorEvent)
+			throws IOException {
+
+		switch (errorEvent.getErrorType()) {
+		case ErrorDataEvent.PROXY_CLIENT_DISCONNECT:
+			final SocketChannel socketWhoDisconnected = (SocketChannel) errorEvent
+					.getOwner();
+
+			break;
+		}
+
+		errorEvent.setCanClose(false);
+		errorEvent.setCanSend(false);
+		return errorEvent;
 	}
 
 }

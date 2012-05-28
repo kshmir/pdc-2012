@@ -14,23 +14,31 @@ import org.chinux.pdc.nio.receivers.api.DataReceiver;
 public class ClientDataEvent extends DataEvent {
 
 	private InetAddress address;
-	private Object owner;
+	private Object owner; // The owner on a clientDataEvent can be a
+							// HTTPProxyEvent
+	private Object key; // The key of a clientDataEvent can be a SocketChannel
+
+	public ClientDataEvent(final ByteBuffer data, final Object owner,
+			final Object key) {
+		this(data, null, null, owner, key);
+	}
 
 	public ClientDataEvent(final ByteBuffer data, final Object owner) {
-		this(data, null, null, owner);
+		this(data, null, null, owner, null);
 	}
 
 	public ClientDataEvent(final ByteBuffer data, final InetAddress address,
 			final Object owner) {
-		this(data, null, address, owner);
+		this(data, null, address, owner, null);
 	}
 
 	public ClientDataEvent(final ByteBuffer data,
 			final DataReceiver<DataEvent> receiver, final InetAddress address,
-			final Object owner) {
+			final Object owner, final Object key) {
 		super(data, receiver);
 		this.address = address;
 		this.owner = owner;
+		this.key = key;
 	}
 
 	/**

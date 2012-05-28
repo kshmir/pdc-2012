@@ -2,6 +2,7 @@ package org.chinux.pdc.nio.handlers.impl;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.CancelledKeyException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
@@ -15,6 +16,7 @@ import java.util.Map;
 
 import org.chinux.pdc.nio.dispatchers.EventDispatcher;
 import org.chinux.pdc.nio.events.api.DataEvent;
+import org.chinux.pdc.nio.events.impl.ErrorDataEvent;
 import org.chinux.pdc.nio.events.impl.ServerDataEvent;
 import org.chinux.pdc.nio.handlers.api.NIOServerHandler;
 import org.chinux.pdc.nio.receivers.api.DataReceiver;
@@ -147,31 +149,37 @@ public class ServerHandler implements NIOServerHandler, DataReceiver<DataEvent> 
 	}
 
 	@Override
-	public void handleWrite(final SelectionKey key) throws IOException {
+	public void handleWrite(final SelectionKey key) {
 		final SocketChannel socketChannel = (SocketChannel) key.channel();
 
-		synchronized (this.pendingData) {
-			final ArrayList<ByteBuffer> queue = this.pendingData
-					.get(socketChannel);
+		try {
 
-			// Write until there's not more data ...
-			while (!queue.isEmpty()) {
-				final ByteBuffer buf = queue.get(0);
-				// TODO: Handle broken pipe
-				socketChannel.write(buf);
-				if (buf.remaining() > 0) {
-					// ... or the socket's buffer fills up
-					break;
+			synchronized (this.pendingData) {
+				final ArrayList<ByteBuffer> queue = this.pendingData
+						.get(socketChannel);
+
+				// Write until there's not more data ...
+				while (queue != null && !queue.isEmpty()) {
+					final ByteBuffer buf = queue.get(0);
+
+					socketChannel.write(buf);
+					if (buf.remaining() > 0) {
+						// ... or the socket's buffer fills up
+						break;
+					}
+					queue.remove(0);
 				}
-				queue.remove(0);
-			}
 
-			if (queue.isEmpty()) {
-				// We wrote away all data, so we're no longer interested
-				// in writing on this socket. Switch back to waiting for
-				// data.
-				key.interestOps(SelectionKey.OP_READ);
+				if (queue == null || queue.isEmpty()) {
+					// We wrote away all data, so we're no longer interested
+					// in writing on this socket. Switch back to waiting for
+					// data.
+					key.interestOps(SelectionKey.OP_READ);
+				}
 			}
+		} catch (final IOException e) {
+			this.dispatcher.processData(new ErrorDataEvent(
+					ErrorDataEvent.PROXY_CLIENT_DISCONNECT, socketChannel));
 		}
 	}
 
@@ -187,8 +195,19 @@ public class ServerHandler implements NIOServerHandler, DataReceiver<DataEvent> 
 				case ChangeRequest.CHANGEOPS:
 					try {
 						key = change.socket.keyFor(this.selector);
-						key.interestOps(change.ops);
+
+						if (key == null) {
+							this.dispatcher.processData(new ErrorDataEvent(
+									ErrorDataEvent.PROXY_CLIENT_DISCONNECT,
+									change.socket));
+						} else {
+							key.interestOps(change.ops);
+						}
+
+					} catch (final CancelledKeyException e) {
+						// TODO: Log server went off prematurely
 					} catch (final Exception e) {
+						e.printStackTrace();
 					}
 					break;
 				case ChangeRequest.CLOSE:
@@ -196,7 +215,6 @@ public class ServerHandler implements NIOServerHandler, DataReceiver<DataEvent> 
 					try {
 						change.socket.close();
 					} catch (final IOException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 					key.cancel();
