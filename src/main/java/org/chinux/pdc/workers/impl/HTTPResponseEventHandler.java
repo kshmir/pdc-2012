@@ -15,6 +15,7 @@ import org.chinux.pdc.http.impl.HTTPResponseHeaderImpl;
 import org.chinux.pdc.http.impl.HTTPResponseImpl;
 import org.chinux.pdc.http.impl.readers.HTTPChunkedResponseReader;
 import org.chinux.pdc.http.impl.readers.HTTPContentLengthReader;
+import org.chinux.pdc.http.impl.readers.HTTPImageResponseReader;
 import org.chinux.pdc.nio.events.impl.ClientDataEvent;
 
 public class HTTPResponseEventHandler {
@@ -110,21 +111,26 @@ public class HTTPResponseEventHandler {
 		final HTTPResponseHeader header = new HTTPResponseHeaderImpl(
 				headerString);
 
-		this.event.setCanSend(true);
-
 		final HTTPResponse response = new HTTPResponseImpl(header,
 				new HTTPBaseReader(header));
 
+		logger.debug(header.toString());
+
 		this.applyReadersToResponse(response);
 
-		try {
-			stream.write(isoCharset.encode(CharBuffer.wrap(header.toString()))
-					.array());
-		} catch (final IOException e) {
-			e.printStackTrace();
-		}
-
 		this.event.setResponse(response);
+
+		this.event.setCanSend(!this.event.getResponse().getBodyReader()
+				.modifiesHeaders());
+
+		if (this.event.canSend()) {
+			try {
+				stream.write(isoCharset.encode(
+						CharBuffer.wrap(header.toString())).array());
+			} catch (final IOException e) {
+				e.printStackTrace();
+			}
+		}
 
 		if (headerAndBody.length > 1) {
 			rawData = ByteBuffer.wrap(isoCharset.encode(headerAndBody[1])
@@ -144,6 +150,11 @@ public class HTTPResponseEventHandler {
 		} else if (!this.hasContentLength(response)
 				&& !this.mustDecodeChunked(response)) {
 			// CRLF ended
+		}
+
+		if (this.hasImageMIME(response)) {
+			response.getBodyReader().addResponseReader(
+					new HTTPImageResponseReader(response.getHeaders()), 50);
 		}
 
 		if (this.mustDecodeChunked(response)) {
@@ -166,6 +177,7 @@ public class HTTPResponseEventHandler {
 		if (contenttype == null) {
 			return false;
 		}
+
 		return contenttype.startsWith("image/");
 	}
 

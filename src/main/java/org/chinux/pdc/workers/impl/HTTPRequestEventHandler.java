@@ -150,9 +150,6 @@ public class HTTPRequestEventHandler {
 
 			// TODO: Filtering
 
-			this.outputBuffer.write(isoCharset.encode(
-					CharBuffer.wrap(header.toString())).array());
-
 			logger.debug(header.toString());
 
 			final HTTPProxyEvent event = new HTTPProxyEvent(
@@ -163,7 +160,13 @@ public class HTTPRequestEventHandler {
 
 			proxyEvent = event;
 
-			proxyEvent.setCanSend(true);
+			proxyEvent.setCanSend(!event.getRequest().getBodyReader()
+					.modifiesHeaders());
+
+			if (proxyEvent.canSend()) {
+				this.outputBuffer.write(isoCharset.encode(
+						CharBuffer.wrap(header.toString())).array());
+			}
 
 			if (headerAndBody.length > 1) {
 				this.rawData = ByteBuffer.wrap(isoCharset.encode(

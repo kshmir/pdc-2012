@@ -94,6 +94,11 @@ public class HTTPBaseReader implements HTTPReader {
 
 	@Override
 	public boolean modifiesHeaders() {
+		for (final HTTPReader reader : this.readers) {
+			if (reader.modifiesHeaders()) {
+				return true;
+			}
+		}
 		return false;
 	}
 }
