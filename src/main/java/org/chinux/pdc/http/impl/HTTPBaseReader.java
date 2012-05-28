@@ -16,7 +16,7 @@ import org.chinux.pdc.http.api.HTTPReader;
 
 public class HTTPBaseReader implements HTTPReader {
 
-	private Logger log = Logger.getLogger(this.getClass());
+	private static Logger log = Logger.getLogger(HTTPBaseReader.class);
 	private boolean finished;
 	private boolean mustConcatHeaders;
 	private HTTPMessageHeader header;
@@ -55,12 +55,11 @@ public class HTTPBaseReader implements HTTPReader {
 
 	@Override
 	public ByteBuffer processData(ByteBuffer data) {
+		this.finished = true;
 		for (final HTTPReader reader : this.readers) {
-			this.log.info("Logging with " + reader);
 			data = reader.processData(data);
 
 			if (data == null) {
-				this.log.info("Stuck on " + reader);
 				this.finished = false;
 				return null;
 			} else {

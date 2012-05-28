@@ -110,19 +110,6 @@ public class HTTPResponseEventHandler {
 		final HTTPResponseHeader header = new HTTPResponseHeaderImpl(
 				headerString);
 
-		// TODO: Call header filter!
-		// final String contenttype = header.getHeader("Content-Type");
-		//
-		// final boolean mustParseChunked =
-		// header.getHeader("Transfer-Encoding") != null
-		// && header.getHeader("Transfer-Encoding").equals("chunked")
-		// && (contenttype != null && (contenttype.startsWith("image/") ||
-		// contenttype
-		// .equals("text/plain")));
-		//
-		// if (mustParseChunked) {
-		// header.removeHeader("transfer-encoding");
-		// }
 		this.event.setCanSend(true);
 
 		final HTTPResponse response = new HTTPResponseImpl(header,
@@ -140,8 +127,8 @@ public class HTTPResponseEventHandler {
 		this.event.setResponse(response);
 
 		if (headerAndBody.length > 1) {
-			rawData = ByteBuffer.wrap(isoCharset
-					.encode(CharBuffer.wrap(headerAndBody[1])).array().clone());
+			rawData = ByteBuffer.wrap(isoCharset.encode(headerAndBody[1])
+					.array().clone());
 		} else {
 			rawData = ByteBuffer.allocate(0);
 		}

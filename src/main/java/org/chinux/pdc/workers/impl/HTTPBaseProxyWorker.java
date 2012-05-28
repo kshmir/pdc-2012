@@ -22,7 +22,6 @@ public abstract class HTTPBaseProxyWorker implements Worker<DataEvent> {
 			try {
 				return this.DoWork((ClientDataEvent) dataEvent);
 			} catch (final UnsupportedEncodingException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}

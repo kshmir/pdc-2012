@@ -17,8 +17,7 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 
 	private static Charset isoCharset = Charset.forName("ISO-8859-1");
 	private Logger logger = Logger.getLogger(this.getClass());
-	private final ByteArrayOutputStream answer = new ByteArrayOutputStream();
-	private ByteBuffer rawData;
+	private final ByteArrayOutputStream outputBuffer = new ByteArrayOutputStream();
 
 	private Set<HTTPProxyEvent> receivedRequests = new HashSet<HTTPProxyEvent>();
 
@@ -45,10 +44,10 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 		final HTTPResponseEventHandler eventHandler = new HTTPResponseEventHandler(
 				event);
 
-		eventHandler.handle(this.answer, clientEvent);
+		eventHandler.handle(this.outputBuffer, clientEvent);
 
 		final DataEvent e = new ServerDataEvent(event.getSocketChannel(),
-				ByteBuffer.wrap(this.answer.toByteArray().clone()),
+				ByteBuffer.wrap(this.outputBuffer.toByteArray().clone()),
 				this.serverDataReceiver);
 
 		e.setCanClose(event.canClose());
@@ -67,8 +66,9 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 
 		final HTTPProxyEvent httpEvent = handler.handle(serverEvent);
 
-		final DataEvent e = new ClientDataEvent(ByteBuffer.wrap(this.answer
-				.toByteArray()), this.clientDataReceiver,
+		final DataEvent e = new ClientDataEvent(
+				ByteBuffer.wrap(this.outputBuffer.toByteArray()),
+				this.clientDataReceiver,
 				(httpEvent != null) ? httpEvent.getAddress() : null, httpEvent);
 
 		// If the client doesn't send back this HTTPEvent, we must expire it
@@ -92,7 +92,8 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 
 	private HTTPRequestEventHandler getRequestEventHandler() {
 		if (this.requestEventHandler == null) {
-			this.requestEventHandler = new HTTPRequestEventHandler(this.answer);
+			this.requestEventHandler = new HTTPRequestEventHandler(
+					this.outputBuffer);
 		}
 		return this.requestEventHandler;
 	}

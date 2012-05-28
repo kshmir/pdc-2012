@@ -135,8 +135,8 @@ public class HTTPProxyEvent {
 	public void setResponse(final HTTPResponse response) {
 		this.response = response;
 	}
-	
+
 	public Configuration getEventConfiguration() {
-		return eventConfiguration;
+		return this.eventConfiguration;
 	}
 }

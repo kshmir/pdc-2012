@@ -27,7 +27,7 @@ public class HTTPRequestEventHandler {
 	private static Pattern headerCutPattern = Pattern.compile("(\\r\\n\\r\\n)",
 			Pattern.MULTILINE);
 
-	private ByteArrayOutputStream answer;
+	private ByteArrayOutputStream outputBuffer;
 	private ByteBuffer rawData;
 
 	private Map<SocketChannel, StringBuilder> readingServerSockets = new HashMap<SocketChannel, StringBuilder>();
@@ -38,7 +38,7 @@ public class HTTPRequestEventHandler {
 			throws IOException {
 		HTTPProxyEvent httpEvent = null;
 
-		this.answer.reset();
+		this.outputBuffer.reset();
 
 		final SocketChannel clientChannel = serverEvent.getChannel();
 
@@ -48,9 +48,6 @@ public class HTTPRequestEventHandler {
 		if (this.isReadingRequestHeaders(clientChannel)) {
 			httpEvent = this.readEventRequestHeader(clientChannel, httpEvent);
 		}
-
-		// TODO: if httpEvent != null we must filter it and send the given error
-		// if we find any.
 
 		// We process all the reading data
 		if (this.isReadingRequestData(clientChannel)) {
@@ -81,7 +78,7 @@ public class HTTPRequestEventHandler {
 	}
 
 	public HTTPRequestEventHandler(final ByteArrayOutputStream answerStream) {
-		this.answer = answerStream;
+		this.outputBuffer = answerStream;
 	}
 
 	private InetAddress getEventAddress(final SocketChannel clientChannel,
@@ -112,7 +109,7 @@ public class HTTPRequestEventHandler {
 
 		try {
 			if (event.canSend()) {
-				this.answer.write(data.array());
+				this.outputBuffer.write(data.array());
 			}
 		} catch (final Exception e1) {
 			e1.printStackTrace();
@@ -120,10 +117,10 @@ public class HTTPRequestEventHandler {
 
 		httpEvent = event;
 
-		event.setCanClose(true);
 		if (request.getBodyReader().isFinished()) {
 			this.readingDataSockets.remove(clientChannel);
 			this.readingServerSockets.remove(clientChannel);
+			event.setCanClose(true);
 		}
 		return httpEvent;
 	}
@@ -133,7 +130,7 @@ public class HTTPRequestEventHandler {
 	 * Request Header
 	 */
 	private HTTPProxyEvent readEventRequestHeader(
-			final SocketChannel clientChannel, HTTPProxyEvent eventOwner)
+			final SocketChannel clientChannel, HTTPProxyEvent proxyEvent)
 			throws IOException {
 		final StringBuilder pendingHeader = this.readingServerSockets
 				.get(clientChannel);
@@ -151,10 +148,12 @@ public class HTTPRequestEventHandler {
 			final HTTPRequestHeader header = new HTTPRequestHeaderImpl(
 					headerString);
 
-			this.answer.write(isoCharset.encode(
+			// TODO: Filtering
+
+			this.outputBuffer.write(isoCharset.encode(
 					CharBuffer.wrap(header.toString())).array());
 
-			this.logger.debug(header.toString());
+			logger.debug(header.toString());
 
 			final HTTPProxyEvent event = new HTTPProxyEvent(
 					new HTTPRequestImpl(header, new HTTPBaseReader(header)),
@@ -162,18 +161,18 @@ public class HTTPRequestEventHandler {
 
 			this.readingDataSockets.put(clientChannel, event);
 
-			eventOwner = event;
+			proxyEvent = event;
 
-			eventOwner.setCanSend(true);
+			proxyEvent.setCanSend(true);
 
 			if (headerAndBody.length > 1) {
 				this.rawData = ByteBuffer.wrap(isoCharset.encode(
-						CharBuffer.wrap(headerAndBody[1])).array());
+						headerAndBody[1]).array());
 			} else {
 				this.rawData = ByteBuffer.allocate(0);
 			}
 		}
-		return eventOwner;
+		return proxyEvent;
 	}
 
 	private void applyReadersToRequest(final HTTPProxyEvent event) {
