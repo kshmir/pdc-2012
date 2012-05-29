@@ -14,31 +14,32 @@ import org.chinux.pdc.nio.receivers.api.DataReceiver;
 public class ClientDataEvent extends DataEvent {
 
 	private InetAddress address;
-	private Object owner; // The owner on a clientDataEvent can be a
-							// HTTPProxyEvent
-	private Object key; // The key of a clientDataEvent can be a SocketChannel
+	private Object attachment; // The attachment on a clientDataEvent can be a
+								// HTTPProxyEvent
+	private Object owner; // The owner of a clientDataEvent can be a
+							// SocketChannel
 
-	public ClientDataEvent(final ByteBuffer data, final Object owner,
-			final Object key) {
-		this(data, null, null, owner, key);
+	public ClientDataEvent(final ByteBuffer data, final Object attachment,
+			final Object owner) {
+		this(data, null, null, attachment, owner);
 	}
 
-	public ClientDataEvent(final ByteBuffer data, final Object owner) {
-		this(data, null, null, owner, null);
+	public ClientDataEvent(final ByteBuffer data, final Object attachment) {
+		this(data, null, null, attachment, null);
 	}
 
 	public ClientDataEvent(final ByteBuffer data, final InetAddress address,
-			final Object owner) {
-		this(data, null, address, owner, null);
+			final Object attachment) {
+		this(data, null, address, attachment, null);
 	}
 
 	public ClientDataEvent(final ByteBuffer data,
 			final DataReceiver<DataEvent> receiver, final InetAddress address,
-			final Object owner, final Object key) {
+			final Object attachment, final Object owner) {
 		super(data, receiver);
 		this.address = address;
+		this.attachment = attachment;
 		this.owner = owner;
-		this.key = key;
 	}
 
 	/**
@@ -51,19 +52,27 @@ public class ClientDataEvent extends DataEvent {
 	}
 
 	/**
-	 * Represents the owner of the event, which could be any instance of an
-	 * object, all consequent dataEvents must be of the same key
+	 * Represents the attachment of the event, which could be any instance of an
+	 * object, all consequent dataEvents must be of the same owner
 	 * 
 	 * @return
 	 */
-	public Object getOwner() {
-		return this.owner;
+	public Object getAttachment() {
+		return this.attachment;
 	}
 
 	@Override
 	public String toString() {
-		return "ClientDataEvent [address=" + this.address + ", owner="
-				+ this.owner + ", toString()=" + super.toString() + "]";
+		return "ClientDataEvent [address=" + this.address + ", attachment="
+				+ this.attachment + ", toString()=" + super.toString() + "]";
+	}
+
+	public Object getOwner() {
+		return this.owner;
+	}
+
+	public void setOwner(final Object owner) {
+		this.owner = owner;
 	}
 
 }

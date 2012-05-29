@@ -3,7 +3,6 @@ package org.chinux.pdc.workers.impl;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
 import java.util.HashSet;
 import java.util.Set;
@@ -45,7 +44,8 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 	@Override
 	protected DataEvent DoWork(final ClientDataEvent clientEvent)
 			throws IOException {
-		final HTTPProxyEvent event = (HTTPProxyEvent) clientEvent.getOwner();
+		final HTTPProxyEvent event = (HTTPProxyEvent) clientEvent
+				.getAttachment();
 
 		DataEvent e = null;
 		if (this.clientDisconnectedForEvent(event)) {
@@ -65,7 +65,7 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 					ByteBuffer.wrap(this.outputBuffer.toByteArray().clone()),
 					this.serverDataReceiver);
 
-			e.setCanClose(event.canClose());
+			e.setCanClose(false && event.canClose());
 			e.setCanSend(event.canSend());
 
 		}
@@ -96,7 +96,7 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 		}
 
 		if (httpEvent != null) {
-			e.setCanClose(false && httpEvent.canClose());
+			// e.setCanClose(false && httpEvent.canClose());
 			e.setCanSend(httpEvent.canSend());
 		} else {
 			e.setCanClose(false);
@@ -120,17 +120,29 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 	protected DataEvent DoWork(final ErrorDataEvent errorEvent)
 			throws IOException {
 
+		ErrorDataEvent answerDataEvent = null;
 		switch (errorEvent.getErrorType()) {
 		case ErrorDataEvent.PROXY_CLIENT_DISCONNECT:
-			final SocketChannel socketWhoDisconnected = (SocketChannel) errorEvent
-					.getOwner();
+			// Nothing is done here yet.
+			errorEvent.setCanClose(false);
+			errorEvent.setCanSend(false);
+			answerDataEvent = errorEvent;
+			break;
+		case ErrorDataEvent.REMOTE_CLIENT_DISCONNECT:
 
+			final HTTPProxyEvent event = (HTTPProxyEvent) errorEvent.getOwner();
+			answerDataEvent = new ErrorDataEvent(
+					ErrorDataEvent.REMOTE_CLIENT_DISCONNECT,
+					errorEvent.getAttachment(), event.getSocketChannel());
+			// We must tell the server to close itself
+			answerDataEvent.getReceivers().addReceiver(this.serverDataReceiver);
+			// TODO: Return data before closing!!!
+			answerDataEvent.setCanSend(false);
+			answerDataEvent.setCanClose(false);
 			break;
 		}
 
-		errorEvent.setCanClose(false);
-		errorEvent.setCanSend(false);
-		return errorEvent;
+		return answerDataEvent;
 	}
 
 }

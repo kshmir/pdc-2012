@@ -68,7 +68,7 @@ public class HttpProxyWorkerTest {
 
 		Assert.assertEquals(get, new String(answer.getData().array()));
 		Assert.assertEquals(true, answer.canSend());
-		Assert.assertNotNull(answer.getOwner());
+		Assert.assertNotNull(answer.getAttachment());
 	}
 
 	@Ignore
@@ -84,7 +84,7 @@ public class HttpProxyWorkerTest {
 
 		Assert.assertEquals(get, new String(answer.getData().array()));
 		Assert.assertEquals(true, answer.canSend());
-		Assert.assertNotNull(answer.getOwner());
+		Assert.assertNotNull(answer.getAttachment());
 	}
 
 	@Ignore
@@ -100,7 +100,7 @@ public class HttpProxyWorkerTest {
 
 		Assert.assertEquals(get, new String(answer.getData().array()));
 		Assert.assertEquals(true, answer.canSend());
-		Assert.assertNotNull(answer.getOwner());
+		Assert.assertNotNull(answer.getAttachment());
 	}
 
 	@Ignore
@@ -121,7 +121,7 @@ public class HttpProxyWorkerTest {
 
 		Assert.assertEquals(get + get2, new String(answer.getData().array()));
 		Assert.assertEquals(true, answer.canSend());
-		Assert.assertNotNull(answer.getOwner());
+		Assert.assertNotNull(answer.getAttachment());
 	}
 
 	private ClientDataEvent testWorkerRequest(final String get,

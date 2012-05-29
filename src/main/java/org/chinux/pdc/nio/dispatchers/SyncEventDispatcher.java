@@ -23,7 +23,7 @@ public class SyncEventDispatcher<T extends DataEvent> implements
 				processed.getReceiver().receiveEvent(processed);
 			}
 
-			if (event.canClose()) {
+			if (processed.canClose()) {
 				processed.getReceiver().closeConnection(processed);
 			}
 		} catch (final IOException e) {

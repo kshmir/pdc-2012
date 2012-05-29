@@ -9,6 +9,7 @@ import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
 import org.chinux.pdc.nio.dispatchers.EventDispatcher;
 import org.chinux.pdc.nio.events.api.DataEvent;
 import org.chinux.pdc.nio.events.impl.ClientDataEvent;
@@ -19,6 +20,7 @@ import org.chinux.pdc.nio.util.NIOUtil;
 
 public class ClientHandler implements NIOClientHandler {
 
+	private static Logger log = Logger.getLogger(ClientHandler.class);
 	private ByteBuffer readBuffer;
 	private EventDispatcher<DataEvent> dispatcher;
 	private ClientDataReceiver receiver;
@@ -69,6 +71,7 @@ public class ClientHandler implements NIOClientHandler {
 			// the selection key and close the channel.
 			key.cancel();
 			socketChannel.close();
+			this.handleUnexpectedDisconnect(key);
 			return;
 		}
 
@@ -76,9 +79,10 @@ public class ClientHandler implements NIOClientHandler {
 			// Remote entity shut the socket down cleanly. Do the
 			// same from our end and cancel the channel.
 
-			// TODO: Handle this
+			// TODO: Analizar qué se hace en este caso.
 			key.channel().close();
 			key.cancel();
+			// this.handleDisconnect(socketChannel);
 		}
 
 		// Hand the data off to our worker thread
@@ -106,7 +110,6 @@ public class ClientHandler implements NIOClientHandler {
 				final ByteBuffer buf = queue.get(0);
 				socketChannel.write(buf);
 				if (buf.remaining() > 0) {
-					System.out.println("GETTING OUT!");
 					// ... or the socket's buffer fills up
 					break;
 				}
@@ -114,7 +117,6 @@ public class ClientHandler implements NIOClientHandler {
 			}
 
 			if (queue.isEmpty()) {
-				System.out.println("GETTING OUT!2");
 				key.interestOps(SelectionKey.OP_READ);
 			}
 		}
@@ -127,18 +129,24 @@ public class ClientHandler implements NIOClientHandler {
 
 		try {
 			socketChannel.finishConnect();
+			// Register an interest in writing on this channel
+			key.interestOps(SelectionKey.OP_WRITE);
 		} catch (final IOException e) {
-			e.printStackTrace();
-			// TODO: Handle this
+			this.handleUnexpectedDisconnect(key);
 		}
-
-		// Register an interest in writing on this channel
-		key.interestOps(SelectionKey.OP_WRITE);
 	}
 
 	@Override
 	public void handlePendingChanges() throws ClosedChannelException {
 		this.receiver.handlePendingChanges();
+	}
+
+	@Override
+	public void handleUnexpectedDisconnect(final SelectionKey key) {
+		// Clear buffers and stuff
+		// this.dispatcher.processData(new ErrorDataEvent(
+		// ErrorDataEvent.REMOTE_CLIENT_DISCONNECT, key.channel(), key
+		// .attachment()));
 	}
 
 }
