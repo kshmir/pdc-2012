@@ -5,7 +5,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -32,8 +31,7 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 
 	@Override
 	public DataEvent DoWork(final DataEvent dataEvent) {
-		this.data = Charset.defaultCharset().decode(dataEvent.getData())
-				.toString().split("\r")[0];
+		this.data = new String(dataEvent.getData().array()).split("\n")[0];
 		this.users = new HashMap<String, String>();
 		final String command = this.data.split(" ")[0];
 		ServerDataEvent event;
@@ -90,7 +88,7 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 
 		event = new ServerDataEvent(((ServerDataEvent) dataEvent).getChannel(),
 				ByteBuffer.wrap(resp), dataEvent.getReceiver());
-		event.setCanClose(true);
+		event.setCanClose(false);
 		event.setCanSend(true);
 		return event;
 	}
@@ -147,7 +145,7 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 		}
 		event = new ServerDataEvent(((ServerDataEvent) dataEvent).getChannel(),
 				ByteBuffer.wrap(resp), dataEvent.getReceiver());
-		event.setCanClose(true);
+		event.setCanClose(false);
 		event.setCanSend(true);
 		return event;
 	}
@@ -157,7 +155,7 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 		byte[] resp;
 		if (this.username != null) {
 			if (!this.users.containsKey(this.username)
-					|| command.compareTo(this.users.get(this.username)) != 0) {
+					|| command.trim().compareTo(this.users.get(this.username)) != 0) {
 				resp = "Login Incorrect\n".getBytes();
 				this.username = null;
 			} else {
@@ -165,12 +163,12 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 				resp = "250 Login OK\n".getBytes();
 			}
 		} else {
-			this.username = command;
+			this.username = command.trim();
 			resp = "Enter password: ".getBytes();
 		}
 		event = new ServerDataEvent(((ServerDataEvent) dataEvent).getChannel(),
 				ByteBuffer.wrap(resp), dataEvent.getReceiver());
-		event.setCanClose(true);
+		event.setCanClose(false);
 		event.setCanSend(true);
 		return event;
 	}

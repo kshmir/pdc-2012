@@ -118,9 +118,9 @@ public class HTTPResponseEventHandler {
 
 		logger.debug(header.toString());
 
-		this.applyReadersToResponse(response);
-
 		this.event.setResponse(response);
+
+		this.applyReadersToResponse(this.event);
 
 		this.event.setCanSend(!this.event.getResponse().getBodyReader()
 				.modifiesHeaders());
@@ -144,7 +144,8 @@ public class HTTPResponseEventHandler {
 	}
 
 	// Loads the readers to the HTTPResponse based on the event we have
-	private void applyReadersToResponse(final HTTPResponse response) {
+	private void applyReadersToResponse(final HTTPProxyEvent event) {
+		final HTTPResponse response = event.getResponse();
 		// Si tiene content-length usamos el content-length reader
 		if (this.hasContentLength(response) || this.mustDecodeChunked(response)) {
 			response.getBodyReader().addResponseReader(
@@ -154,7 +155,8 @@ public class HTTPResponseEventHandler {
 			// CRLF ended
 		}
 
-		if (this.hasImageMIME(response)) {
+		if (this.hasImageMIME(response)
+				&& event.getEventConfiguration().isRotateImages()) {
 			response.getBodyReader().addResponseReader(
 					new HTTPImageResponseReader(response.getHeaders()), 50);
 		}
@@ -170,7 +172,8 @@ public class HTTPResponseEventHandler {
 		}
 
 		/* for l33t translation */
-		if (this.isTextPlain(response)) {
+		if (this.isTextPlain(response)
+				&& event.getEventConfiguration().isRotateImages()) {
 			response.getBodyReader().addResponseReader(
 					new HTTPL33tEncoder(response.getHeaders()), 50);
 		}

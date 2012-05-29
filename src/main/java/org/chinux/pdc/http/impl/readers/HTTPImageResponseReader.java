@@ -9,11 +9,13 @@ import java.nio.ByteBuffer;
 
 import javax.imageio.ImageIO;
 
+import org.apache.log4j.Logger;
 import org.chinux.pdc.http.api.HTTPReader;
 import org.chinux.pdc.http.api.HTTPResponseHeader;
 
 public class HTTPImageResponseReader implements HTTPReader {
 
+	private static Logger log = Logger.getLogger(HTTPImageResponseReader.class);
 	private HTTPResponseHeader responseHeader;
 	private boolean finished;
 	private ByteArrayOutputStream stream = new ByteArrayOutputStream();
@@ -60,6 +62,7 @@ public class HTTPImageResponseReader implements HTTPReader {
 			try {
 				buffer = this.flip(this.stream);
 			} catch (final Exception e) {
+				log.error("No se pudo voltear la imagen :(", e);
 				buffer = ByteBuffer.wrap(this.stream.toByteArray());
 			}
 
