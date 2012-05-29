@@ -2,6 +2,8 @@ package org.chinux.pdc.http.api;
 
 public interface HTTPResponseHeader extends HTTPMessageHeader {
 
+	public String getHTTPVersion();
+
 	public void addHeader(String name, String value);
 
 	public boolean containsHeader(String name);

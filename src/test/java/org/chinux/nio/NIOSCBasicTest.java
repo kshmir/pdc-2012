@@ -91,7 +91,7 @@ public class NIOSCBasicTest {
 
 		clientReceiver.receiveEvent(event);
 
-		// 1ms should be enough to receive the data
+		// 100ms should be enough to receive the data
 		service.awaitTermination(100, TimeUnit.MILLISECONDS);
 
 		service.shutdownNow();

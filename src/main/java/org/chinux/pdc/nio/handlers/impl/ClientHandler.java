@@ -83,7 +83,7 @@ public class ClientHandler implements NIOClientHandler {
 			// TODO: Analizar qué se hace en este caso.
 			key.channel().close();
 			key.cancel();
-			// this.handleDisconnect(socketChannel);
+			// this.handleUnexpectedDisconnect(key);
 		}
 
 		// Hand the data off to our worker thread
