@@ -173,7 +173,7 @@ public class HTTPResponseEventHandler {
 
 		/* for l33t translation */
 		if (this.isTextPlain(response)
-				&& event.getEventConfiguration().isRotateImages()) {
+				&& event.getEventConfiguration().isL33t()) {
 			response.getBodyReader().addResponseReader(
 					new HTTPL33tEncoder(response.getHeaders()), 50);
 		}

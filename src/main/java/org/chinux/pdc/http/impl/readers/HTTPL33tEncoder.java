@@ -54,6 +54,8 @@ public class HTTPL33tEncoder implements HTTPReader {
 
 	public static ByteBuffer stringToByteBuffer(final String msg) {
 		try {
+			// TODO: Esto tira exception, hay que arreglarlo, si no se puede
+			// encodear hay que esperar a que se pueda!!!
 			return encoder.encode(CharBuffer.wrap(msg));
 		} catch (final Exception e) {
 			e.printStackTrace();
