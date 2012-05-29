@@ -34,7 +34,7 @@ public class ASyncClientDataReceiver extends ClientDataReceiver {
 
 		SocketChannel socketChannel;
 		synchronized (this.clientIPMap) {
-			socketChannel = this.clientIPMap.get(event.getOwner());
+			socketChannel = this.clientIPMap.get(event.getAttachment());
 
 			if (socketChannel == null) {
 				try {
@@ -45,7 +45,7 @@ public class ASyncClientDataReceiver extends ClientDataReceiver {
 					e.printStackTrace();
 				}
 
-				this.clientIPMap.put(event.getOwner(), socketChannel);
+				this.clientIPMap.put(event.getAttachment(), socketChannel);
 
 				// Queue a channel registration since the caller is not the
 				// selecting thread. As part of the registration we'll register
@@ -55,17 +55,17 @@ public class ASyncClientDataReceiver extends ClientDataReceiver {
 				synchronized (this.changeRequests) {
 					this.changeRequests.add(new ChangeRequest(socketChannel,
 							ChangeRequest.REGISTER, SelectionKey.OP_CONNECT,
-							event.getOwner()));
+							event.getAttachment()));
 				}
 			}
 		}
 
 		synchronized (this.pendingData) {
 			ArrayList<ByteBuffer> queue = this.pendingData
-					.get(event.getOwner());
+					.get(event.getAttachment());
 			if (queue == null) {
 				queue = new ArrayList<ByteBuffer>();
-				this.pendingData.put(event.getOwner(), queue);
+				this.pendingData.put(event.getAttachment(), queue);
 			}
 			queue.add(event.getData());
 		}
@@ -81,7 +81,7 @@ public class ASyncClientDataReceiver extends ClientDataReceiver {
 		if (dataEvent instanceof ClientDataEvent) {
 			final ClientDataEvent clientEvent = (ClientDataEvent) dataEvent;
 			this.changeRequests.add(new ChangeRequest(this.clientIPMap
-					.get(clientEvent.getOwner()), ChangeRequest.CLOSE, 0));
+					.get(clientEvent.getAttachment()), ChangeRequest.CLOSE, 0));
 		}
 	}
 

@@ -42,7 +42,6 @@ public class HTTPImageResponseReader implements HTTPReader {
 	public ByteBuffer processData(final ByteBuffer data) {
 
 		if (this.is300Response() || this.getBytesToRead() == 0) {
-
 			if (data.array().length == 0) {
 				this.finished = true;
 			}
@@ -57,7 +56,14 @@ public class HTTPImageResponseReader implements HTTPReader {
 
 		if (this.stream.size() >= this.getBytesToRead()) {
 			this.finished = true;
-			final ByteBuffer buffer = this.flip(this.stream);
+			ByteBuffer buffer;
+			try {
+				buffer = this.flip(this.stream);
+			} catch (final Exception e) {
+				buffer = ByteBuffer.wrap(this.stream.toByteArray());
+			}
+
+			this.responseHeader.addHeader("X-Image-Rotated", "true");
 			this.responseHeader.addHeader("content-length",
 					String.valueOf(buffer.array().length));
 			return buffer;
