@@ -61,8 +61,8 @@ public class ASyncClientDataReceiver extends ClientDataReceiver {
 		}
 
 		synchronized (this.pendingData) {
-			ArrayList<ByteBuffer> queue = this.pendingData
-					.get(event.getAttachment());
+			ArrayList<ByteBuffer> queue = this.pendingData.get(event
+					.getAttachment());
 			if (queue == null) {
 				queue = new ArrayList<ByteBuffer>();
 				this.pendingData.put(event.getAttachment(), queue);
@@ -81,12 +81,13 @@ public class ASyncClientDataReceiver extends ClientDataReceiver {
 		if (dataEvent instanceof ClientDataEvent) {
 			final ClientDataEvent clientEvent = (ClientDataEvent) dataEvent;
 			this.changeRequests.add(new ChangeRequest(this.clientIPMap
-					.get(clientEvent.getAttachment()), ChangeRequest.CLOSE, 0));
+					.get(((ClientDataEvent) dataEvent).getAttachment()),
+					ChangeRequest.CLOSE, 0, clientEvent.getAttachment()));
 		}
 	}
 
 	@Override
-	public void handlePendingChanges() throws ClosedChannelException {
+	public boolean handlePendingChanges() throws ClosedChannelException {
 
 		synchronized (this.changeRequests) {
 			if (!this.changeRequests.isEmpty()) {
@@ -97,6 +98,13 @@ public class ASyncClientDataReceiver extends ClientDataReceiver {
 				switch (change.type) {
 				case ChangeRequest.CLOSE:
 					try {
+						if (this.pendingData.get(change.attachment) != null
+								&& this.pendingData.get(change.attachment)
+										.size() > 0) {
+							this.changeRequests.add(change);
+							return false;
+						}
+
 						change.socket.close();
 					} catch (final IOException e) {
 						e.printStackTrace();
@@ -111,7 +119,11 @@ public class ASyncClientDataReceiver extends ClientDataReceiver {
 					key.attach(change.attachment);
 					break;
 				}
+			} else {
+				return false;
 			}
 		}
+		return this.changeRequests.size() > 0;
 	}
+
 }

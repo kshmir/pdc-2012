@@ -15,5 +15,5 @@ public interface NIOHandler {
 
 	public void handleWrite(SelectionKey key) throws IOException;
 
-	public void handlePendingChanges() throws ClosedChannelException;
+	public boolean handlePendingChanges() throws ClosedChannelException;
 }

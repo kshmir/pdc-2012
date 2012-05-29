@@ -33,6 +33,8 @@ public class HTTPResponseEventHandler {
 
 	public HTTPResponseEventHandler(final HTTPProxyEvent event) {
 		this.event = event;
+		this.event.setCanClose(false);
+		this.event.setCanSend(false);
 	}
 
 	public void handle(final ByteArrayOutputStream stream,
@@ -166,7 +168,8 @@ public class HTTPResponseEventHandler {
 					new HTTPChunkedResponseReader(response.getHeaders()), 0);
 		}
 
-		if (this.isGzipped(response)) {
+		if (this.isGzipped(response)
+				&& (this.isTextPlain(response) || this.hasImageMIME(response))) {
 			response.getBodyReader().addResponseReader(
 					new HTTPGzipReader(response.getHeaders()), 20);
 		}

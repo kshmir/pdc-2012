@@ -9,7 +9,6 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -102,7 +101,7 @@ public class ServerHandler implements NIOServerHandler, DataReceiver<DataEvent> 
 		synchronized (this.changeRequests) {
 			// Indicate we want the interest ops set changed
 			this.changeRequests.add(new ChangeRequest(event.getChannel(),
-					ChangeRequest.CLOSE, 0));
+					ChangeRequest.CLOSE, 0, event.getChannel()));
 		}
 		this.selector.wakeup();
 	}
@@ -211,55 +210,72 @@ public class ServerHandler implements NIOServerHandler, DataReceiver<DataEvent> 
 	}
 
 	@Override
-	public void handlePendingChanges() {
+	public boolean handlePendingChanges() {
 		synchronized (this.changeRequests) {
-			final Iterator<ChangeRequest> changes = this.changeRequests
-					.iterator();
-			while (changes.hasNext()) {
-				final ChangeRequest change = changes.next();
-				SelectionKey key;
-				switch (change.type) {
-				case ChangeRequest.CHANGEOPS:
-					try {
-						key = change.socket.keyFor(this.selector);
-
-						if (key == null) {
-							this.handleUnexpectedDisconnect(change);
-						} else {
-							key.interestOps(change.ops);
-						}
-
-					} catch (final CancelledKeyException e) {
-						this.handleUnexpectedDisconnect(change);
-					} catch (final Exception e) {
-						e.printStackTrace();
-					}
-					break;
-				case ChangeRequest.CLOSE:
-					key = change.socket.keyFor(this.selector);
-					try {
-						change.socket.close();
-					} catch (final IOException e) {
-						e.printStackTrace();
-					}
-					if (key != null) {
-						key.cancel();
-					}
-					break;
-				}
+			if (this.changeRequests.size() == 0) {
+				return false;
 			}
-			this.changeRequests.clear();
+			final ChangeRequest change = this.changeRequests.remove(0);
+			SelectionKey key;
+			switch (change.type) {
+			case ChangeRequest.CHANGEOPS:
+				try {
+					key = change.socket.keyFor(this.selector);
+
+					if (key == null) {
+						this.handleUnexpectedDisconnect(change);
+					} else {
+						key.interestOps(change.ops);
+					}
+
+				} catch (final CancelledKeyException e) {
+					this.handleUnexpectedDisconnect(change);
+				} catch (final Exception e) {
+					e.printStackTrace();
+				}
+				break;
+			case ChangeRequest.CLOSE:
+				if (this.pendingData.get(change.socket) != null
+						&& this.pendingData.get(change.socket).size() > 0) {
+					this.changeRequests.add(change);
+					return true;
+				}
+				key = change.socket.keyFor(this.selector);
+				try {
+					change.socket.close();
+				} catch (final IOException e) {
+					e.printStackTrace();
+				}
+				if (key != null) {
+					key.cancel();
+				}
+				break;
+			}
 		}
+		return this.changeRequests.size() > 0;
 	}
 
 	private void handleUnexpectedDisconnect(final ChangeRequest change) {
+		try {
+			if (change.socket != null) {
+				change.socket.close();
+			}
+		} catch (final Exception e) {
+
+		}
+
 		this.dispatcher.processData(new ErrorDataEvent(
 				ErrorDataEvent.PROXY_CLIENT_DISCONNECT, change.socket, null));
 	}
 
 	@Override
 	public void handleUnexpectedDisconnect(final SelectionKey key) {
-		// TODO: Clear buffers and stuff.
+		try {
+			key.cancel();
+			key.channel().close();
+		} catch (final Exception e) {
+
+		}
 
 		this.dispatcher.processData(new ErrorDataEvent(
 				ErrorDataEvent.PROXY_CLIENT_DISCONNECT, key.channel(), null));

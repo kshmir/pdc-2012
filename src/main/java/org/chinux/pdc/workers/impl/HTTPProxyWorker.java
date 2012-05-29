@@ -65,7 +65,22 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 					ByteBuffer.wrap(this.outputBuffer.toByteArray().clone()),
 					this.serverDataReceiver);
 
-			e.setCanClose(false && event.canClose());
+			if (clientEvent.canClose() || event.canClose()) {
+				if (event.getResponse() != null) {
+					this.logger.info("Renviando RESPONSE: "
+							+ event.getResponse().getHeaders()
+									.returnStatusCode() + " "
+							+ event.getRequest().getHeaders().getRequestURI());
+				}
+			}
+
+			if (event.getResponse() != null
+					&& event.getResponse().getHeaders().getHeader("connection") != null
+					&& event.getResponse().getHeaders().getHeader("connection")
+							.equals("close") && clientEvent.canClose()) {
+
+				e.setCanClose(clientEvent.canClose());
+			}
 			e.setCanSend(event.canSend());
 
 		}
@@ -96,7 +111,16 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 		}
 
 		if (httpEvent != null) {
-			// e.setCanClose(false && httpEvent.canClose());
+			if (httpEvent.canClose()) {
+				if (httpEvent.getRequest() != null) {
+					this.logger.info("Renviando REQUEST: "
+							+ httpEvent.getRequest().getHeaders().getMethod()
+							+ " "
+							+ httpEvent.getRequest().getHeaders()
+									.getRequestURI());
+				}
+			}
+
 			e.setCanSend(httpEvent.canSend());
 		} else {
 			e.setCanClose(false);

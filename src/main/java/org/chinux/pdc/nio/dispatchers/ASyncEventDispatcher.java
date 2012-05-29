@@ -49,6 +49,7 @@ public class ASyncEventDispatcher<T extends DataEvent> implements Runnable,
 			T event;
 			try {
 				event = this.worker.DoWork(dataEvent);
+
 				if (event.canSend()) {
 					event.getReceiver().receiveEvent(event);
 				}
@@ -56,6 +57,7 @@ public class ASyncEventDispatcher<T extends DataEvent> implements Runnable,
 				if (event.canClose()) {
 					event.getReceiver().closeConnection(event);
 				}
+
 			} catch (final IOException e) {
 				this.log.error("Unexpected exception", e);
 			} catch (final Exception e) {

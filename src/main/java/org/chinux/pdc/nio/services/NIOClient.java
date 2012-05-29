@@ -32,9 +32,14 @@ public class NIOClient implements Runnable {
 		while (true) {
 			try {
 				// Process any pending changes
-				this.handler.handlePendingChanges();
+				final boolean mustBlock = this.handler.handlePendingChanges();
+
 				// Wait for an event one of the registered channels
-				this.selector.select();
+				if (mustBlock) {
+					this.selector.select();
+				} else {
+					this.selector.selectNow();
+				}
 
 				// Iterate over the set of keys for which events are available
 				final Iterator<SelectionKey> selectedKeys = this.selector
