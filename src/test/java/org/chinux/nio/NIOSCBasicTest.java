@@ -57,8 +57,8 @@ public class NIOSCBasicTest {
 					@Override
 					public DataEvent DoWork(final DataEvent dataEvent) {
 						NIOSCBasicTest.this.receivedString = Charset
-								.defaultCharset().decode(dataEvent.getData())
-								.toString().trim();
+								.forName("ISO-8859-1")
+								.decode(dataEvent.getData()).toString().trim();
 						return dataEvent;
 					}
 				});
@@ -92,7 +92,7 @@ public class NIOSCBasicTest {
 		clientReceiver.receiveEvent(event);
 
 		// 1ms should be enough to receive the data
-		service.awaitTermination(30, TimeUnit.MILLISECONDS);
+		service.awaitTermination(100, TimeUnit.MILLISECONDS);
 
 		service.shutdownNow();
 

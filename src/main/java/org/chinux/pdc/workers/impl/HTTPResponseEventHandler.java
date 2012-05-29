@@ -13,7 +13,8 @@ import org.chinux.pdc.http.api.HTTPResponseHeader;
 import org.chinux.pdc.http.impl.HTTPBaseReader;
 import org.chinux.pdc.http.impl.HTTPResponseHeaderImpl;
 import org.chinux.pdc.http.impl.HTTPResponseImpl;
-import org.chinux.pdc.http.impl.readers.HTTPChunkedResponseReader;
+import org.chinux.pdc.http.impl.readers.HTTPChunkedResponseEndDetectorReader;
+import org.chinux.pdc.http.impl.readers.HTTPChunkedResponseTransformReader;
 import org.chinux.pdc.http.impl.readers.HTTPContentLengthReader;
 import org.chinux.pdc.http.impl.readers.HTTPGzipReader;
 import org.chinux.pdc.http.impl.readers.HTTPImageResponseReader;
@@ -165,7 +166,11 @@ public class HTTPResponseEventHandler {
 
 		if (this.mustDecodeChunked(response)) {
 			response.getBodyReader().addResponseReader(
-					new HTTPChunkedResponseReader(response.getHeaders()), 0);
+					new HTTPChunkedResponseTransformReader(
+							response.getHeaders()), 0);
+		} else if (this.hasEncodingChunked(response)) {
+			response.getBodyReader().addResponseReader(
+					new HTTPChunkedResponseEndDetectorReader(), 10);
 		}
 
 		if (this.isGzipped(response)
