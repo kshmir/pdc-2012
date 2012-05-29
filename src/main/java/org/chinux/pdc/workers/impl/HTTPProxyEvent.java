@@ -1,6 +1,7 @@
 package org.chinux.pdc.workers.impl;
 
 import java.net.InetAddress;
+import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
 
@@ -20,6 +21,7 @@ public class HTTPProxyEvent {
 	private HTTPRequest request;
 	private HTTPResponse response;
 	private SocketChannel socketChannel;
+	private ByteBuffer parseOffsetData;
 	private Charset dataCharset = Charset.forName("ISO-8859-1"); // Por ahora re
 																	// va
 
@@ -138,5 +140,13 @@ public class HTTPProxyEvent {
 
 	public Configuration getEventConfiguration() {
 		return this.eventConfiguration;
+	}
+
+	public ByteBuffer getParseOffsetData() {
+		return parseOffsetData;
+	}
+
+	public void setParseOffsetData(ByteBuffer parseOffsetData) {
+		this.parseOffsetData = parseOffsetData;
 	}
 }

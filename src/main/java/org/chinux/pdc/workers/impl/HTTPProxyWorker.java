@@ -3,8 +3,11 @@ package org.chinux.pdc.workers.impl;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -19,6 +22,8 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 	private static Charset isoCharset = Charset.forName("ISO-8859-1");
 	private Logger logger = Logger.getLogger(this.getClass());
 	private final ByteArrayOutputStream outputBuffer = new ByteArrayOutputStream();
+
+	private Map<SocketChannel, ByteBuffer> lastBufferForSocket = new HashMap<SocketChannel, ByteBuffer>();
 
 	private Set<HTTPProxyEvent> receivedRequests = new HashSet<HTTPProxyEvent>();
 
@@ -96,6 +101,14 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 
 		final HTTPRequestEventHandler handler = this.getRequestEventHandler();
 
+		if (this.lastBufferForSocket.containsKey(serverEvent.getChannel())) {
+			final ByteArrayOutputStream concatenator = new ByteArrayOutputStream();
+			concatenator.write(this.lastBufferForSocket.get(
+					serverEvent.getChannel()).array());
+			concatenator.write(serverEvent.getData().array());
+			serverEvent.setData(ByteBuffer.wrap(concatenator.toByteArray()));
+		}
+
 		final HTTPProxyEvent httpEvent = handler.handle(serverEvent);
 
 		final DataEvent e = new ClientDataEvent(
@@ -121,7 +134,13 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 				}
 			}
 
+			if (httpEvent.getParseOffsetData() != null) {
+				this.lastBufferForSocket.put(serverEvent.getChannel(),
+						httpEvent.getParseOffsetData());
+			}
+
 			e.setCanSend(httpEvent.canSend());
+
 		} else {
 			e.setCanClose(false);
 			e.setCanSend(false);
