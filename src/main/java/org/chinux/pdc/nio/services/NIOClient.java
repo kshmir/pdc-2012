@@ -32,12 +32,13 @@ public class NIOClient implements Runnable {
 		while (true) {
 			try {
 				// Process any pending changes
-				final boolean mustBlock = this.handler.handlePendingChanges();
+				final boolean hasChanges = this.handler.handlePendingChanges();
 
 				// Wait for an event one of the registered channels
-				if (mustBlock) {
+				if (!hasChanges) {
 					this.selector.select();
 				} else {
+					// System.out.println("Selection non block client");
 					this.selector.selectNow();
 				}
 

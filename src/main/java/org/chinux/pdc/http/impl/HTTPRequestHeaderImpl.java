@@ -66,8 +66,8 @@ public class HTTPRequestHeaderImpl implements HTTPRequestHeader {
 
 	@Override
 	public String getHeader(final String name) {
-		return this.headers.containsKey(name.toLowerCase()) ? this.headers
-				.get(name.toLowerCase()) : null;
+		return this.headers.containsKey(name.toLowerCase()) ? this.headers.get(
+				name.toLowerCase()).trim() : null;
 	}
 
 	@Override

@@ -60,12 +60,13 @@ public class NIOServer implements Runnable {
 			try {
 
 				// Process any pending changes
-				final boolean mustBlock = this.handler.handlePendingChanges();
+				final boolean hasChanges = this.handler.handlePendingChanges();
 
 				// Wait for an event one of the registered channels
-				if (mustBlock) {
+				if (!hasChanges) {
 					this.selector.select();
 				} else {
+					// System.out.println("Selection non block");
 					this.selector.selectNow();
 				}
 
