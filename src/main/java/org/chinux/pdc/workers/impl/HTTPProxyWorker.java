@@ -70,6 +70,7 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 					ByteBuffer.wrap(this.outputBuffer.toByteArray().clone()),
 					this.serverDataReceiver);
 
+			// TODO: Aprolijar esto
 			if (clientEvent.canClose() || event.canClose()) {
 				if (event.getResponse() != null) {
 					this.logger.info("Renviando RESPONSE: "
@@ -79,11 +80,14 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 				}
 			}
 
+			// TODO: Aprolijar esto
 			if (event.getResponse() != null
-					&& event.getResponse().getHeaders().getHeader("connection") != null
-					&& event.getResponse().getHeaders().getHeader("connection")
-							.equals("close") && clientEvent.canClose()) {
-
+					&& (event.getResponse().getHeaders()
+							.getHeader("connection") != null
+							&& event.getResponse().getHeaders()
+									.getHeader("connection").equals("close") || event
+							.getResponse().getHeaders().getHTTPVersion()
+							.equals("1.0")) && clientEvent.canClose()) {
 				e.setCanClose(clientEvent.canClose());
 			}
 			e.setCanSend(event.canSend());
