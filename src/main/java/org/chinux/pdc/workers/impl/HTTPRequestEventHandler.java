@@ -52,6 +52,8 @@ public class HTTPRequestEventHandler {
 		// We process all the reading data
 		if (this.isReadingRequestData(clientChannel)) {
 			httpEvent = this.readRequestData(clientChannel);
+		} else if (httpEvent != null) {
+			httpEvent.setParseOffsetData(this.rawData);
 		}
 
 		if (httpEvent != null) {
@@ -159,12 +161,17 @@ public class HTTPRequestEventHandler {
 					new HTTPRequestImpl(header, new HTTPBaseReader(header)),
 					clientChannel);
 
-			this.readingDataSockets.put(clientChannel, event);
+			if (!(header.getMethod().equals("GET"))) {
+				event.setCanSend(true);
+				this.readingDataSockets.put(clientChannel, event);
+			} else {
+				event.setCanClose(true);
+				event.setCanSend(!event.getRequest().getBodyReader()
+						.modifiesHeaders());
+				this.readingServerSockets.remove(clientChannel);
+			}
 
 			proxyEvent = event;
-
-			proxyEvent.setCanSend(!event.getRequest().getBodyReader()
-					.modifiesHeaders());
 
 			if (proxyEvent.canSend()) {
 				this.outputBuffer.write(isoCharset.encode(

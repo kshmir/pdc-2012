@@ -13,7 +13,7 @@ import org.chinux.pdc.http.api.HTTPResponseHeader;
 import org.chinux.pdc.http.impl.HTTPBaseReader;
 import org.chinux.pdc.http.impl.HTTPResponseHeaderImpl;
 import org.chinux.pdc.http.impl.HTTPResponseImpl;
-import org.chinux.pdc.http.impl.readers.HTTPChunkedResponseReader;
+import org.chinux.pdc.http.impl.readers.HTTPChunkedResponseTransformReader;
 import org.chinux.pdc.http.impl.readers.HTTPContentLengthReader;
 import org.chinux.pdc.http.impl.readers.HTTPGzipReader;
 import org.chinux.pdc.http.impl.readers.HTTPImageResponseReader;
@@ -56,10 +56,8 @@ public class HTTPResponseEventHandler {
 			if (this.matchesHeader(pendingHeader)) {
 				// The rawdata is used for the data of the response, since both
 				// can fit in the same space.
+				// TODO: Catch this exception when an invalid header comes in
 				rawData = this.buildEventResponse(stream, pendingHeader);
-			} else {
-				// TODO: Ver una forma de handlear responses inválidos
-				// this.event.builder = new StringBuilder();
 			}
 		}
 
@@ -136,6 +134,11 @@ public class HTTPResponseEventHandler {
 			}
 		}
 
+		if (this.event.getResponse().getHeaders().getHTTPVersion() != null) {
+			this.event.setCanSend(this.event.getResponse().getHeaders()
+					.getHTTPVersion().equals("1.0"));
+		}
+
 		if (headerAndBody.length > 1) {
 			rawData = ByteBuffer.wrap(isoCharset.encode(headerAndBody[1])
 					.array().clone());
@@ -163,9 +166,11 @@ public class HTTPResponseEventHandler {
 					new HTTPImageResponseReader(response.getHeaders()), 50);
 		}
 
-		if (this.mustDecodeChunked(response)) {
+		if (this.hasEncodingChunked(response)) {
 			response.getBodyReader().addResponseReader(
-					new HTTPChunkedResponseReader(response.getHeaders()), 0);
+					new HTTPChunkedResponseTransformReader(
+							response.getHeaders()), 0);
+
 		}
 
 		if (this.isGzipped(response)

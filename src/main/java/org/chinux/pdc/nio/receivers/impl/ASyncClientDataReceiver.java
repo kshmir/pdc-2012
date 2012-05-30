@@ -95,29 +95,32 @@ public class ASyncClientDataReceiver extends ClientDataReceiver {
 				final ChangeRequest change = this.changeRequests.remove(0);
 
 				SelectionKey key;
-				switch (change.type) {
-				case ChangeRequest.CLOSE:
-					try {
-						if (this.pendingData.get(change.attachment) != null
-								&& this.pendingData.get(change.attachment)
-										.size() > 0) {
-							this.changeRequests.add(change);
-							return false;
-						}
 
-						change.socket.close();
-					} catch (final IOException e) {
-						e.printStackTrace();
+				if (change != null) {
+					switch (change.type) {
+					case ChangeRequest.CLOSE:
+						try {
+							if (this.pendingData.get(change.attachment) != null
+									&& this.pendingData.get(change.attachment)
+											.size() > 0) {
+								this.changeRequests.add(change);
+								return false;
+							}
+
+							change.socket.close();
+						} catch (final IOException e) {
+							e.printStackTrace();
+						}
+						break;
+					case ChangeRequest.CHANGEOPS:
+						key = change.socket.keyFor(this.selector);
+						key.interestOps(change.ops);
+						break;
+					case ChangeRequest.REGISTER:
+						key = change.socket.register(this.selector, change.ops);
+						key.attach(change.attachment);
+						break;
 					}
-					break;
-				case ChangeRequest.CHANGEOPS:
-					key = change.socket.keyFor(this.selector);
-					key.interestOps(change.ops);
-					break;
-				case ChangeRequest.REGISTER:
-					key = change.socket.register(this.selector, change.ops);
-					key.attach(change.attachment);
-					break;
 				}
 			} else {
 				return false;

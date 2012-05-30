@@ -83,7 +83,7 @@ public class ClientHandler implements NIOClientHandler {
 			// TODO: Analizar qué se hace en este caso.
 			key.channel().close();
 			key.cancel();
-			// this.handleDisconnect(socketChannel);
+			// this.handleUnexpectedDisconnect(key);
 		}
 
 		// Hand the data off to our worker thread
@@ -107,7 +107,7 @@ public class ClientHandler implements NIOClientHandler {
 					.attachment());
 
 			// Write until there's not more data ...
-			while (!queue.isEmpty()) {
+			while (queue != null && !queue.isEmpty()) {
 				final ByteBuffer buf = queue.get(0);
 				socketChannel.write(buf);
 				if (buf.remaining() > 0) {
@@ -117,7 +117,7 @@ public class ClientHandler implements NIOClientHandler {
 				queue.remove(0);
 			}
 
-			if (queue.isEmpty()) {
+			if (queue == null || queue.isEmpty()) {
 				key.interestOps(SelectionKey.OP_READ);
 			}
 		}
