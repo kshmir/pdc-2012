@@ -46,6 +46,55 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 		return !event.getSocketChannel().isConnected();
 	}
 
+	private boolean isEndOfRequest(final ClientDataEvent clientEvent) {
+		final HTTPProxyEvent event = (HTTPProxyEvent) clientEvent
+				.getAttachment();
+
+		if (event.getResponse() != null) {
+			boolean connectionClose = true;
+			if (event.getResponse().getHeaders().getHTTPVersion().equals("1.0")) {
+				if (event.getResponse().getHeaders().getHeader("connection") != null) {
+					connectionClose = event.getResponse().getHeaders()
+							.getHeader("connection").equals("close");
+				}
+				return (event.canClose() && !connectionClose)
+						|| clientEvent.canClose();
+			} else {
+				return event.canClose();
+			}
+
+		} else {
+			return false;
+		}
+	}
+
+	private boolean isEndOfConnection(final ClientDataEvent clientEvent) {
+		final HTTPProxyEvent event = (HTTPProxyEvent) clientEvent
+				.getAttachment();
+
+		if (event.getResponse() != null) {
+			boolean connectionClose = false;
+			if (event.getResponse().getHeaders().getHTTPVersion().equals("1.0")) {
+				if (event.getResponse().getHeaders().getHeader("connection") != null) {
+					connectionClose = event.getResponse().getHeaders()
+							.getHeader("connection").equals("close");
+				}
+				return (connectionClose || clientEvent.canClose());
+			} else {
+				if (event.getResponse().getHeaders().getHeader("connection") != null) {
+					connectionClose = event.getResponse().getHeaders()
+							.getHeader("connection").equals("close");
+				} else {
+					return false;
+				}
+				return (connectionClose || clientEvent.canClose())
+						&& event.canClose();
+			}
+		} else {
+			return false;
+		}
+	}
+
 	@Override
 	protected DataEvent DoWork(final ClientDataEvent clientEvent)
 			throws IOException {
@@ -71,23 +120,18 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 					this.serverDataReceiver);
 
 			// TODO: Aprolijar esto
-			if (clientEvent.canClose() || event.canClose()) {
-				if (event.getResponse() != null) {
-					this.logger.info("Renviando RESPONSE: "
-							+ event.getResponse().getHeaders()
-									.returnStatusCode() + " "
-							+ event.getRequest().getHeaders().getRequestURI());
-				}
+			if (this.isEndOfRequest(clientEvent)) {
+				this.logger
+						.info("Reenviando RESPONSE: "
+								+ event.getResponse().getHeaders()
+										.returnStatusCode()
+								+ " "
+								+ event.getRequest().getHeaders()
+										.getRequestURI());
 			}
 
 			// TODO: Aprolijar esto
-			if (event.getResponse() != null
-					&& (event.getResponse().getHeaders()
-							.getHeader("connection") != null
-							&& event.getResponse().getHeaders()
-									.getHeader("connection").equals("close") || event
-							.getResponse().getHeaders().getHTTPVersion()
-							.equals("1.0")) && clientEvent.canClose()) {
+			if (this.isEndOfConnection(clientEvent)) {
 				e.setCanClose(clientEvent.canClose());
 			}
 			e.setCanSend(event.canSend());
@@ -130,7 +174,7 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 		if (httpEvent != null) {
 			if (httpEvent.canClose()) {
 				if (httpEvent.getRequest() != null) {
-					this.logger.info("Renviando REQUEST: "
+					this.logger.info("Reenviando REQUEST: "
 							+ httpEvent.getRequest().getHeaders().getMethod()
 							+ " "
 							+ httpEvent.getRequest().getHeaders()
