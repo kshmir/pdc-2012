@@ -1,5 +1,6 @@
 package org.chinux.pdc.http.impl;
 
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -14,6 +15,9 @@ public class HTTPResponseHeaderImpl implements HTTPResponseHeader {
 
 	private static Pattern headPattern = Pattern
 			.compile("HTTP/([0-9].[0-9]+) ([\\w-/]+) ([\\w-/]+)");
+
+	private static Pattern charsetPattern = Pattern
+			.compile(".*;[ ]?charset=(.*)[ ]?(;|\r\n)?");
 
 	private static Pattern headerPattern = Pattern.compile("([\\w-]+): (.+)");
 
@@ -67,8 +71,8 @@ public class HTTPResponseHeaderImpl implements HTTPResponseHeader {
 
 	@Override
 	public String getHeader(final String name) {
-		return this.headers.containsKey(name.toLowerCase()) ? this.headers
-				.get(name.toLowerCase()) : null;
+		return this.headers.containsKey(name.toLowerCase()) ? this.headers.get(
+				name.toLowerCase()).trim() : null;
 	}
 
 	@Override
@@ -88,5 +92,21 @@ public class HTTPResponseHeaderImpl implements HTTPResponseHeader {
 		}
 
 		return builder.toString() + "\r\n";
+	}
+
+	@Override
+	public Charset getCharset() {
+		if (this.getHeader("content-type") != null) {
+			final String contentType = this.getHeader("content-type");
+			final Matcher m = charsetPattern.matcher(contentType);
+			if (m.find()) {
+				try {
+					return Charset.forName(m.group(1));
+				} catch (final Exception e) {
+					return Charset.forName("ISO-8859-1");
+				}
+			}
+		}
+		return Charset.forName("ISO-8859-1");
 	}
 }
