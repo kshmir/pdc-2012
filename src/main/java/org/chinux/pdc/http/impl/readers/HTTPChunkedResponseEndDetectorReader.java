@@ -1,6 +1,7 @@
 package org.chinux.pdc.http.impl.readers;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import org.apache.log4j.Logger;
@@ -18,13 +19,31 @@ public class HTTPChunkedResponseEndDetectorReader implements HTTPReader {
 	@Override
 	public ByteBuffer processData(final ByteBuffer data) {
 		this.chunkedEndDetector.write(data.array());
-		final ByteBuffer answer = this.chunkedEndDetector.read();
+
+		this.stream.reset();
+		ByteBuffer answer;
+
+		while ((answer = this.chunkedEndDetector.read()) != null) {
+			if (answer.array().length == 0) {
+				return ByteBuffer.wrap(this.stream.toByteArray());
+			}
+			try {
+				this.stream.write(answer.array());
+			} catch (final IOException e) {
+
+			}
+
+			if (this.chunkedEndDetector.chunkedInputOver()) {
+				this.isFinished = true;
+				return ByteBuffer.wrap(this.stream.toByteArray());
+			}
+		}
 
 		if (this.chunkedEndDetector.chunkedInputOver()) {
 			this.isFinished = true;
 		}
 
-		return answer;
+		return ByteBuffer.wrap(this.stream.toByteArray());
 	}
 
 	@Override

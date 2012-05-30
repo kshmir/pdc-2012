@@ -137,6 +137,11 @@ public class HTTPResponseEventHandler {
 			}
 		}
 
+		if (this.event.getResponse().getHeaders().getHTTPVersion() != null) {
+			this.event.setCanSend(this.event.getResponse().getHeaders()
+					.getHTTPVersion().equals("1.0"));
+		}
+
 		if (headerAndBody.length > 1) {
 			rawData = ByteBuffer.wrap(isoCharset.encode(headerAndBody[1])
 					.array().clone());

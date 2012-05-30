@@ -13,7 +13,7 @@ public class ChunkedInputEndDetector {
 	private static final int DETECTING_LEN = 0;
 	private static final int READING_CHUNK = 1;
 	private static Charset isoCharset = Charset.forName("ISO-8859-1");
-	private static Logger log = Logger.getLogger(ChunkedInputTransformer.class);
+	private static Logger log = Logger.getLogger(ChunkedInputEndDetector.class);
 
 	private int state = DETECTING_LEN;
 	private int sizeToRead = 0;
@@ -57,6 +57,7 @@ public class ChunkedInputEndDetector {
 				final Integer size = Integer.valueOf(line.split(";")[0], 16);
 
 				if (size == 0) {
+					this.inStream.reset();
 					this.isOver = true;
 					return ByteBuffer.wrap("0\r\n\r\n".getBytes(isoCharset));
 				} else {
@@ -74,16 +75,22 @@ public class ChunkedInputEndDetector {
 			}
 
 			if (this.state == READING_CHUNK) {
+
 				int chunkToRemoveSize = 0;
-				if (this.inStream.size() - this.sizeRead > this.sizeToRead) {
+				if (this.inStream.size() > this.sizeToRead - this.sizeRead) {
 					chunkToRemoveSize = this.sizeToRead - this.sizeRead;
 				} else {
-					chunkToRemoveSize = this.inStream.size() - this.sizeRead;
+					chunkToRemoveSize = this.inStream.size() - readOffset;
 				}
 
 				this.sizeRead += chunkToRemoveSize;
 
-				if (this.sizeRead == this.sizeToRead) {
+				if (this.sizeRead >= this.sizeToRead) {
+
+					if (this.sizeRead > this.sizeToRead) {
+						throw new RuntimeException();
+					}
+
 					this.state = DETECTING_LEN;
 				}
 
@@ -109,8 +116,15 @@ public class ChunkedInputEndDetector {
 				}
 
 				this.outputStream.write(response);
-				this.outputStream.write("\r\n".getBytes(isoCharset));
-				return ByteBuffer.wrap(this.outputStream.toByteArray());
+				if (this.state == DETECTING_LEN) {
+					this.outputStream.write("\r\n".getBytes(isoCharset));
+				}
+				final ByteBuffer answer = ByteBuffer.wrap(this.outputStream
+						.toByteArray());
+
+				this.outputStream.reset();
+
+				return answer;
 
 			}
 		} catch (final BufferUnderflowException e) {
