@@ -11,22 +11,27 @@ import org.chinux.pdc.http.api.HTTPResponseHeader;
 
 public class HTTPL33tEncoder implements HTTPReader {
 
-	public static Charset charset = Charset.forName("ISO-8859-1");
-	public static CharsetEncoder encoder = charset.newEncoder();
-	public static CharsetDecoder decoder = charset.newDecoder();
+	public static Charset isoCharset = Charset.forName("ISO-8859-1");
+	private CharsetEncoder encoder = null;
+	private CharsetDecoder decoder = null;
 	private HTTPResponseHeader responseHeader;
+	private Charset charset;
 	private boolean isFinished = false;
 
 	public HTTPL33tEncoder(final HTTPResponseHeader responseHeader) {
 		this.responseHeader = responseHeader;
+		this.charset = (responseHeader.getCharset() == null) ? isoCharset
+				: responseHeader.getCharset();
+
+		this.encoder = this.charset.newEncoder();
+		this.decoder = this.charset.newDecoder();
 	}
 
 	@Override
 	public ByteBuffer processData(final ByteBuffer data) {
-		final String aux = byteBufferToString(data);
+		final String aux = this.byteBufferToString(data);
 		final String out = translate(aux);
-		return stringToByteBuffer(out);
-
+		return this.stringToByteBuffer(out);
 	}
 
 	@Override
@@ -52,22 +57,22 @@ public class HTTPL33tEncoder implements HTTPReader {
 		return out;
 	}
 
-	public static ByteBuffer stringToByteBuffer(final String msg) {
+	private ByteBuffer stringToByteBuffer(final String msg) {
 		try {
 			// TODO: Esto tira exception, hay que arreglarlo, si no se puede
 			// encodear hay que esperar a que se pueda!!!
-			return encoder.encode(CharBuffer.wrap(msg));
+			return this.encoder.encode(CharBuffer.wrap(msg));
 		} catch (final Exception e) {
 			e.printStackTrace();
 		}
 		return null;
 	}
 
-	public static String byteBufferToString(final ByteBuffer buffer) {
+	private String byteBufferToString(final ByteBuffer buffer) {
 		String data = "";
 		try {
 			final int old_position = buffer.position();
-			data = decoder.decode(buffer).toString();
+			data = this.decoder.decode(buffer).toString();
 			// reset buffer's position to its original so it is not altered:
 			buffer.position(old_position);
 		} catch (final Exception e) {

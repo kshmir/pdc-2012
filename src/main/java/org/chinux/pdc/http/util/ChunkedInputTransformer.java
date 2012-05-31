@@ -66,12 +66,13 @@ public class ChunkedInputTransformer {
 
 			return ByteBuffer.wrap(byteData);
 		} catch (final BufferUnderflowException e) {
-			log.debug("Buffer underrun in chunked input");
+			// It can happen and be corrected
 		} catch (final NumberFormatException e) {
+			// It just cant
 			log.error("Invalid chunked transfer?", e);
 			return null;
 		} catch (final Exception e) {
-			log.error("Some kind of error we didn't expect...", e);
+			// It can happen and be corrected
 		}
 		this.stream.reset();
 		try {

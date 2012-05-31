@@ -15,7 +15,7 @@ import org.chinux.pdc.http.impl.HTTPBaseFilter;
 import org.chinux.pdc.http.impl.HTTPBaseReader;
 import org.chinux.pdc.http.impl.HTTPResponseHeaderImpl;
 import org.chinux.pdc.http.impl.HTTPResponseImpl;
-import org.chinux.pdc.http.impl.readers.HTTPChunkedResponseReader;
+import org.chinux.pdc.http.impl.readers.HTTPChunkedResponseTransformReader;
 import org.chinux.pdc.http.impl.readers.HTTPContentLengthReader;
 import org.chinux.pdc.http.impl.readers.HTTPGzipReader;
 import org.chinux.pdc.http.impl.readers.HTTPImageResponseReader;
@@ -58,10 +58,8 @@ public class HTTPResponseEventHandler {
 			if (this.matchesHeader(pendingHeader)) {
 				// The rawdata is used for the data of the response, since both
 				// can fit in the same space.
+				// TODO: Catch this exception when an invalid header comes in
 				rawData = this.buildEventResponse(stream, pendingHeader);
-			} else {
-				// TODO: Ver una forma de handlear responses inválidos
-				// this.event.builder = new StringBuilder();
 			}
 		}
 
@@ -149,6 +147,25 @@ public class HTTPResponseEventHandler {
 			}
 		}
 
+		if (this.event.getResponse().getHeaders().getHTTPVersion() != null) {
+			this.event.setCanSend(this.event.getResponse().getHeaders()
+					.getHTTPVersion().equals("1.0"));
+		}
+
+		this.applyReadersToResponse(this.event);
+
+		this.event.setCanSend(!this.event.getResponse().getBodyReader()
+				.modifiesHeaders());
+
+		if (this.event.canSend()) {
+			try {
+				stream.write(isoCharset.encode(
+						CharBuffer.wrap(header.toString())).array());
+			} catch (final IOException e) {
+				e.printStackTrace();
+			}
+		}
+
 		if (headerAndBody.length > 1) {
 			rawData = ByteBuffer.wrap(isoCharset.encode(headerAndBody[1])
 					.array().clone());
@@ -176,9 +193,24 @@ public class HTTPResponseEventHandler {
 					new HTTPImageResponseReader(response.getHeaders()), 50);
 		}
 
-		if (this.mustDecodeChunked(response)) {
+		if (this.hasEncodingChunked(response)) {
 			response.getBodyReader().addResponseReader(
-					new HTTPChunkedResponseReader(response.getHeaders()), 0);
+					new HTTPChunkedResponseTransformReader(
+							response.getHeaders()), 0);
+
+		}
+
+		if (this.isGzipped(response)
+				&& (this.isTextPlain(response) || this.hasImageMIME(response))) {
+			response.getBodyReader().addResponseReader(
+					new HTTPGzipReader(response.getHeaders()), 20);
+		}
+
+		/* for l33t translation */
+		if (this.isTextPlain(response)
+				&& event.getEventConfiguration().isL33t()) {
+			response.getBodyReader().addResponseReader(
+					new HTTPL33tEncoder(response.getHeaders()), 50);
 		}
 
 		if (this.isGzipped(response)
