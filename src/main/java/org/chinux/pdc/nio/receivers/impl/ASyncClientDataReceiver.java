@@ -20,7 +20,7 @@ public class ASyncClientDataReceiver extends ClientDataReceiver implements
 	private TimeoutablePool pool = new TimeoutablePool(30);
 
 	@Override
-	public void receiveEvent(final DataEvent dataEvent) {
+	public synchronized void receiveEvent(final DataEvent dataEvent) {
 
 		this.log.debug("Receiving data event " + dataEvent);
 
@@ -36,71 +36,62 @@ public class ASyncClientDataReceiver extends ClientDataReceiver implements
 				this.connectionPort);
 
 		SocketChannel socketChannel;
-		synchronized (this.clientIPMap) {
-			socketChannel = this.clientIPMap.get(event.getAttachment());
+
+		socketChannel = this.clientIPMap.get(event.getAttachment());
+
+		if (socketChannel == null) {
+
+			socketChannel = this.pool.getObject(socketHost);
 
 			if (socketChannel == null) {
 
-				socketChannel = this.pool.getObject(socketHost);
+				try {
+					socketChannel = SocketChannel.open();
+					socketChannel.configureBlocking(false);
+					socketChannel.connect(socketHost);
 
-				if (socketChannel == null) {
-
-					try {
-						this.log.info("New socket spawned for " + socketHost);
-						socketChannel = SocketChannel.open();
-						socketChannel.configureBlocking(false);
-						socketChannel.connect(socketHost);
-
-					} catch (final IOException e) {
-						e.printStackTrace();
-					}
+				} catch (final IOException e) {
+					e.printStackTrace();
 				}
+			}
 
-				this.clientIPMap.put(event.getAttachment(), socketChannel);
+			this.clientIPMap.put(event.getAttachment(), socketChannel);
 
-				// Queue a channel registration since the caller is not the
-				// selecting thread. As part of the registration we'll register
-				// an interest in connection events. These are raised when a
-				// channel
-				// is ready to complete connection establishment.
-				synchronized (this.changeRequests) {
-					if (!socketChannel.isConnected()) {
-						this.log.info("registering for CONNECT");
-						this.changeRequests
-								.add(new ChangeRequest(socketChannel,
-										ChangeRequest.REGISTER,
-										SelectionKey.OP_CONNECT, event
-												.getAttachment()));
+			// Queue a channel registration since the caller is not
+			// the
+			// selecting thread. As part of the registration we'll
+			// register
+			// an interest in connection events. These are raised
+			// when a
+			// channel
+			// is ready to complete connection establishment.
 
-					} else {
+			if (!socketChannel.isConnected()) {
+				this.changeRequests.add(new ChangeRequest(socketChannel,
+						ChangeRequest.REGISTER, SelectionKey.OP_CONNECT, event
+								.getAttachment()));
 
-						if (socketChannel.keyFor(this.selector) == null) {
-							this.log.info("registering for WRITE");
-							this.changeRequests.add(new ChangeRequest(
-									socketChannel, ChangeRequest.REGISTER,
-									SelectionKey.OP_WRITE, event
-											.getAttachment()));
-						} else {
-							this.log.info("Changing ops to WRITE");
-							this.changeRequests.add(new ChangeRequest(
-									socketChannel, ChangeRequest.CHANGEOPS,
-									SelectionKey.OP_WRITE, event
-											.getAttachment()));
-						}
-					}
+			} else {
+
+				if (socketChannel.keyFor(this.selector) == null) {
+					this.changeRequests.add(new ChangeRequest(socketChannel,
+							ChangeRequest.REGISTER, SelectionKey.OP_WRITE,
+							event.getAttachment()));
+				} else {
+					this.changeRequests.add(new ChangeRequest(socketChannel,
+							ChangeRequest.CHANGEOPS, SelectionKey.OP_WRITE,
+							event.getAttachment()));
 				}
 			}
 		}
 
-		synchronized (this.pendingData) {
-			ArrayList<ByteBuffer> queue = this.pendingData.get(event
-					.getAttachment());
-			if (queue == null) {
-				queue = new ArrayList<ByteBuffer>();
-				this.pendingData.put(event.getAttachment(), queue);
-			}
-			queue.add(event.getData());
+		ArrayList<ByteBuffer> queue = this.pendingData.get(event
+				.getAttachment());
+		if (queue == null) {
+			queue = new ArrayList<ByteBuffer>();
+			this.pendingData.put(event.getAttachment(), queue);
 		}
+		queue.add(event.getData());
 
 		// Finally, wake up our selecting thread so it can make the required
 		// changes
@@ -108,7 +99,7 @@ public class ASyncClientDataReceiver extends ClientDataReceiver implements
 	}
 
 	@Override
-	public void closeConnection(final DataEvent dataEvent) {
+	public synchronized void closeConnection(final DataEvent dataEvent) {
 
 		if (dataEvent instanceof ClientDataEvent) {
 			this.handleConnectionClose(this.clientIPMap
@@ -121,56 +112,55 @@ public class ASyncClientDataReceiver extends ClientDataReceiver implements
 	}
 
 	@Override
-	public boolean handlePendingChanges() throws ClosedChannelException {
+	public synchronized boolean handlePendingChanges()
+			throws ClosedChannelException {
 
-		synchronized (this.changeRequests) {
-			if (!this.changeRequests.isEmpty()) {
-				this.log.debug("Handling pending changes...");
-				final ChangeRequest change = this.changeRequests.remove(0);
+		if (!this.changeRequests.isEmpty()) {
+			this.log.debug("Handling pending changes...");
+			final ChangeRequest change = this.changeRequests.remove(0);
 
-				SelectionKey key;
+			SelectionKey key;
 
-				if (change != null) {
-					switch (change.type) {
-					case ChangeRequest.CLOSE:
-						if (change.socket.isConnected()
-								&& this.pendingData.get(change.attachment) != null
-								&& this.pendingData.get(change.attachment)
-										.size() > 0) {
-							this.changeRequests.add(change);
-							return false;
-						}
-
-						if (change.socket.isConnected()) {
-							this.doClose(change.socket);
-						}
-
-						break;
-					case ChangeRequest.CHANGEOPS:
-						key = change.socket.keyFor(this.selector);
-						if (key != null && key.isValid()) {
-							key.interestOps(change.ops);
-							key.attach(change.attachment);
-						} else {
-							if (change.socket.isConnected()) {
-								change.socket.register(this.selector,
-										change.ops, change.attachment);
-							} else {
-								throw new RuntimeException(
-										"I expected this socket to be connected, we must reconnect :(");
-							}
-						}
-						break;
-					case ChangeRequest.REGISTER:
-						change.socket.register(this.selector, change.ops,
-								change.attachment);
-						break;
+			if (change != null) {
+				switch (change.type) {
+				case ChangeRequest.CLOSE:
+					if (change.socket.isConnected()
+							&& this.pendingData.get(change.attachment) != null
+							&& this.pendingData.get(change.attachment).size() > 0) {
+						this.changeRequests.add(change);
+						return false;
 					}
+
+					if (change.socket.isConnected()) {
+						this.doClose(change.socket);
+					}
+
+					break;
+				case ChangeRequest.CHANGEOPS:
+					key = change.socket.keyFor(this.selector);
+					if (key != null && key.isValid()) {
+						key.interestOps(change.ops);
+						key.attach(change.attachment);
+					} else {
+						if (change.socket.isConnected()) {
+							change.socket.register(this.selector, change.ops,
+									change.attachment);
+						} else {
+							throw new RuntimeException(
+									"I expected this socket to be connected, we must reconnect :(");
+						}
+					}
+					break;
+				case ChangeRequest.REGISTER:
+					change.socket.register(this.selector, change.ops,
+							change.attachment);
+					break;
 				}
-			} else {
-				return false;
 			}
+		} else {
+			return false;
 		}
+
 		return this.changeRequests.size() > 0;
 	}
 

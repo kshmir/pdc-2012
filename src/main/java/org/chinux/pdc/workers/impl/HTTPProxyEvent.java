@@ -18,6 +18,9 @@ import org.chinux.pdc.server.ConfigurationProvider;
  * @author cris
  */
 public class HTTPProxyEvent {
+
+	public HTTPProxyEvent previous;
+
 	private HTTPRequest request;
 	private HTTPResponse response;
 	private SocketChannel socketChannel;

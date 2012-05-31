@@ -130,6 +130,9 @@ public class ClientHandler implements NIOClientHandler, ConnectionCloseHandler {
 			}
 
 			if (queue == null || queue.isEmpty()) {
+				if (queue == null) {
+					System.out.println("Race condition");
+				}
 				key.interestOps(SelectionKey.OP_READ);
 			}
 		}

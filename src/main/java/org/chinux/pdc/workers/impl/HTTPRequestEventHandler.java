@@ -157,8 +157,6 @@ public class HTTPRequestEventHandler {
 
 			// TODO: Filtering
 
-			logger.debug(header.toString());
-
 			final HTTPProxyEvent event = new HTTPProxyEvent(
 					new HTTPRequestImpl(header, new HTTPBaseReader(header)),
 					clientChannel);

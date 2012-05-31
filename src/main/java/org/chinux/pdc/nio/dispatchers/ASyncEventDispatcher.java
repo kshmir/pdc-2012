@@ -23,7 +23,6 @@ public class ASyncEventDispatcher<T extends DataEvent> implements Runnable,
 	@Override
 	public void processData(final T event) {
 		synchronized (this.events) {
-			this.log.debug("Process data from event " + event.toString());
 			this.events.addLast(event);
 			this.events.notify();
 		}

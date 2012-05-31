@@ -45,9 +45,6 @@ public class TimeoutablePool {
 					}
 				}
 
-				log.info("Idle sockets: "
-						+ TimeoutablePool.this.timeAdded.size());
-
 				for (final Object c : this.toRemove) {
 					TimeoutablePool.this.elements.remove(c);
 					TimeoutablePool.this.timeAdded.remove(c);
@@ -70,7 +67,6 @@ public class TimeoutablePool {
 		}
 		this.timeAdded.put(channel, System.currentTimeMillis());
 		this.elements.get(key).add(channel);
-		log.info("Saving socketChannel");
 	}
 
 	public synchronized SocketChannel getObject(final Object key) {
@@ -78,7 +74,6 @@ public class TimeoutablePool {
 			final SocketChannel answer = this.elements.get(key).removeFirst();
 			this.timeAdded.remove(answer);
 			if (answer.isConnected()) {
-				log.info("!!!!!!!!!! Reusing socketChannel " + answer);
 				return answer;
 			}
 		}

@@ -38,7 +38,6 @@ public class NIOClient implements Runnable {
 				if (!hasChanges) {
 					this.selector.select();
 				} else {
-					System.out.println("Selection non block client");
 					this.selector.selectNow();
 				}
 

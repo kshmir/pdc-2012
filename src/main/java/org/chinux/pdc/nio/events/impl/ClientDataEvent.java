@@ -64,7 +64,7 @@ public class ClientDataEvent extends DataEvent {
 	@Override
 	public String toString() {
 		return "ClientDataEvent [address=" + this.address + ", attachment="
-				+ this.attachment + ", toString()=" + super.toString() + "]";
+				+ this.attachment + ", owner()=" + this.getOwner() + "]";
 	}
 
 	public Object getOwner() {
