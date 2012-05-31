@@ -2,19 +2,20 @@ package org.chinux.pdc.nio.handlers.impl;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.CancelledKeyException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 import org.chinux.pdc.nio.dispatchers.EventDispatcher;
 import org.chinux.pdc.nio.events.api.DataEvent;
+import org.chinux.pdc.nio.events.impl.ErrorDataEvent;
 import org.chinux.pdc.nio.events.impl.ServerDataEvent;
 import org.chinux.pdc.nio.handlers.api.NIOServerHandler;
 import org.chinux.pdc.nio.receivers.api.DataReceiver;
@@ -78,6 +79,19 @@ public class ServerHandler implements NIOServerHandler, DataReceiver<DataEvent> 
 	@Override
 	public void closeConnection(final DataEvent dataEvent) {
 
+		if (dataEvent instanceof ErrorDataEvent) {
+
+			final ErrorDataEvent errorEvent = (ErrorDataEvent) dataEvent;
+			synchronized (this.changeRequests) {
+				this.changeRequests.add(new ChangeRequest(
+						(SocketChannel) errorEvent.getOwner(),
+						ChangeRequest.CLOSE, 0));
+			}
+			System.out.println("CONNECTION CLOSING!");
+			this.selector.wakeup();
+			return;
+		}
+
 		if (!(dataEvent instanceof ServerDataEvent)) {
 			throw new RuntimeException("Must receive a NIOServerDataEvent");
 		}
@@ -87,28 +101,37 @@ public class ServerHandler implements NIOServerHandler, DataReceiver<DataEvent> 
 		synchronized (this.changeRequests) {
 			// Indicate we want the interest ops set changed
 			this.changeRequests.add(new ChangeRequest(event.getChannel(),
-					ChangeRequest.CHANGEOPS, SelectionKey.OP_WRITE));
+					ChangeRequest.CLOSE, 0, event.getChannel()));
 		}
+		this.selector.wakeup();
 	}
 
 	@Override
-	public void handleAccept(final SelectionKey key) throws IOException {
+	public void handleAccept(final SelectionKey key) {
 		// For an accept to be pending the channel must be a server socket
 		// channel.
 		final ServerSocketChannel serverSocketChannel = (ServerSocketChannel) key
 				.channel();
 
 		// Accept the connection and make it non-blocking
-		final SocketChannel socketChannel = serverSocketChannel.accept();
-		socketChannel.configureBlocking(false);
+		SocketChannel socketChannel = null;
+		try {
+			socketChannel = serverSocketChannel.accept();
+			socketChannel.configureBlocking(false);
 
-		// Register the new SocketChannel with our Selector, indicating
-		// we'd like to be notified when there's data waiting to be read
-		socketChannel.register(this.selector, SelectionKey.OP_READ);
+			// Register the new SocketChannel with our Selector, indicating
+			// we'd like to be notified when there's data waiting to be read
+			socketChannel.register(this.selector, SelectionKey.OP_READ);
+		} catch (final IOException e) {
+			if (socketChannel != null) {
+				this.handleUnexpectedDisconnect(key);
+			}
+		}
+
 	}
 
 	@Override
-	public void handleRead(final SelectionKey key) throws IOException {
+	public void handleRead(final SelectionKey key) {
 
 		final SocketChannel socketChannel = (SocketChannel) key.channel();
 
@@ -126,18 +149,24 @@ public class ServerHandler implements NIOServerHandler, DataReceiver<DataEvent> 
 			// The remote forcibly closed the connection, cancel
 			// the selection key and close the channel.
 			key.cancel();
-			socketChannel.close();
+			try {
+				socketChannel.close();
+			} catch (final IOException e1) {
+			}
 
-			// TODO: Handle this
+			this.handleUnexpectedDisconnect(key);
 			return;
 		}
 
 		if (numRead == -1) {
 			// Remote entity shut the socket down cleanly. Do the
 			// same from our end and cancel the channel.
-			key.channel().close();
+			try {
+				key.channel().close();
+			} catch (final IOException e) {
+			}
 			key.cancel();
-			// return;
+			// this.handleUnexpectedDisconnect(socketChannel);
 		}
 		// Hand the data off to our worker thread
 		final ByteBuffer data = NIOUtil.readBuffer(readBuffer, numRead);
@@ -147,63 +176,108 @@ public class ServerHandler implements NIOServerHandler, DataReceiver<DataEvent> 
 	}
 
 	@Override
-	public void handleWrite(final SelectionKey key) throws IOException {
+	public void handleWrite(final SelectionKey key) {
 		final SocketChannel socketChannel = (SocketChannel) key.channel();
 
-		synchronized (this.pendingData) {
-			final ArrayList<ByteBuffer> queue = this.pendingData
-					.get(socketChannel);
+		try {
 
-			// Write until there's not more data ...
-			while (!queue.isEmpty()) {
-				final ByteBuffer buf = queue.get(0);
-				// TODO: Handle broken pipe
-				socketChannel.write(buf);
-				if (buf.remaining() > 0) {
-					// ... or the socket's buffer fills up
-					break;
+			synchronized (this.pendingData) {
+				final ArrayList<ByteBuffer> queue = this.pendingData
+						.get(socketChannel);
+
+				// Write until there's not more data ...
+				while (queue != null && !queue.isEmpty()) {
+					final ByteBuffer buf = queue.get(0);
+
+					socketChannel.write(buf);
+					if (buf.remaining() > 0) {
+						// ... or the socket's buffer fills up
+						break;
+					}
+					queue.remove(0);
 				}
-				queue.remove(0);
-			}
 
-			if (queue.isEmpty()) {
-				// We wrote away all data, so we're no longer interested
-				// in writing on this socket. Switch back to waiting for
-				// data.
-				key.interestOps(SelectionKey.OP_READ);
+				if (queue == null || queue.isEmpty()) {
+					// We wrote away all data, so we're no longer interested
+					// in writing on this socket. Switch back to waiting for
+					// data.
+					key.interestOps(SelectionKey.OP_READ);
+				}
 			}
+		} catch (final IOException e) {
+			this.handleUnexpectedDisconnect(key);
 		}
 	}
 
 	@Override
-	public void handlePendingChanges() {
+	public boolean handlePendingChanges() {
 		synchronized (this.changeRequests) {
-			final Iterator<ChangeRequest> changes = this.changeRequests
-					.iterator();
-			while (changes.hasNext()) {
-				final ChangeRequest change = changes.next();
-				SelectionKey key;
-				switch (change.type) {
-				case ChangeRequest.CHANGEOPS:
-					try {
-						key = change.socket.keyFor(this.selector);
-						key.interestOps(change.ops);
-					} catch (final Exception e) {
-					}
-					break;
-				case ChangeRequest.CLOSE:
-					key = change.socket.keyFor(this.selector);
-					try {
-						change.socket.close();
-					} catch (final IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					key.cancel();
-					break;
-				}
+			if (this.changeRequests.size() == 0) {
+				return false;
 			}
-			this.changeRequests.clear();
+			final ChangeRequest change = this.changeRequests.remove(0);
+			SelectionKey key;
+			switch (change.type) {
+			case ChangeRequest.CHANGEOPS:
+				try {
+					key = change.socket.keyFor(this.selector);
+
+					if (key == null) {
+						this.handleUnexpectedDisconnect(change);
+					} else {
+						key.interestOps(change.ops);
+					}
+
+				} catch (final CancelledKeyException e) {
+					this.handleUnexpectedDisconnect(change);
+				} catch (final Exception e) {
+					e.printStackTrace();
+				}
+				break;
+			case ChangeRequest.CLOSE:
+				if (this.pendingData.get(change.socket) != null
+						&& this.pendingData.get(change.socket).size() > 0) {
+					this.changeRequests.add(change);
+					return true;
+				}
+				key = change.socket.keyFor(this.selector);
+				try {
+					change.socket.close();
+				} catch (final IOException e) {
+					e.printStackTrace();
+				}
+				if (key != null) {
+					key.cancel();
+				}
+				break;
+			}
 		}
+		return this.changeRequests.size() > 0;
+	}
+
+	private void handleUnexpectedDisconnect(final ChangeRequest change) {
+		try {
+			if (change.socket != null) {
+				change.socket.close();
+			}
+		} catch (final Exception e) {
+
+		}
+
+		this.dispatcher.processData(new ErrorDataEvent(
+				ErrorDataEvent.PROXY_CLIENT_DISCONNECT, change.socket, null));
+	}
+
+	@Override
+	public void handleUnexpectedDisconnect(final SelectionKey key) {
+		try {
+			key.cancel();
+			key.channel().close();
+		} catch (final Exception e) {
+
+		}
+
+		this.dispatcher.processData(new ErrorDataEvent(
+				ErrorDataEvent.PROXY_CLIENT_DISCONNECT, key.channel(), null));
 	}
 }

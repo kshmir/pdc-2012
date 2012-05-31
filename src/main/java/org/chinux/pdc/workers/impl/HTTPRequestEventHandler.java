@@ -37,7 +37,7 @@ public class HTTPRequestEventHandler {
 	private Map<SocketChannel, HTTPProxyEvent> readingDataSockets = new HashMap<SocketChannel, HTTPProxyEvent>();
 
 	public HTTPProxyEvent handle(final ServerDataEvent serverEvent)
-			throws IOException {
+			throws IOException, FilterException {
 		HTTPProxyEvent httpEvent = null;
 
 		this.outputBuffer.reset();
@@ -130,10 +130,12 @@ public class HTTPRequestEventHandler {
 	/**
 	 * Reads the current data and tries to build a new HTTPEvent after parsing a
 	 * Request Header
+	 * 
+	 * @throws FilterException
 	 */
 	private HTTPProxyEvent readEventRequestHeader(
 			final SocketChannel clientChannel, HTTPProxyEvent proxyEvent)
-			throws IOException {
+			throws IOException, FilterException {
 		final StringBuilder pendingHeader = this.readingServerSockets
 				.get(clientChannel);
 
@@ -150,21 +152,18 @@ public class HTTPRequestEventHandler {
 			final HTTPRequestHeader header = new HTTPRequestHeaderImpl(
 					headerString);
 
+			header.removeHeader("Accept-Encoding");
+			header.addHeader("Accept-Encoding", "identity");
+
 			logger.debug(header.toString());
 
 			final HTTPProxyEvent event = new HTTPProxyEvent(
 					new HTTPRequestImpl(header, new HTTPBaseReader(header)),
 					clientChannel);
 
-			// TODO remove try-catch
 			if (!HTTPBaseFilter.getBaseRequestFilter().isValid(event)) {
-				try {
-					throw new FilterException(HTTPBaseFilter
-							.getBaseRequestFilter().getErrorResponse(event)
-							.toString());
-				} catch (final FilterException e) {
-					e.printStackTrace();
-				}
+				throw new FilterException(HTTPBaseFilter.getBaseRequestFilter()
+						.getErrorResponse(event));
 			} else {
 				this.outputBuffer.write(isoCharset.encode(
 						CharBuffer.wrap(header.toString())).array());
@@ -174,7 +173,13 @@ public class HTTPRequestEventHandler {
 
 			proxyEvent = event;
 
-			proxyEvent.setCanSend(true);
+			proxyEvent.setCanSend(!event.getRequest().getBodyReader()
+					.modifiesHeaders());
+
+			if (proxyEvent.canSend()) {
+				this.outputBuffer.write(isoCharset.encode(
+						CharBuffer.wrap(header.toString())).array());
+			}
 
 			if (headerAndBody.length > 1) {
 				this.rawData = ByteBuffer.wrap(isoCharset.encode(

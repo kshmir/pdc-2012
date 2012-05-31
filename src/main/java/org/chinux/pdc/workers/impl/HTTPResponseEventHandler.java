@@ -17,6 +17,9 @@ import org.chinux.pdc.http.impl.HTTPResponseHeaderImpl;
 import org.chinux.pdc.http.impl.HTTPResponseImpl;
 import org.chinux.pdc.http.impl.readers.HTTPChunkedResponseReader;
 import org.chinux.pdc.http.impl.readers.HTTPContentLengthReader;
+import org.chinux.pdc.http.impl.readers.HTTPGzipReader;
+import org.chinux.pdc.http.impl.readers.HTTPImageResponseReader;
+import org.chinux.pdc.http.impl.readers.HTTPL33tEncoder;
 import org.chinux.pdc.nio.events.impl.ClientDataEvent;
 
 public class HTTPResponseEventHandler {
@@ -32,10 +35,12 @@ public class HTTPResponseEventHandler {
 
 	public HTTPResponseEventHandler(final HTTPProxyEvent event) {
 		this.event = event;
+		this.event.setCanClose(false);
+		this.event.setCanSend(false);
 	}
 
 	public void handle(final ByteArrayOutputStream stream,
-			final ClientDataEvent clientEvent) {
+			final ClientDataEvent clientEvent) throws FilterException {
 
 		stream.reset();
 
@@ -64,16 +69,16 @@ public class HTTPResponseEventHandler {
 			this.processData(stream, rawData);
 		}
 
-		// TODO remove try-catch
-		if (!HTTPBaseFilter.getBaseResponseFilter().isValid(this.event)) {
-			try {
+		if (this.canDoFilter(this.event)) {
+			if (!HTTPBaseFilter.getBaseResponseFilter().isValid(this.event)) {
 				throw new FilterException(HTTPBaseFilter
-						.getBaseResponseFilter().getErrorResponse(this.event)
-						.toString());
-			} catch (final FilterException e) {
-				e.printStackTrace();
+						.getBaseResponseFilter().getErrorResponse(this.event));
 			}
 		}
+	}
+
+	private boolean canDoFilter(final HTTPProxyEvent event) {
+		return event.getResponse() != null;
 	}
 
 	private boolean matchesHeader(final StringBuilder pendingHeader) {
@@ -123,21 +128,26 @@ public class HTTPResponseEventHandler {
 		final HTTPResponseHeader header = new HTTPResponseHeaderImpl(
 				headerString);
 
-		this.event.setCanSend(true);
-
 		final HTTPResponse response = new HTTPResponseImpl(header,
 				new HTTPBaseReader(header));
 
-		this.applyReadersToResponse(response);
-
-		try {
-			stream.write(isoCharset.encode(CharBuffer.wrap(header.toString()))
-					.array());
-		} catch (final IOException e) {
-			e.printStackTrace();
-		}
+		logger.debug(header.toString());
 
 		this.event.setResponse(response);
+
+		this.applyReadersToResponse(this.event);
+
+		this.event.setCanSend(!this.event.getResponse().getBodyReader()
+				.modifiesHeaders());
+
+		if (this.event.canSend()) {
+			try {
+				stream.write(isoCharset.encode(
+						CharBuffer.wrap(header.toString())).array());
+			} catch (final IOException e) {
+				e.printStackTrace();
+			}
+		}
 
 		if (headerAndBody.length > 1) {
 			rawData = ByteBuffer.wrap(isoCharset.encode(headerAndBody[1])
@@ -149,20 +159,56 @@ public class HTTPResponseEventHandler {
 	}
 
 	// Loads the readers to the HTTPResponse based on the event we have
-	private void applyReadersToResponse(final HTTPResponse response) {
+	private void applyReadersToResponse(final HTTPProxyEvent event) {
+		final HTTPResponse response = event.getResponse();
 		// Si tiene content-length usamos el content-length reader
 		if (this.hasContentLength(response) || this.mustDecodeChunked(response)) {
 			response.getBodyReader().addResponseReader(
 					new HTTPContentLengthReader(response.getHeaders()), 100);
 		} else if (!this.hasContentLength(response)
-				&& !this.mustDecodeChunked(response)) {
+				&& !this.hasEncodingChunked(response)) {
 			// CRLF ended
+		}
+
+		if (this.hasImageMIME(response)
+				&& event.getEventConfiguration().isRotateImages()) {
+			response.getBodyReader().addResponseReader(
+					new HTTPImageResponseReader(response.getHeaders()), 50);
 		}
 
 		if (this.mustDecodeChunked(response)) {
 			response.getBodyReader().addResponseReader(
 					new HTTPChunkedResponseReader(response.getHeaders()), 0);
 		}
+
+		if (this.isGzipped(response)
+				&& (this.isTextPlain(response) || this.hasImageMIME(response))) {
+			response.getBodyReader().addResponseReader(
+					new HTTPGzipReader(response.getHeaders()), 20);
+		}
+
+		/* for l33t translation */
+		if (this.isTextPlain(response)
+				&& event.getEventConfiguration().isL33t()) {
+			response.getBodyReader().addResponseReader(
+					new HTTPL33tEncoder(response.getHeaders()), 50);
+		}
+	}
+
+	private boolean isGzipped(final HTTPResponse response) {
+		if (response.getHeaders().getHeader("Content-Encoding") != null) {
+			return response.getHeaders().getHeader("Content-Encoding")
+					.contains("gzip");
+		}
+		return false;
+	}
+
+	private boolean isTextPlain(final HTTPResponse response) {
+		if (response.getHeaders().getHeader("Content-Type") != null) {
+			return response.getHeaders().getHeader("Content-Type")
+					.contains("text/plain");
+		}
+		return false;
 	}
 
 	private boolean hasContentLength(final HTTPResponse response) {
@@ -179,6 +225,7 @@ public class HTTPResponseEventHandler {
 		if (contenttype == null) {
 			return false;
 		}
+
 		return contenttype.startsWith("image/");
 	}
 

@@ -3,15 +3,13 @@ package org.chinux.pdc.http.impl.filters;
 import java.nio.ByteBuffer;
 
 import org.chinux.pdc.http.api.HTTPFilter;
+import org.chinux.pdc.http.util.ErrorPageProvider;
 import org.chinux.pdc.workers.impl.HTTPProxyEvent;
 
 public class HTTPSizeFilter implements HTTPFilter {
 
 	@Override
 	public boolean isValid(final HTTPProxyEvent event) {
-		if (event.getResponse() == null) {
-			return true;
-		}
 		final int maxSize = event.getEventConfiguration().getMaxResSize();
 		if (event.getResponse().getHeaders().getHeader("Content-Length") == null) {
 			return true;
@@ -23,9 +21,7 @@ public class HTTPSizeFilter implements HTTPFilter {
 
 	@Override
 	public ByteBuffer getErrorResponse(final HTTPProxyEvent event) {
-		return ByteBuffer
-				.wrap("The size of the requested resource is too big.\n"
-						.getBytes());
+		return ByteBuffer.wrap(ErrorPageProvider.get403());
 	}
 
 }

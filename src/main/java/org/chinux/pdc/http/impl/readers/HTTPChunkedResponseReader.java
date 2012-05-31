@@ -25,9 +25,7 @@ public class HTTPChunkedResponseReader implements HTTPReader {
 	@Override
 	public ByteBuffer processData(final ByteBuffer data) {
 
-		this.log.info("Getting data...");
 		this.chunkedTransformer.write(data.array());
-
 		ByteBuffer answer;
 
 		while ((answer = this.chunkedTransformer.read()) != null) {

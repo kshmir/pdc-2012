@@ -28,7 +28,8 @@ public abstract class ClientDataReceiver implements DataReceiver<DataEvent> {
 		return this.pendingData;
 	}
 
-	public abstract void handlePendingChanges() throws ClosedChannelException;
+	public abstract boolean handlePendingChanges()
+			throws ClosedChannelException;
 
 	public void setSelector(final Selector selector) {
 		this.selector = selector;

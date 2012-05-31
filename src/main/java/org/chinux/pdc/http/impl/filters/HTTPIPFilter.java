@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 import java.util.List;
 
 import org.chinux.pdc.http.api.HTTPFilter;
+import org.chinux.pdc.http.util.ErrorPageProvider;
 import org.chinux.pdc.workers.impl.HTTPProxyEvent;
 
 public class HTTPIPFilter implements HTTPFilter {
@@ -25,14 +26,12 @@ public class HTTPIPFilter implements HTTPFilter {
 		if (dest != null) {
 			return !this.matches(ips, dest);
 		}
-		System.err.println("Destination host null\n");
 		return true;
 	}
 
 	@Override
 	public ByteBuffer getErrorResponse(final HTTPProxyEvent event) {
-		return ByteBuffer.wrap("The requested IP has been blocked.\n"
-				.getBytes());
+		return ByteBuffer.wrap(ErrorPageProvider.get403());
 	}
 
 	private boolean matches(final List<String> list, final String ip) {
