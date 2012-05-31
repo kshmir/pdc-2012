@@ -153,7 +153,7 @@ public class HTTPRequestEventHandler {
 					headerString);
 
 			header.removeHeader("Accept-Encoding");
-			header.addHeader("Accept-Encoding", "identity");
+			// header.addHeader("Accept-Encoding", "identity");
 
 			// TODO: Filtering
 

@@ -1,5 +1,6 @@
 package org.chinux.pdc.http.impl;
 
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -34,6 +35,18 @@ public class HTTPRequestHeaderImpl implements HTTPRequestHeader {
 		if (match.find()) {
 			this.method = match.group(1);
 			this.URI = match.group(2);
+			if (this.URI.startsWith("http")) {
+				try {
+					String params = "";
+					if (this.URI.indexOf("?") != -1) {
+						params = this.URI.substring(this.URI.indexOf("?"));
+					}
+					this.URI = new java.net.URI(this.URI).getPath() + params;
+				} catch (final URISyntaxException e) {
+
+				}
+			}
+
 			this.version = match.group(3);
 		}
 
