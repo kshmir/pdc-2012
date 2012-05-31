@@ -41,7 +41,7 @@ public class ASyncClientDataReceiver extends ClientDataReceiver implements
 
 			if (socketChannel == null) {
 
-//				socketChannel = this.pool.getObject(socketHost);
+				socketChannel = this.pool.getObject(socketHost);
 
 				if (socketChannel == null) {
 
