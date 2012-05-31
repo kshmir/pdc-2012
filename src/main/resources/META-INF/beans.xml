@@ -53,6 +53,7 @@
 		<constructor-arg>
 			<ref bean="clientDataReceiver" />
 		</constructor-arg>
+		<property name="connectionCloseHandler" ref="clientDataReceiver"></property>
 	</bean>
 
 	<bean id="serverHandler" class="org.chinux.pdc.nio.handlers.impl.ServerHandler"

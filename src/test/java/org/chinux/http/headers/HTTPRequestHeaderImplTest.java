@@ -27,7 +27,6 @@ public class HTTPRequestHeaderImplTest {
 				"/kshmir/pdc-2012/issues/3?licenseID=string&content=string&paramsXML=string",
 				req.getRequestURI());
 		Assert.assertEquals("keep-alive", req.getHeader("Connection"));
-		Assert.assertEquals("string", req.getParameter("content"));
 	}
 
 	@Test

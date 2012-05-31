@@ -143,10 +143,10 @@ public class HTTPProxyEvent {
 	}
 
 	public ByteBuffer getParseOffsetData() {
-		return parseOffsetData;
+		return this.parseOffsetData;
 	}
 
-	public void setParseOffsetData(ByteBuffer parseOffsetData) {
+	public void setParseOffsetData(final ByteBuffer parseOffsetData) {
 		this.parseOffsetData = parseOffsetData;
 	}
 }

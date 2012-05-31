@@ -235,7 +235,8 @@ public class ServerHandler implements NIOServerHandler, DataReceiver<DataEvent> 
 				}
 				break;
 			case ChangeRequest.CLOSE:
-				if (this.pendingData.get(change.socket) != null
+				if (change.socket.isOpen()
+						&& this.pendingData.get(change.socket) != null
 						&& this.pendingData.get(change.socket).size() > 0) {
 					this.changeRequests.add(change);
 					return true;

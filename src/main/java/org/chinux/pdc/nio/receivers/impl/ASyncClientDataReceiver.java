@@ -14,7 +14,10 @@ import org.chinux.pdc.nio.events.impl.ClientDataEvent;
 import org.chinux.pdc.nio.receivers.api.ClientDataReceiver;
 import org.chinux.pdc.nio.services.util.ChangeRequest;
 
-public class ASyncClientDataReceiver extends ClientDataReceiver {
+public class ASyncClientDataReceiver extends ClientDataReceiver implements
+		ConnectionCloseHandler {
+
+	private TimeoutablePool pool = new TimeoutablePool(30);
 
 	@Override
 	public void receiveEvent(final DataEvent dataEvent) {
@@ -37,12 +40,20 @@ public class ASyncClientDataReceiver extends ClientDataReceiver {
 			socketChannel = this.clientIPMap.get(event.getAttachment());
 
 			if (socketChannel == null) {
-				try {
-					socketChannel = SocketChannel.open();
-					socketChannel.configureBlocking(false);
-					socketChannel.connect(socketHost);
-				} catch (final IOException e) {
-					e.printStackTrace();
+
+				socketChannel = this.pool.getObject(socketHost);
+
+				if (socketChannel == null) {
+
+					try {
+						this.log.info("New socket spawned for " + socketHost);
+						socketChannel = SocketChannel.open();
+						socketChannel.configureBlocking(false);
+						socketChannel.connect(socketHost);
+
+					} catch (final IOException e) {
+						e.printStackTrace();
+					}
 				}
 
 				this.clientIPMap.put(event.getAttachment(), socketChannel);
@@ -53,9 +64,30 @@ public class ASyncClientDataReceiver extends ClientDataReceiver {
 				// channel
 				// is ready to complete connection establishment.
 				synchronized (this.changeRequests) {
-					this.changeRequests.add(new ChangeRequest(socketChannel,
-							ChangeRequest.REGISTER, SelectionKey.OP_CONNECT,
-							event.getAttachment()));
+					if (!socketChannel.isConnected()) {
+						this.log.info("registering for CONNECT");
+						this.changeRequests
+								.add(new ChangeRequest(socketChannel,
+										ChangeRequest.REGISTER,
+										SelectionKey.OP_CONNECT, event
+												.getAttachment()));
+
+					} else {
+
+						if (socketChannel.keyFor(this.selector) == null) {
+							this.log.info("registering for WRITE");
+							this.changeRequests.add(new ChangeRequest(
+									socketChannel, ChangeRequest.REGISTER,
+									SelectionKey.OP_WRITE, event
+											.getAttachment()));
+						} else {
+							this.log.info("Changing ops to WRITE");
+							this.changeRequests.add(new ChangeRequest(
+									socketChannel, ChangeRequest.CHANGEOPS,
+									SelectionKey.OP_WRITE, event
+											.getAttachment()));
+						}
+					}
 				}
 			}
 		}
@@ -79,10 +111,12 @@ public class ASyncClientDataReceiver extends ClientDataReceiver {
 	public void closeConnection(final DataEvent dataEvent) {
 
 		if (dataEvent instanceof ClientDataEvent) {
-			final ClientDataEvent clientEvent = (ClientDataEvent) dataEvent;
-			this.changeRequests.add(new ChangeRequest(this.clientIPMap
-					.get(((ClientDataEvent) dataEvent).getAttachment()),
-					ChangeRequest.CLOSE, 0, clientEvent.getAttachment()));
+			this.handleConnectionClose(this.clientIPMap
+					.get(((ClientDataEvent) dataEvent).getAttachment()));
+			// final ClientDataEvent clientEvent = (ClientDataEvent) dataEvent;
+			// this.changeRequests.add(new ChangeRequest(this.clientIPMap
+			// .get(((ClientDataEvent) dataEvent).getAttachment()),
+			// ChangeRequest.CLOSE, 0, clientEvent.getAttachment()));
 		}
 	}
 
@@ -99,26 +133,30 @@ public class ASyncClientDataReceiver extends ClientDataReceiver {
 				if (change != null) {
 					switch (change.type) {
 					case ChangeRequest.CLOSE:
-						try {
-							if (this.pendingData.get(change.attachment) != null
-									&& this.pendingData.get(change.attachment)
-											.size() > 0) {
-								this.changeRequests.add(change);
-								return false;
-							}
-
-							change.socket.close();
-						} catch (final IOException e) {
-							e.printStackTrace();
+						if (this.pendingData.get(change.attachment) != null
+								&& this.pendingData.get(change.attachment)
+										.size() > 0) {
+							this.changeRequests.add(change);
+							return false;
 						}
+
+						if (change.socket.isConnected()) {
+							this.doClose(change.socket);
+						}
+
 						break;
 					case ChangeRequest.CHANGEOPS:
 						key = change.socket.keyFor(this.selector);
-						key.interestOps(change.ops);
+						if (key.isValid()) {
+							key.interestOps(change.ops);
+							key.attach(change.attachment);
+						} else {
+							throw new RuntimeException("Key not valid!!!");
+						}
 						break;
 					case ChangeRequest.REGISTER:
-						key = change.socket.register(this.selector, change.ops);
-						key.attach(change.attachment);
+						change.socket.register(this.selector, change.ops,
+								change.attachment);
 						break;
 					}
 				}
@@ -127,6 +165,17 @@ public class ASyncClientDataReceiver extends ClientDataReceiver {
 			}
 		}
 		return this.changeRequests.size() > 0;
+	}
+
+	private void doClose(final SocketChannel socket) {
+
+		this.pool.saveObject(new InetSocketAddress(socket.socket()
+				.getInetAddress(), socket.socket().getPort()), socket);
+	}
+
+	@Override
+	public void handleConnectionClose(final SocketChannel socket) {
+		this.doClose(socket);
 	}
 
 }

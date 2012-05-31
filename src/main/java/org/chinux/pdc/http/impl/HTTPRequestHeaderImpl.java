@@ -46,15 +46,6 @@ public class HTTPRequestHeaderImpl implements HTTPRequestHeader {
 			if (!this.URI.contains("?")) {
 				return;
 			}
-
-			match = parametersPattern.matcher(this.URI.substring(this.URI
-					.indexOf('?') + 1));
-			String[] values = null;
-			while (match.find()) {
-				values = match.group(1).split("=");
-				this.parameters.put(values[0], (values.length > 1) ? values[1]
-						: "");
-			}
 		}
 
 	}
@@ -83,12 +74,6 @@ public class HTTPRequestHeaderImpl implements HTTPRequestHeader {
 	@Override
 	public String getRequestURI() {
 		return this.URI;
-	}
-
-	@Override
-	public String getParameter(final String name) {
-		return this.parameters.containsKey(name) ? this.parameters.get(name)
-				: null;
 	}
 
 	@Override

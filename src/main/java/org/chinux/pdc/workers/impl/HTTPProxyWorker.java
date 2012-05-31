@@ -52,7 +52,9 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 
 		if (event.getResponse() != null) {
 			boolean connectionClose = true;
-			if (event.getResponse().getHeaders().getHTTPVersion().equals("1.0")) {
+			if (event.getResponse().getHeaders().getHTTPVersion() != null
+					&& event.getResponse().getHeaders().getHTTPVersion()
+							.equals("1.0")) {
 				if (event.getResponse().getHeaders().getHeader("connection") != null) {
 					connectionClose = event.getResponse().getHeaders()
 							.getHeader("connection").equals("close");
@@ -74,7 +76,9 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 
 		if (event.getResponse() != null) {
 			boolean connectionClose = false;
-			if (event.getResponse().getHeaders().getHTTPVersion().equals("1.0")) {
+			if (event.getResponse().getHeaders().getHTTPVersion() != null
+					&& event.getResponse().getHeaders().getHTTPVersion()
+							.equals("1.0")) {
 				if (event.getResponse().getHeaders().getHeader("connection") != null) {
 					connectionClose = event.getResponse().getHeaders()
 							.getHeader("connection").equals("close");
@@ -128,6 +132,9 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 								+ " "
 								+ event.getRequest().getHeaders()
 										.getRequestURI());
+				final ClientDataEvent tellToClose = new ClientDataEvent(null,
+						this.clientDataReceiver, null, event, null);
+				this.clientDataReceiver.closeConnection(tellToClose);
 			}
 
 			// TODO: Aprolijar esto
