@@ -41,7 +41,7 @@ public class ASyncClientDataReceiver extends ClientDataReceiver implements
 
 			if (socketChannel == null) {
 
-				socketChannel = this.pool.getObject(socketHost);
+//				socketChannel = this.pool.getObject(socketHost);
 
 				if (socketChannel == null) {
 
@@ -133,7 +133,8 @@ public class ASyncClientDataReceiver extends ClientDataReceiver implements
 				if (change != null) {
 					switch (change.type) {
 					case ChangeRequest.CLOSE:
-						if (this.pendingData.get(change.attachment) != null
+						if (change.socket.isConnected()
+								&& this.pendingData.get(change.attachment) != null
 								&& this.pendingData.get(change.attachment)
 										.size() > 0) {
 							this.changeRequests.add(change);
@@ -147,11 +148,17 @@ public class ASyncClientDataReceiver extends ClientDataReceiver implements
 						break;
 					case ChangeRequest.CHANGEOPS:
 						key = change.socket.keyFor(this.selector);
-						if (key.isValid()) {
+						if (key != null && key.isValid()) {
 							key.interestOps(change.ops);
 							key.attach(change.attachment);
 						} else {
-							throw new RuntimeException("Key not valid!!!");
+							if (change.socket.isConnected()) {
+								change.socket.register(this.selector,
+										change.ops, change.attachment);
+							} else {
+								throw new RuntimeException(
+										"I expected this socket to be connected, we must reconnect :(");
+							}
 						}
 						break;
 					case ChangeRequest.REGISTER:

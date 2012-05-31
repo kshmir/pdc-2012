@@ -83,6 +83,8 @@ public class HTTPRequestEventHandler {
 		this.outputBuffer = answerStream;
 	}
 
+	private IPAddressResolver resolver = new IPAddressResolver();
+
 	private InetAddress getEventAddress(final SocketChannel clientChannel,
 			final HTTPProxyEvent httpEvent) {
 		InetAddress address = null;
@@ -90,8 +92,8 @@ public class HTTPRequestEventHandler {
 			if (httpEvent.getRequest().getHeaders().getHeader("Host") == null) {
 				throw new Exception();
 			}
-			address = InetAddress.getByName(httpEvent.getRequest().getHeaders()
-					.getHeader("Host"));
+			address = this.resolver.getAddressForHost(httpEvent.getRequest()
+					.getHeaders().getHeader("Host"));
 		} catch (final Exception e) {
 			address = clientChannel.socket().getInetAddress();
 		}
