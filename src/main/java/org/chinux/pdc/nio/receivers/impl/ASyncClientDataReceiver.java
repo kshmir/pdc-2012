@@ -34,7 +34,7 @@ public class ASyncClientDataReceiver extends ClientDataReceiver {
 
 		SocketChannel socketChannel;
 		synchronized (this.clientIPMap) {
-			socketChannel = this.clientIPMap.get(event.getOwner());
+			socketChannel = this.clientIPMap.get(event.getAttachment());
 
 			if (socketChannel == null) {
 				try {
@@ -45,7 +45,7 @@ public class ASyncClientDataReceiver extends ClientDataReceiver {
 					e.printStackTrace();
 				}
 
-				this.clientIPMap.put(event.getOwner(), socketChannel);
+				this.clientIPMap.put(event.getAttachment(), socketChannel);
 
 				// Queue a channel registration since the caller is not the
 				// selecting thread. As part of the registration we'll register
@@ -55,17 +55,17 @@ public class ASyncClientDataReceiver extends ClientDataReceiver {
 				synchronized (this.changeRequests) {
 					this.changeRequests.add(new ChangeRequest(socketChannel,
 							ChangeRequest.REGISTER, SelectionKey.OP_CONNECT,
-							event.getOwner()));
+							event.getAttachment()));
 				}
 			}
 		}
 
 		synchronized (this.pendingData) {
-			ArrayList<ByteBuffer> queue = this.pendingData
-					.get(event.getOwner());
+			ArrayList<ByteBuffer> queue = this.pendingData.get(event
+					.getAttachment());
 			if (queue == null) {
 				queue = new ArrayList<ByteBuffer>();
-				this.pendingData.put(event.getOwner(), queue);
+				this.pendingData.put(event.getAttachment(), queue);
 			}
 			queue.add(event.getData());
 		}
@@ -77,11 +77,17 @@ public class ASyncClientDataReceiver extends ClientDataReceiver {
 
 	@Override
 	public void closeConnection(final DataEvent dataEvent) {
-		// TODO Make this
+
+		if (dataEvent instanceof ClientDataEvent) {
+			final ClientDataEvent clientEvent = (ClientDataEvent) dataEvent;
+			this.changeRequests.add(new ChangeRequest(this.clientIPMap
+					.get(((ClientDataEvent) dataEvent).getAttachment()),
+					ChangeRequest.CLOSE, 0, clientEvent.getAttachment()));
+		}
 	}
 
 	@Override
-	public void handlePendingChanges() throws ClosedChannelException {
+	public boolean handlePendingChanges() throws ClosedChannelException {
 
 		synchronized (this.changeRequests) {
 			if (!this.changeRequests.isEmpty()) {
@@ -89,17 +95,38 @@ public class ASyncClientDataReceiver extends ClientDataReceiver {
 				final ChangeRequest change = this.changeRequests.remove(0);
 
 				SelectionKey key;
-				switch (change.type) {
-				case ChangeRequest.CHANGEOPS:
-					key = change.socket.keyFor(this.selector);
-					key.interestOps(change.ops);
-					break;
-				case ChangeRequest.REGISTER:
-					key = change.socket.register(this.selector, change.ops);
-					key.attach(change.attachment);
-					break;
+
+				if (change != null) {
+					switch (change.type) {
+					case ChangeRequest.CLOSE:
+						try {
+							if (this.pendingData.get(change.attachment) != null
+									&& this.pendingData.get(change.attachment)
+											.size() > 0) {
+								this.changeRequests.add(change);
+								return false;
+							}
+
+							change.socket.close();
+						} catch (final IOException e) {
+							e.printStackTrace();
+						}
+						break;
+					case ChangeRequest.CHANGEOPS:
+						key = change.socket.keyFor(this.selector);
+						key.interestOps(change.ops);
+						break;
+					case ChangeRequest.REGISTER:
+						key = change.socket.register(this.selector, change.ops);
+						key.attach(change.attachment);
+						break;
+					}
 				}
+			} else {
+				return false;
 			}
 		}
+		return this.changeRequests.size() > 0;
 	}
+
 }

@@ -9,7 +9,7 @@ import org.chinux.pdc.http.api.HTTPReader;
 import org.chinux.pdc.http.api.HTTPResponseHeader;
 import org.chinux.pdc.http.util.ChunkedInputTransformer;
 
-public class HTTPChunkedResponseReader implements HTTPReader {
+public class HTTPChunkedResponseTransformReader implements HTTPReader {
 
 	private HTTPResponseHeader responseHeader;
 	private boolean isFinished = false;
@@ -18,16 +18,14 @@ public class HTTPChunkedResponseReader implements HTTPReader {
 	private ChunkedInputTransformer chunkedTransformer = new ChunkedInputTransformer();
 	private Logger log = Logger.getLogger(this.getClass());
 
-	public HTTPChunkedResponseReader(final HTTPResponseHeader responseHeader) {
+	public HTTPChunkedResponseTransformReader(final HTTPResponseHeader responseHeader) {
 		this.responseHeader = responseHeader;
 	}
 
 	@Override
 	public ByteBuffer processData(final ByteBuffer data) {
 
-		this.log.info("Getting data...");
 		this.chunkedTransformer.write(data.array());
-
 		ByteBuffer answer;
 
 		while ((answer = this.chunkedTransformer.read()) != null) {

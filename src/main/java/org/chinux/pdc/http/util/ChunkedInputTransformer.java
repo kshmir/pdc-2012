@@ -7,10 +7,12 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.log4j.Logger;
 
 public class ChunkedInputTransformer {
 
 	private static Charset isoCharset = Charset.forName("ISO-8859-1");
+	private static Logger log = Logger.getLogger(ChunkedInputTransformer.class);
 	private ByteArrayOutputStream stream = new ByteArrayOutputStream();
 
 	/**
@@ -64,12 +66,13 @@ public class ChunkedInputTransformer {
 
 			return ByteBuffer.wrap(byteData);
 		} catch (final BufferUnderflowException e) {
-			e.printStackTrace();
+			// It can happen and be corrected
 		} catch (final NumberFormatException e) {
-			e.printStackTrace();
+			// It just cant
+			log.error("Invalid chunked transfer?", e);
 			return null;
 		} catch (final Exception e) {
-			e.printStackTrace();
+			// It can happen and be corrected
 		}
 		this.stream.reset();
 		try {

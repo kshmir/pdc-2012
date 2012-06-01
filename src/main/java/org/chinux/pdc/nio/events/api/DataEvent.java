@@ -50,6 +50,10 @@ public abstract class DataEvent {
 		return this.data;
 	}
 
+	public void setData(final ByteBuffer newData) {
+		this.data = newData;
+	}
+
 	public boolean canSend() {
 		return this.canSend;
 	}

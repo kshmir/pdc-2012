@@ -46,11 +46,10 @@ public class ASyncEventDispatcher<T extends DataEvent> implements Runnable,
 				}
 				dataEvent = this.events.poll();
 			}
-			this.log.debug("Do work from event" + dataEvent.toString());
 			T event;
 			try {
 				event = this.worker.DoWork(dataEvent);
-				this.log.debug("Got event" + event.toString());
+
 				if (event.canSend()) {
 					event.getReceiver().receiveEvent(event);
 				}
@@ -58,8 +57,11 @@ public class ASyncEventDispatcher<T extends DataEvent> implements Runnable,
 				if (event.canClose()) {
 					event.getReceiver().closeConnection(event);
 				}
+
 			} catch (final IOException e) {
-				e.printStackTrace();
+				this.log.error("Unexpected exception", e);
+			} catch (final Exception e) {
+				this.log.error("Unexpected exception", e);
 			}
 		}
 	}
