@@ -46,6 +46,11 @@ public class HTTPContentLengthReader implements HTTPDelimiterReader {
 
 	@Override
 	public ByteBuffer processData(final ByteBuffer data) {
+		if (data.array().length == 0) {
+			this.finished = this.currlength >= this.getLengthToRead();
+			return data;
+		}
+
 		final int oldlength = this.currlength;
 		this.currlength += data.array().length;
 		if (this.currlength >= this.getLengthToRead()) {

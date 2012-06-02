@@ -36,32 +36,39 @@ public class HTTPRequestEventHandler {
 
 	public HTTPProxyEvent handle(final ServerDataEvent serverEvent)
 			throws IOException {
-		HTTPProxyEvent httpEvent = null;
+		try {
+			HTTPProxyEvent httpEvent = null;
 
-		this.outputBuffer.reset();
+			this.outputBuffer.reset();
 
-		final SocketChannel clientChannel = serverEvent.getChannel();
+			final SocketChannel clientChannel = serverEvent.getChannel();
 
-		this.rawData = ByteBuffer.wrap(serverEvent.getData().array().clone());
+			this.rawData = ByteBuffer.wrap(serverEvent.getData().array()
+					.clone());
 
-		// If we are already building the httpRequest... we build it
-		if (this.isReadingRequestHeaders(clientChannel)) {
-			httpEvent = this.readEventRequestHeader(clientChannel, httpEvent);
+			// If we are already building the httpRequest... we build it
+			if (this.isReadingRequestHeaders(clientChannel)) {
+				httpEvent = this.readEventRequestHeader(clientChannel,
+						httpEvent);
+			}
+
+			// We process all the reading data
+			if (this.isReadingRequestData(clientChannel)) {
+				httpEvent = this.readRequestData(clientChannel);
+			} else if (httpEvent != null) {
+				httpEvent.setParseOffsetData(this.rawData);
+			}
+
+			if (httpEvent != null) {
+				httpEvent.setAddress(this.getEventAddress(clientChannel,
+						httpEvent));
+			}
+			return httpEvent;
+		} catch (final NullPointerException e) {
+			this.readingServerSockets.remove(serverEvent.getChannel());
+			return null;
 		}
 
-		// We process all the reading data
-		if (this.isReadingRequestData(clientChannel)) {
-			httpEvent = this.readRequestData(clientChannel);
-		} else if (httpEvent != null) {
-			httpEvent.setParseOffsetData(this.rawData);
-		}
-
-		if (httpEvent != null) {
-			httpEvent
-					.setAddress(this.getEventAddress(clientChannel, httpEvent));
-		}
-
-		return httpEvent;
 	}
 
 	private boolean isReadingRequestHeaders(final SocketChannel socketChannel) {
@@ -102,7 +109,6 @@ public class HTTPRequestEventHandler {
 
 	private HTTPProxyEvent readRequestData(final SocketChannel clientChannel) {
 		HTTPProxyEvent httpEvent;
-		this.logger.debug("Reading data from clientChannel: " + clientChannel);
 		final HTTPProxyEvent event = this.readingDataSockets.get(clientChannel);
 		final HTTPRequest request = event.getRequest();
 
@@ -217,10 +223,6 @@ public class HTTPRequestEventHandler {
 		header.addHeader("Via", oldviaheader + header.getHTTPVersion()
 				+ " chinuProxy");
 
-	}
-
-	private void applyReadersToRequest(final HTTPProxyEvent event) {
-		final HTTPRequest request = event.getRequest();
 	}
 
 }

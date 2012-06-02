@@ -44,7 +44,7 @@ public class ServerHandler implements NIOServerHandler, DataReceiver<DataEvent> 
 	}
 
 	@Override
-	public synchronized void receiveEvent(final DataEvent dataEvent) {
+	public void receiveEvent(final DataEvent dataEvent) {
 
 		if (!(dataEvent instanceof ServerDataEvent)) {
 			throw new RuntimeException("Must receive a NIOServerDataEvent");
@@ -78,7 +78,7 @@ public class ServerHandler implements NIOServerHandler, DataReceiver<DataEvent> 
 	}
 
 	@Override
-	public synchronized void closeConnection(final DataEvent dataEvent) {
+	public void closeConnection(final DataEvent dataEvent) {
 
 		if (dataEvent instanceof ErrorDataEvent) {
 
@@ -162,10 +162,7 @@ public class ServerHandler implements NIOServerHandler, DataReceiver<DataEvent> 
 		if (numRead == -1) {
 			// Remote entity shut the socket down cleanly. Do the
 			// same from our end and cancel the channel.
-			try {
-				key.channel().close();
-			} catch (final IOException e) {
-			}
+			this.handleUnexpectedDisconnect(key);
 			key.cancel();
 			// this.handleUnexpectedDisconnect(socketChannel);
 		}
@@ -217,47 +214,53 @@ public class ServerHandler implements NIOServerHandler, DataReceiver<DataEvent> 
 
 	@Override
 	public boolean handlePendingChanges() {
-		synchronized (this.changeRequests) {
-			if (this.changeRequests.size() == 0) {
-				return false;
-			}
-			final ChangeRequest change = this.changeRequests.remove(0);
-			SelectionKey key;
-			switch (change.type) {
-			case ChangeRequest.CHANGEOPS:
-				try {
-					key = change.socket.keyFor(this.selector);
+		try {
+			synchronized (this.changeRequests) {
+				if (this.changeRequests.size() == 0) {
+					return false;
+				}
+				final ChangeRequest change = this.changeRequests.remove(0);
+				SelectionKey key;
+				switch (change.type) {
+				case ChangeRequest.CHANGEOPS:
+					try {
+						key = change.socket.keyFor(this.selector);
 
-					if (key == null) {
-						this.handleUnexpectedDisconnect(change);
-					} else {
-						key.interestOps(change.ops);
+						if (key == null) {
+							throw new ClientDisconnectException(change);
+						} else {
+							key.interestOps(change.ops);
+						}
+
+					} catch (final ClientDisconnectException e) {
+						throw e;
+					} catch (final CancelledKeyException e) {
+						throw new ClientDisconnectException(change);
+					} catch (final Exception e) {
+						e.printStackTrace();
 					}
-
-				} catch (final CancelledKeyException e) {
-					this.handleUnexpectedDisconnect(change);
-				} catch (final Exception e) {
-					e.printStackTrace();
+					break;
+				case ChangeRequest.CLOSE:
+					if (change.socket.isOpen()
+							&& this.pendingData.get(change.socket) != null
+							&& this.pendingData.get(change.socket).size() > 0) {
+						this.changeRequests.add(change);
+						return true;
+					}
+					key = change.socket.keyFor(this.selector);
+					try {
+						change.socket.close();
+					} catch (final IOException e) {
+						e.printStackTrace();
+					}
+					if (key != null) {
+						key.cancel();
+					}
+					break;
 				}
-				break;
-			case ChangeRequest.CLOSE:
-				if (change.socket.isOpen()
-						&& this.pendingData.get(change.socket) != null
-						&& this.pendingData.get(change.socket).size() > 0) {
-					this.changeRequests.add(change);
-					return true;
-				}
-				key = change.socket.keyFor(this.selector);
-				try {
-					change.socket.close();
-				} catch (final IOException e) {
-					e.printStackTrace();
-				}
-				if (key != null) {
-					key.cancel();
-				}
-				break;
 			}
+		} catch (final ClientDisconnectException e) {
+			this.handleUnexpectedDisconnect(e.getChange());
 		}
 		return this.changeRequests.size() > 0;
 	}
@@ -271,8 +274,9 @@ public class ServerHandler implements NIOServerHandler, DataReceiver<DataEvent> 
 
 		}
 
-		// this.dispatcher.processData(new ErrorDataEvent(
-		// ErrorDataEvent.PROXY_CLIENT_DISCONNECT, change.socket, null));
+		System.out.println("Proxy client disconnection");
+		this.dispatcher.processData(new ErrorDataEvent(
+				ErrorDataEvent.PROXY_CLIENT_DISCONNECT, change.socket, null));
 	}
 
 	@Override
@@ -284,7 +288,8 @@ public class ServerHandler implements NIOServerHandler, DataReceiver<DataEvent> 
 
 		}
 
-		// this.dispatcher.processData(new ErrorDataEvent(
-		// ErrorDataEvent.PROXY_CLIENT_DISCONNECT, key.channel(), null));
+		System.out.println("Proxy client disconnection");
+		this.dispatcher.processData(new ErrorDataEvent(
+				ErrorDataEvent.PROXY_CLIENT_DISCONNECT, key.channel(), null));
 	}
 }

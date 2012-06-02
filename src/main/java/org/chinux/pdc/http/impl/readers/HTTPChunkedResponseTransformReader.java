@@ -4,7 +4,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import org.apache.log4j.Logger;
 import org.chinux.pdc.http.api.HTTPReader;
 import org.chinux.pdc.http.api.HTTPResponseHeader;
 import org.chinux.pdc.http.util.ChunkedInputTransformer;
@@ -16,9 +15,9 @@ public class HTTPChunkedResponseTransformReader implements HTTPReader {
 
 	private ByteArrayOutputStream stream = new ByteArrayOutputStream();
 	private ChunkedInputTransformer chunkedTransformer = new ChunkedInputTransformer();
-	private Logger log = Logger.getLogger(this.getClass());
 
-	public HTTPChunkedResponseTransformReader(final HTTPResponseHeader responseHeader) {
+	public HTTPChunkedResponseTransformReader(
+			final HTTPResponseHeader responseHeader) {
 		this.responseHeader = responseHeader;
 	}
 

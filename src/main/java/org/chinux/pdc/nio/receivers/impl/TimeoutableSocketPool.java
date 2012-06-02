@@ -10,9 +10,7 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import org.apache.log4j.Logger;
-
-public class TimeoutablePool {
+public class TimeoutableSocketPool {
 
 	private Timer timeoutTimer = new Timer();
 
@@ -21,9 +19,7 @@ public class TimeoutablePool {
 
 	private int seconds;
 
-	private static Logger log = Logger.getLogger(TimeoutablePool.class);
-
-	public TimeoutablePool(final int seconds) {
+	public TimeoutableSocketPool(final int seconds) {
 		this.seconds = seconds;
 		final TimerTask task = new TimerTask() {
 
@@ -31,11 +27,11 @@ public class TimeoutablePool {
 
 			@Override
 			public synchronized void run() {
-				for (final SocketChannel channel : TimeoutablePool.this.timeAdded
+				for (final SocketChannel channel : TimeoutableSocketPool.this.timeAdded
 						.keySet()) {
-					if (TimeoutablePool.this.seconds * 1000 < System
+					if (TimeoutableSocketPool.this.seconds * 1000 < System
 							.currentTimeMillis()
-							- TimeoutablePool.this.timeAdded.get(channel)) {
+							- TimeoutableSocketPool.this.timeAdded.get(channel)) {
 						try {
 							channel.close();
 							this.toRemove.add(channel);
@@ -46,8 +42,8 @@ public class TimeoutablePool {
 				}
 
 				for (final Object c : this.toRemove) {
-					TimeoutablePool.this.elements.remove(c);
-					TimeoutablePool.this.timeAdded.remove(c);
+					TimeoutableSocketPool.this.elements.remove(c);
+					TimeoutableSocketPool.this.timeAdded.remove(c);
 				}
 			}
 		};

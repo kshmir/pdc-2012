@@ -16,19 +16,13 @@ public class HTTPRequestHeaderImpl implements HTTPRequestHeader {
 
 	private static Pattern headerPattern = Pattern.compile("([\\w-]+): (.+)");
 
-	private static Pattern parametersPattern = Pattern.compile("([\\w|=]+)");
-
 	private String method;
 	private Map<String, String> headers;
-	private Map<String, String> parameters;
 	private String URI;
-	private String request;
 	private String version;
 
 	public HTTPRequestHeaderImpl(final String request) {
-		this.request = request;
 		this.headers = new HashMap<String, String>();
-		this.parameters = new HashMap<String, String>();
 		final String firstLine = request.split("\n")[0];
 
 		Matcher match = headPattern.matcher(firstLine);

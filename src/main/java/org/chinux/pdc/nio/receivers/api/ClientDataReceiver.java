@@ -19,9 +19,10 @@ public abstract class ClientDataReceiver implements DataReceiver<DataEvent> {
 	protected Selector selector;
 	protected int connectionPort;
 
-	protected Map<Object, ArrayList<ByteBuffer>> pendingData = new HashMap<Object, ArrayList<ByteBuffer>>();
 	protected List<ChangeRequest> changeRequests = new ArrayList<ChangeRequest>();
-	protected Map<Object, SocketChannel> clientIPMap = new HashMap<Object, SocketChannel>();
+	
+	protected Map<Object, ArrayList<ByteBuffer>> pendingData = new HashMap<Object, ArrayList<ByteBuffer>>();
+	protected Map<Object, SocketChannel> attachmentSocketMap = new HashMap<Object, SocketChannel>();
 	protected Map<Object, InetAddress> attachmentIPMap = new HashMap<Object, InetAddress>();
 
 	protected Logger log = Logger.getLogger(this.getClass());

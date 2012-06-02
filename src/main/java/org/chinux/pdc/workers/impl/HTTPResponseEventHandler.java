@@ -7,7 +7,6 @@ import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.util.regex.Pattern;
 
-import org.apache.log4j.Logger;
 import org.chinux.pdc.http.api.HTTPResponse;
 import org.chinux.pdc.http.api.HTTPResponseHeader;
 import org.chinux.pdc.http.impl.HTTPBaseReader;
@@ -22,8 +21,6 @@ import org.chinux.pdc.nio.events.impl.ClientDataEvent;
 public class HTTPResponseEventHandler {
 
 	private static Charset isoCharset = Charset.forName("ISO-8859-1");
-	private static Logger logger = Logger
-			.getLogger(HTTPResponseEventHandler.class);
 
 	private static Pattern headerCutPattern = Pattern.compile("(\\r\\n\\r\\n)",
 			Pattern.MULTILINE);
