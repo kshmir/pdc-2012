@@ -19,6 +19,8 @@ public interface HTTPRequestHeader extends HTTPMessageHeader {
 	 */
 	public String getRequestURI();
 
+	public String getHTTPVersion();
+
 	public void removeHeader(String name);
 
 	public void addHeader(String name, String value);

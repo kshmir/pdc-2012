@@ -156,6 +156,8 @@ public class HTTPRequestEventHandler {
 
 			header.removeHeader("Accept-Encoding");
 			header.addHeader("Accept-Encoding", "identity");
+			this.addViaHeader(header);
+			this.addMaxForwardsHeader(header);
 
 			// TODO: Filtering
 
@@ -188,6 +190,39 @@ public class HTTPRequestEventHandler {
 			}
 		}
 		return proxyEvent;
+	}
+
+	private void addMaxForwardsHeader(final HTTPRequestHeader header) {
+		Integer currentforwards;
+		if (header.getHeader("Max-Forwards") != null) {
+			currentforwards = Integer.valueOf(header.getHeader("Max-Forwards"));
+			if (currentforwards == 0) {
+				// do not forward request
+			} else {
+				currentforwards--;
+			}
+		} else {
+			currentforwards = 10;
+		}
+		header.addHeader("Max-Forwards", String.valueOf(currentforwards));
+
+		// System.out
+		// .println("=================== HEADER ========================================== "
+		// + header.getHeader("Max-Forwards"));
+	}
+
+	private void addViaHeader(final HTTPRequestHeader header) {
+		String oldviaheader = "";
+		if (header.getHeader("Via") != null) {
+			oldviaheader = header.getHeader("Via");
+			oldviaheader += ", ";
+		}
+		header.addHeader("Via", oldviaheader + header.getHTTPVersion()
+				+ " chinuProxy");
+
+		// System.out
+		// .println("=================== HEADER ========================================== "
+		// + header.getHeader("Via"));
 	}
 
 	private void applyReadersToRequest(final HTTPProxyEvent event) {
