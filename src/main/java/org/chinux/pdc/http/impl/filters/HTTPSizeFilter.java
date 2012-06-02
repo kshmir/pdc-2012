@@ -14,9 +14,6 @@ public class HTTPSizeFilter implements HTTPFilter {
 
 	@Override
 	public boolean isValid(final HTTPProxyEvent event) {
-		if (event.getResponse() == null) {
-			return true;
-		}
 		final int maxSize = event.getEventConfiguration().getMaxResSize();
 		if (event.getResponse().getHeaders().getHeader("Content-Length") == null) {
 			return true;

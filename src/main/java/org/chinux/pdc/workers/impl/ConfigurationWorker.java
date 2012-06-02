@@ -31,7 +31,11 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 
 	@Override
 	public DataEvent DoWork(final DataEvent dataEvent) {
-		this.data = new String(dataEvent.getData().array()).split("\n")[0];
+		final String str = new String(dataEvent.getData().array());
+		if (str.length() < 2) {
+			return dataEvent;
+		}
+		this.data = str.split("\n")[0];
 		this.users = new HashMap<String, String>();
 		final String command = this.data.split(" ")[0];
 		ServerDataEvent event;

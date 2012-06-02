@@ -67,10 +67,16 @@ public class HTTPResponseEventHandler {
 			this.processData(stream, rawData);
 		}
 
-		if (!HTTPBaseFilter.getBaseResponseFilter().isValid(this.event)) {
-			throw new FilterException(HTTPBaseFilter.getBaseResponseFilter()
-					.getErrorResponse(this.event));
+		if (this.canDoFilter(this.event)) {
+			if (!HTTPBaseFilter.getBaseResponseFilter().isValid(this.event)) {
+				throw new FilterException(HTTPBaseFilter
+						.getBaseResponseFilter().getErrorResponse(this.event));
+			}
 		}
+	}
+
+	private boolean canDoFilter(final HTTPProxyEvent event) {
+		return event.getResponse() != null;
 	}
 
 	private boolean matchesHeader(final StringBuilder pendingHeader) {
@@ -146,6 +152,20 @@ public class HTTPResponseEventHandler {
 					.getHTTPVersion().equals("1.0"));
 		}
 
+		this.applyReadersToResponse(this.event);
+
+		this.event.setCanSend(!this.event.getResponse().getBodyReader()
+				.modifiesHeaders());
+
+		if (this.event.canSend()) {
+			try {
+				stream.write(isoCharset.encode(
+						CharBuffer.wrap(header.toString())).array());
+			} catch (final IOException e) {
+				e.printStackTrace();
+			}
+		}
+
 		if (headerAndBody.length > 1) {
 			rawData = ByteBuffer.wrap(isoCharset.encode(headerAndBody[1])
 					.array().clone());
@@ -178,6 +198,19 @@ public class HTTPResponseEventHandler {
 					new HTTPChunkedResponseTransformReader(
 							response.getHeaders()), 0);
 
+		}
+
+		if (this.isGzipped(response)
+				&& (this.isTextPlain(response) || this.hasImageMIME(response))) {
+			response.getBodyReader().addResponseReader(
+					new HTTPGzipReader(response.getHeaders()), 20);
+		}
+
+		/* for l33t translation */
+		if (this.isTextPlain(response)
+				&& event.getEventConfiguration().isL33t()) {
+			response.getBodyReader().addResponseReader(
+					new HTTPL33tEncoder(response.getHeaders()), 50);
 		}
 
 		if (this.isGzipped(response)

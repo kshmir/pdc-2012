@@ -20,7 +20,6 @@ public class HTTPL33tEncoder implements HTTPReader {
 
 	public HTTPL33tEncoder(final HTTPResponseHeader responseHeader) {
 		this.responseHeader = responseHeader;
-
 		this.charset = (responseHeader.getCharset() == null) ? isoCharset
 				: responseHeader.getCharset();
 
@@ -33,7 +32,6 @@ public class HTTPL33tEncoder implements HTTPReader {
 		final String aux = this.byteBufferToString(data);
 		final String out = translate(aux);
 		return this.stringToByteBuffer(out);
-
 	}
 
 	@Override
