@@ -1,0 +1,454 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="es" dir="ltr" class="client-nojs" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Fórmulas de Newton–Cotes - Wikipedia, la enciclopedia libre</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta http-equiv="Content-Style-Type" content="text/css" />
+<meta name="generator" content="MediaWiki 1.20wmf2" />
+<link rel="alternate" type="application/x-wiki" title="Editar" href="/w/index.php?title=F%C3%B3rmulas_de_Newton%E2%80%93Cotes&amp;action=edit" />
+<link rel="edit" title="Editar" href="/w/index.php?title=F%C3%B3rmulas_de_Newton%E2%80%93Cotes&amp;action=edit" />
+<link rel="apple-touch-icon" href="//es.wikipedia.org/apple-touch-icon.png" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/w/opensearch_desc.php" title="Wikipedia (es)" />
+<link rel="EditURI" type="application/rsd+xml" href="//es.wikipedia.org/w/api.php?action=rsd" />
+<link rel="copyright" href="//creativecommons.org/licenses/by-sa/3.0/" />
+<link rel="alternate" type="application/atom+xml" title="Feed Atom de Wikipedia" href="/w/index.php?title=Especial:CambiosRecientes&amp;feed=atom" />
+<link rel="stylesheet" href="//bits.wikimedia.org/es.wikipedia.org/load.php?debug=false&amp;lang=es&amp;modules=ext.gadget.a-commons-directo%2Cimagenesinfobox%2CrefToolbar%7Cext.wikihiero%7Cmediawiki.legacy.commonPrint%2Cshared%7Cskins.vector&amp;only=styles&amp;skin=vector&amp;*" type="text/css" media="all" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<link rel="stylesheet" href="//bits.wikimedia.org/es.wikipedia.org/load.php?debug=false&amp;lang=es&amp;modules=site&amp;only=styles&amp;skin=vector&amp;*" type="text/css" media="all" />
+<style type="text/css" media="all">a:lang(ar),a:lang(ckb),a:lang(fa),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+
+/* cache key: eswiki:resourceloader:filter:minify-css:7:d5a1bf6cbd05fc6cc2705e47f52062dc */</style>
+
+<script src="//bits.wikimedia.org/es.wikipedia.org/load.php?debug=false&amp;lang=es&amp;modules=startup&amp;only=scripts&amp;skin=vector&amp;*" type="text/javascript"></script>
+<script type="text/javascript">if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"Fórmulas_de_Newton–Cotes","wgTitle":"Fórmulas de Newton–Cotes","wgCurRevisionId":52021202,"wgArticleId":2956966,"wgIsArticle":true,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Integración numérica"],"wgBreakFrames":false,"wgPageContentLanguage":"es","wgSeparatorTransformTable":[",	.",".	,"],"wgDigitTransformTable":["",""],"wgRelevantPageName":"Fórmulas_de_Newton–Cotes","wgRestrictionEdit":[],"wgRestrictionMove":[],"wgSearchNamespaces":[0,100,104],"wgVectorEnabledModules":{"collapsiblenav":true,"collapsibletabs":true,"editwarning":true,"expandablesearch":false,"footercleanup":false,"sectioneditlinks":false,"simplesearch":true,"experiments":true},"wgWikiEditorEnabledModules":{"toolbar":true,"dialogs":true,"hidesig":true,"templateEditor":false,"templates":false,"preview":false,"previewDialog":false,"publish":false,"toc":false},"wgTrackingToken":"bd71ac7ad4adfb56aa55b90b48d955bf","wgCategoryTreePageCategoryOptions":"{\"mode\":0,\"hideprefix\":20,\"showcount\":true,\"namespaces\":false}","Geo":{"city":"","country":""},"wgNoticeProject":"wikipedia"});
+}</script><script type="text/javascript">if(window.mw){
+mw.loader.implement("user.options",function(){mw.user.options.set({"ccmeonemails":0,"cols":80,"date":"default","diffonly":0,"disablemail":0,"disablesuggest":0,"editfont":"default","editondblclick":0,"editsection":1,"editsectiononrightclick":0,"enotifminoredits":0,"enotifrevealaddr":0,"enotifusertalkpages":1,"enotifwatchlistpages":0,"extendwatchlist":0,"externaldiff":0,"externaleditor":0,"fancysig":0,"forceeditsummary":0,"gender":"unknown","hideminor":0,"hidepatrolled":0,"imagesize":2,"justify":0,"math":0,"minordefault":0,"newpageshidepatrolled":0,"nocache":0,"noconvertlink":0,"norollbackdiff":0,"numberheadings":0,"previewonfirst":0,"previewontop":1,"quickbar":5,"rcdays":7,"rclimit":50,"rememberpassword":0,"rows":25,"searchlimit":20,"showhiddencats":false,"showjumplinks":1,"shownumberswatching":1,"showtoc":1,"showtoolbar":1,"skin":"vector","stubthreshold":0,"thumbsize":4,"underline":2,"uselivepreview":0,"usenewrc":0,"watchcreations":1,"watchdefault":0,"watchdeletion":0,"watchlistdays":3
+,"watchlisthideanons":0,"watchlisthidebots":0,"watchlisthideliu":0,"watchlisthideminor":0,"watchlisthideown":0,"watchlisthidepatrolled":0,"watchmoves":0,"wllimit":250,"vector-simplesearch":1,"useeditwarning":1,"vector-collapsiblenav":1,"usebetatoolbar":1,"usebetatoolbar-cgd":1,"variant":"es","language":"es","searchNs0":true,"searchNs1":false,"searchNs2":false,"searchNs3":false,"searchNs4":false,"searchNs5":false,"searchNs6":false,"searchNs7":false,"searchNs8":false,"searchNs9":false,"searchNs10":false,"searchNs11":false,"searchNs12":false,"searchNs13":false,"searchNs14":false,"searchNs15":false,"searchNs100":true,"searchNs101":false,"searchNs102":false,"searchNs103":false,"searchNs104":true,"searchNs105":false,"gadget-a-commons-directo":1,"gadget-refToolbar":1,"gadget-imagenesinfobox":1});;},{},{});mw.loader.implement("user.tokens",function(){mw.user.tokens.set({"editToken":"+\\","watchToken":false});;},{},{});
+
+/* cache key: eswiki:resourceloader:filter:minify-js:7:c5f8ab69e30cdbdd46cc34ead2a14da8 */
+}</script>
+<script type="text/javascript">if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/w/skins-1.20wmf2/vector/csshover.min.htc")}</style><![endif]--></head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-Fórmulas_de_Newton–Cotes skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<!-- content -->
+		<div id="content" class="mw-body">
+			<a id="top"></a>
+			<div id="mw-js-message" style="display:none;"></div>
+						<!-- sitenotice -->
+			<div id="siteNotice"><!-- centralNotice loads here --></div>
+			<!-- /sitenotice -->
+						<!-- firstHeading -->
+			<h1 id="firstHeading" class="firstHeading">
+				<span dir="auto">Fórmulas de Newton–Cotes</span>
+			</h1>
+			<!-- /firstHeading -->
+			<!-- bodyContent -->
+			<div id="bodyContent">
+								<!-- tagline -->
+				<div id="siteSub">De Wikipedia, la enciclopedia libre</div>
+				<!-- /tagline -->
+								<!-- subtitle -->
+				<div id="contentSub"></div>
+				<!-- /subtitle -->
+																<!-- jumpto -->
+				<div id="jump-to-nav" class="mw-jump">
+					Saltar a: <a href="#mw-head">navegación</a>,
+					<a href="#p-search">búsqueda</a>
+				</div>
+				<!-- /jumpto -->
+								<!-- bodycontent -->
+				<div id="mw-content-text" lang="es" dir="ltr" class="mw-content-ltr"><p>En <a href="/wiki/An%C3%A1lisis_num%C3%A9rico" title="Análisis numérico">análisis numérico</a> las <b>fórmulas de Newton-Cotes</b> (nombradas así por <a href="/wiki/Isaac_Newton" title="Isaac Newton">Isaac Newton</a> y <a href="/w/index.php?title=Roger_Cotes&amp;action=edit&amp;redlink=1" class="new" title="Roger Cotes (aún no redactado)">Roger Cotes</a>) son un grupo de fórmulas de <a href="/wiki/Integraci%C3%B3n_num%C3%A9rica" title="Integración numérica">integración numérica</a> de tipo <a href="/wiki/Interpolaci%C3%B3n" title="Interpolación">interpolatorio</a>, en las cuales se evalúa la función en puntos equidistantes, para así hallar un valor aproximado de la integral. Cuanto más intervalos se divida la función más preciso será el resultado.</p>
+<p>Este método es eficiente si se conocen los valores de la función en puntos igualmente separados. Si se pueden cambiar los puntos en los cuales la función es evaluada otros métodos como la <a href="/wiki/Cuadratura_de_Gauss" title="Cuadratura de Gauss">cuadratura de Gauss</a> son probablemente más eficientes.</p>
+<table id="toc" class="toc">
+<tr>
+<td>
+<div id="toctitle">
+<h2>Contenido</h2>
+</div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#Descripci.C3.B3n"><span class="tocnumber">1</span> <span class="toctext">Descripción</span></a></li>
+<li class="toclevel-1 tocsection-2"><a href="#F.C3.B3rmulas_cerradas_de_Newton-Cotes"><span class="tocnumber">2</span> <span class="toctext">Fórmulas cerradas de Newton-Cotes</span></a>
+<ul>
+<li class="toclevel-2 tocsection-3"><a href="#Regla_del_trapecio"><span class="tocnumber">2.1</span> <span class="toctext">Regla del trapecio</span></a></li>
+<li class="toclevel-2 tocsection-4"><a href="#Regla_de_Simpson"><span class="tocnumber">2.2</span> <span class="toctext">Regla de Simpson</span></a>
+<ul>
+<li class="toclevel-3 tocsection-5"><a href="#Regla_de_Simpson_1.2F3"><span class="tocnumber">2.2.1</span> <span class="toctext">Regla de Simpson 1/3</span></a></li>
+<li class="toclevel-3 tocsection-6"><a href="#Regla_de_Simpson_3.2F8"><span class="tocnumber">2.2.2</span> <span class="toctext">Regla de Simpson 3/8</span></a></li>
+</ul>
+</li>
+<li class="toclevel-2 tocsection-7"><a href="#Regla_de_Boole"><span class="tocnumber">2.3</span> <span class="toctext">Regla de Boole</span></a></li>
+<li class="toclevel-2 tocsection-8"><a href="#Regla_de_Quinto_orden"><span class="tocnumber">2.4</span> <span class="toctext">Regla de Quinto orden</span></a></li>
+<li class="toclevel-2 tocsection-9"><a href="#Regla_de_Sexto_orden"><span class="tocnumber">2.5</span> <span class="toctext">Regla de Sexto orden</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-10"><a href="#F.C3.B3rmulas_abiertas_de_Newton-Cotes"><span class="tocnumber">3</span> <span class="toctext">Fórmulas abiertas de Newton-Cotes</span></a>
+<ul>
+<li class="toclevel-2 tocsection-11"><a href="#Regla_del_punto_medio"><span class="tocnumber">3.1</span> <span class="toctext">Regla del punto medio</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-12"><a href="#Reglas_compuestas"><span class="tocnumber">4</span> <span class="toctext">Reglas compuestas</span></a>
+<ul>
+<li class="toclevel-2 tocsection-13"><a href="#Regla_del_trapecio_compuesta"><span class="tocnumber">4.1</span> <span class="toctext">Regla del trapecio compuesta</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-14"><a href="#Referencias"><span class="tocnumber">5</span> <span class="toctext">Referencias</span></a></li>
+<li class="toclevel-1 tocsection-15"><a href="#Enlaces_externos"><span class="tocnumber">6</span> <span class="toctext">Enlaces externos</span></a></li>
+</ul>
+</td>
+</tr>
+</table>
+<h2><span class="editsection">[<a href="/w/index.php?title=F%C3%B3rmulas_de_Newton%E2%80%93Cotes&amp;action=edit&amp;section=1" title="Editar sección: Descripción">editar</a>]</span> <span class="mw-headline" id="Descripci.C3.B3n">Descripción</span></h2>
+<p>Para la integración numérica de <img class="tex" alt="\int_a^b f(x) dx" src="//upload.wikimedia.org/wikipedia/es/math/d/b/6/db625ff0285f87a97833a1a0536c0781.png" /> utilizando las fórmulas de Newton-Cotes se subdivide el intervalo <img class="tex" alt="[a,b]" src="//upload.wikimedia.org/wikipedia/es/math/2/c/3/2c3d331bc98b44e71cb2aae9edadca7e.png" /> en <img class="tex" alt="n" src="//upload.wikimedia.org/wikipedia/es/math/7/b/8/7b8b965ad4bca0e41ab51de7b31363a1.png" /> intervalos iguales. Así se obtienen <img class="tex" alt="n + 1" src="//upload.wikimedia.org/wikipedia/es/math/4/0/b/40b85027598d87611b1c8d5d11e46812.png" /> puntos donde se evaluará la función:</p>
+<dl>
+<dd><img class="tex" alt="a \leq x_0 &lt; x_1 &lt; \ldots &lt; x_n \leq b." src="//upload.wikimedia.org/wikipedia/es/math/c/3/a/c3ad54df78867b5ab1d169000a31b64d.png" /></dd>
+</dl>
+<p>Si <img class="tex" alt="a = x_0" src="//upload.wikimedia.org/wikipedia/es/math/4/a/3/4a3b5b5bbbed275c326eb348a6ff0ea6.png" /> y <img class="tex" alt="b = x_n" src="//upload.wikimedia.org/wikipedia/es/math/9/1/e/91e80dce48a9b60df63072eac667eed8.png" /> se denominan <b>fórmulas cerradas de Newton-Cotes</b> ya que los intervalos de los extremos están incluidos en la integral, si por el contrario no se tienen en cuenta se denominan <b>fórmulas abiertas de Newton-Cotes</b>. Para el calculo se utilizará la siguiente función:</p>
+<dl>
+<dd><img class="tex" alt=" p(x) = \sum_{i=0}^n f(x_i) L_{in}(x) " src="//upload.wikimedia.org/wikipedia/es/math/1/a/e/1aeefa3b3f3bc8b7a3f7d4e5cb7a9b09.png" /></dd>
+</dl>
+<p>donde:</p>
+<dl>
+<dd><img class="tex" alt="L_{in}(x) = \frac{(x-x_0)\cdots(x-x_{i-1})(x-x_{i+1})\cdots(x-x_n)}
+{(x_i-x_0)\cdots(x_i-x_{i-1})(x_i-x_{i+1})\cdots(x_i-x_n)}" src="//upload.wikimedia.org/wikipedia/es/math/7/0/3/7035eee4287c3c30224ed8cd2705e1aa.png" /></dd>
+</dl>
+<p>es el <a href="/wiki/Polinomio_de_Lagrange" title="Polinomio de Lagrange" class="mw-redirect">polinomio de Lagrange</a>, por lo tanto se deduce que</p>
+<dl>
+<dd><img class="tex" alt=" \int_a^b p(x) dx = (b-a) \sum_{i=0}^n f(x_i) \frac{1}{(b-a)} \int_a^b L_{in}(x) dx." src="//upload.wikimedia.org/wikipedia/es/math/1/2/7/127028a619572be5b4b5b73ca225bb92.png" /></dd>
+</dl>
+<p>Esta función se expresa de la siguiente forma</p>
+<dl>
+<dd><img class="tex" alt="\int_a^b f(x) dx \approx \int_a^b p(x) dx = (b-a) \sum_{i=0}^n w_i f(x_i)" src="//upload.wikimedia.org/wikipedia/es/math/b/5/f/b5f97ddfedfa131a64a8f95bc80ec5d1.png" /></dd>
+</dl>
+<p>Donde los "pesos" <i>w</i><sub><i>i</i></sub> están definidos por</p>
+<dl>
+<dd><img class="tex" alt="w_i = \frac{1}{(b-a)} \int_a^b L_{in}(x) dx " src="//upload.wikimedia.org/wikipedia/es/math/5/0/a/50acef7ecdb27fe1bd9fde65b63a6c99.png" /></dd>
+</dl>
+<h2><span class="editsection">[<a href="/w/index.php?title=F%C3%B3rmulas_de_Newton%E2%80%93Cotes&amp;action=edit&amp;section=2" title="Editar sección: Fórmulas cerradas de Newton-Cotes">editar</a>]</span> <span class="mw-headline" id="F.C3.B3rmulas_cerradas_de_Newton-Cotes">Fórmulas cerradas de Newton-Cotes</span></h2>
+<p>Estas son algunas de las fórmulas cerradas de Newton-Cotes.</p>
+<p>La notación <img class="tex" alt="\displaystyle f_i" src="//upload.wikimedia.org/wikipedia/es/math/5/0/6/506eafda5ddb3918e758d727cdce1bc2.png" /> es una abreviatura de <img class="tex" alt="\displaystyle f(x_i)" src="//upload.wikimedia.org/wikipedia/es/math/f/0/e/f0ed9682fbaf65073429742cc7c4d08f.png" />, con &#160; <img class="tex" alt="\displaystyle x_i = a + i \times h" src="//upload.wikimedia.org/wikipedia/es/math/7/9/a/79ac193fb10d0299a9d8d3bcd370d39d.png" />, &#160; <img class="tex" alt="\displaystyle h = \frac{b-a}{n}" src="//upload.wikimedia.org/wikipedia/es/math/8/4/4/844f541dea9ac5870041b151db0ef49e.png" /> &#160; y &#160; <img class="tex" alt="\displaystyle n" src="//upload.wikimedia.org/wikipedia/es/math/4/e/1/4e13c6d0dc983bd2f0dd3c099786ac27.png" /> el grado.</p>
+<h4><span class="editsection">[<a href="/w/index.php?title=F%C3%B3rmulas_de_Newton%E2%80%93Cotes&amp;action=edit&amp;section=3" title="Editar sección: Regla del trapecio">editar</a>]</span> <span class="mw-headline" id="Regla_del_trapecio">Regla del trapecio</span></h4>
+<div class="noprint AP rellink"><span style="font-size:88%">Artículo principal:</span> <i><a href="/wiki/Regla_del_trapecio" title="Regla del trapecio">Regla del trapecio</a></i>.</div>
+<div class="thumb tright">
+<div class="thumbinner" style="width:342px;"><a href="/wiki/Archivo:Calkowanie_numeryczne-metoda_trapezow.png" class="image"><img alt="" src="//upload.wikimedia.org/wikipedia/commons/a/a8/Calkowanie_numeryczne-metoda_trapezow.png" width="340" height="102" class="thumbimage" /></a>
+<div class="thumbcaption">Ilustración de la regla del trapecio.</div>
+</div>
+</div>
+<p>La regla del trapecio consiste en hallar la integral aproximada de una función a través de un polinomio de primer grado, es decir uniendo mediante una recta los puntos en donde se evaluara la función.</p>
+<dl>
+<dd><img class="tex" alt="\int_a^b f(x) dx \approx  (b-a) \frac{f_0+f_1}{2}" src="//upload.wikimedia.org/wikipedia/es/math/d/c/d/dcd2325ffada3f525be5800f536ba207.png" /></dd>
+</dl>
+<p>Y el error es:</p>
+<p><img class="tex" alt="-\frac{(b-a)^3}{12}\,f^{(2)}(\xi)" src="//upload.wikimedia.org/wikipedia/es/math/f/e/0/fe0032a9b208fa638ce885d5c299f59c.png" /></p>
+<p>Siendo <img class="tex" alt="\xi" src="//upload.wikimedia.org/wikipedia/es/math/5/8/f/58fb07e3d4fa708afd0734aab363fd36.png" /> un número entre <i>a</i> y <i>b</i>.</p>
+<h4><span class="editsection">[<a href="/w/index.php?title=F%C3%B3rmulas_de_Newton%E2%80%93Cotes&amp;action=edit&amp;section=4" title="Editar sección: Regla de Simpson">editar</a>]</span> <span class="mw-headline" id="Regla_de_Simpson">Regla de Simpson</span></h4>
+<div class="noprint AP rellink"><span style="font-size:88%">Artículo principal:</span> <i><a href="/wiki/Regla_de_Simpson" title="Regla de Simpson">Regla de Simpson</a></i>.</div>
+<div class="thumb tright">
+<div class="thumbinner" style="width:342px;"><a href="/wiki/Archivo:Integration_simpson.png" class="image"><img alt="" src="//upload.wikimedia.org/wikipedia/commons/5/50/Integration_simpson.png" width="340" height="104" class="thumbimage" /></a>
+<div class="thumbcaption">Ilustración de la regla de Simpson.</div>
+</div>
+</div>
+<p>La <a href="/wiki/Regla_de_Simpson" title="Regla de Simpson">regla de Simpson</a> (nombrada así por <a href="/wiki/Thomas_Simpson" title="Thomas Simpson">Thomas Simpson</a>) halla la integral aproximada de una función mediante un polinomio de segundo o tercer grado.</p>
+<h5><span class="editsection">[<a href="/w/index.php?title=F%C3%B3rmulas_de_Newton%E2%80%93Cotes&amp;action=edit&amp;section=5" title="Editar sección: Regla de Simpson 1/3">editar</a>]</span> <span class="mw-headline" id="Regla_de_Simpson_1.2F3">Regla de Simpson 1/3</span></h5>
+<p>La regla de Simpson 1/3 utiliza tres puntos consecutivos en donde se evalúa la función a través de un polinomio de segundo grado.</p>
+<dl>
+<dd><img class="tex" alt=" \int_{a}^{b} f(x) \, dx \approx \frac{h}{3} (f_0 + 4 f_1 + f_2) " src="//upload.wikimedia.org/wikipedia/es/math/6/1/5/6159529010e107869d111bc579a217cc.png" /></dd>
+</dl>
+<p>Y el error es:</p>
+<dl>
+<dd><img class="tex" alt="-\frac{(b-a)^5}{2880}f^{(4)}(\xi)," src="//upload.wikimedia.org/wikipedia/es/math/b/6/9/b6973e2dd9b1884ec5c4ec5bdb5d674a.png" /></dd>
+</dl>
+<p>siendo <img class="tex" alt="\xi" src="//upload.wikimedia.org/wikipedia/es/math/5/8/f/58fb07e3d4fa708afd0734aab363fd36.png" /> un número entre <i>a</i> y <i>b</i>.</p>
+<h5><span class="editsection">[<a href="/w/index.php?title=F%C3%B3rmulas_de_Newton%E2%80%93Cotes&amp;action=edit&amp;section=6" title="Editar sección: Regla de Simpson 3/8">editar</a>]</span> <span class="mw-headline" id="Regla_de_Simpson_3.2F8">Regla de Simpson 3/8</span></h5>
+<p>La regla de Simpson 3/8 utiliza cuatro puntos consecutivos en donde se evalúa la función a través de un polinomio de tercer grado.</p>
+<dl>
+<dd><img class="tex" alt=" \int_{a}^{b} f(x) \, dx \approx \frac{b-a}{8} (f_0 + 3 f_1 + 3 f_2 + f_3)" src="//upload.wikimedia.org/wikipedia/es/math/f/8/a/f8a8ddcbb62fbb64d73e9bfb9a45c239.png" />.</dd>
+</dl>
+<p>Y el error es:</p>
+<dl>
+<dd><img class="tex" alt="-\frac{(b-a)^5}{6480}f^{(4)}(\xi)," src="//upload.wikimedia.org/wikipedia/es/math/f/c/8/fc8629c59730ec9ea81b3b066eb84935.png" /></dd>
+</dl>
+<p>Siendo <img class="tex" alt="\xi" src="//upload.wikimedia.org/wikipedia/es/math/5/8/f/58fb07e3d4fa708afd0734aab363fd36.png" /> un número entre <i>a</i> y <i>b</i>.</p>
+<h4><span class="editsection">[<a href="/w/index.php?title=F%C3%B3rmulas_de_Newton%E2%80%93Cotes&amp;action=edit&amp;section=7" title="Editar sección: Regla de Boole">editar</a>]</span> <span class="mw-headline" id="Regla_de_Boole">Regla de Boole</span></h4>
+<p>La regla de Boole (llamada así debido a <a href="/wiki/George_Boole" title="George Boole">George Boole</a>) utiliza cinco puntos consecutivos igualmente separados para calcular la integral aproximada de la función utilizando un polinomio de cuarto grado.</p>
+<dl>
+<dd><img class="tex" alt="\int_a^b f(x) dx \approx \frac{2h}{45} (7 f_0 + 32 f_1 + 12 f_2 + 32 f_3 + 7 f_4) " src="//upload.wikimedia.org/wikipedia/es/math/6/7/d/67d2f7228923a534953c6bbeefd7aafe.png" /></dd>
+</dl>
+<p>Y el error es:</p>
+<p><img class="tex" alt="-\frac{(b-a)^7}{1935360}\,f^{(6)}(\xi)" src="//upload.wikimedia.org/wikipedia/es/math/6/7/a/67a2288030c6d2b1f34626489dce9194.png" /></p>
+<p>Siendo <img class="tex" alt="\xi" src="//upload.wikimedia.org/wikipedia/es/math/5/8/f/58fb07e3d4fa708afd0734aab363fd36.png" /> un número entre <i>a</i> y <i>b</i>.</p>
+<h4><span class="editsection">[<a href="/w/index.php?title=F%C3%B3rmulas_de_Newton%E2%80%93Cotes&amp;action=edit&amp;section=8" title="Editar sección: Regla de Quinto orden">editar</a>]</span> <span class="mw-headline" id="Regla_de_Quinto_orden">Regla de Quinto orden</span></h4>
+<p>La regla de quinto orden utiliza seis puntos consecutivos igualmente separados para calcular la integral aproximada de la función utilizando un polinomio de quinto grado.</p>
+<dl>
+<dd><img class="tex" alt="\int_a^b f(x) dx \approx \frac{5h}{288} (19 f_0 + 75 f_1 + 50 f_2 + 50 f_3 + 75 f_4 + 19 f_5) " src="//upload.wikimedia.org/wikipedia/es/math/2/8/2/282dd0cc384e1b6b83e351f4b569e329.png" /></dd>
+</dl>
+<h4><span class="editsection">[<a href="/w/index.php?title=F%C3%B3rmulas_de_Newton%E2%80%93Cotes&amp;action=edit&amp;section=9" title="Editar sección: Regla de Sexto orden">editar</a>]</span> <span class="mw-headline" id="Regla_de_Sexto_orden">Regla de Sexto orden</span></h4>
+<p>La regla de sexto orden utiliza siete puntos consecutivos igualmente separados para calcular la integral aproximada de la función utilizando un polinomio de sexto grado.</p>
+<dl>
+<dd><img class="tex" alt="\int_a^b f(x) dx \approx \frac{h}{140} (41 f_0 + 216 f_1 + 27 f_2 + 272 f_3 + 27 f_4 + 216 f_5 + 41 f_6) " src="//upload.wikimedia.org/wikipedia/es/math/d/2/2/d22d11f77932de9e281e6615234e4b5b.png" /></dd>
+</dl>
+<h2><span class="editsection">[<a href="/w/index.php?title=F%C3%B3rmulas_de_Newton%E2%80%93Cotes&amp;action=edit&amp;section=10" title="Editar sección: Fórmulas abiertas de Newton-Cotes">editar</a>]</span> <span class="mw-headline" id="F.C3.B3rmulas_abiertas_de_Newton-Cotes">Fórmulas abiertas de Newton-Cotes</span></h2>
+<p>Estas son algunas de las fórmulas abiertas de Newton-Cotes.</p>
+<h4><span class="editsection">[<a href="/w/index.php?title=F%C3%B3rmulas_de_Newton%E2%80%93Cotes&amp;action=edit&amp;section=11" title="Editar sección: Regla del punto medio">editar</a>]</span> <span class="mw-headline" id="Regla_del_punto_medio">Regla del punto medio</span></h4>
+<div class="thumb tright">
+<div class="thumbinner" style="width:342px;"><a href="/wiki/Archivo:Integration_rectangle.png" class="image"><img alt="" src="//upload.wikimedia.org/wikipedia/commons/e/ea/Integration_rectangle.png" width="340" height="110" class="thumbimage" /></a>
+<div class="thumbcaption">Ilustración de la regla del punto medio.</div>
+</div>
+</div>
+<p>En este método se divide la función en rectángulos, los cuales deben tener una altura igual al valor de la función en el punto medio. Así se calcularía la integral aproximada mediante un polinomio de grado cero.</p>
+<dl>
+<dd><img class="tex" alt="\int_a^b f(x) dx \sim (b-a) f\left (\frac{a+b}{2} \right )" src="//upload.wikimedia.org/wikipedia/es/math/0/7/0/07079b7e280f861f56081fa109b32270.png" /></dd>
+</dl>
+<p>Y el error es:</p>
+<dl>
+<dd><img class="tex" alt="\frac{(b-a)^3}{24}\,f^{(2)}(\xi)" src="//upload.wikimedia.org/wikipedia/es/math/7/b/9/7b9db400814ca9efc42706ca0c074776.png" /></dd>
+</dl>
+<p>Siendo <img class="tex" alt="\xi" src="//upload.wikimedia.org/wikipedia/es/math/5/8/f/58fb07e3d4fa708afd0734aab363fd36.png" /> un número entre <i>a</i> y <i>b</i>.</p>
+<h2><span class="editsection">[<a href="/w/index.php?title=F%C3%B3rmulas_de_Newton%E2%80%93Cotes&amp;action=edit&amp;section=12" title="Editar sección: Reglas compuestas">editar</a>]</span> <span class="mw-headline" id="Reglas_compuestas">Reglas compuestas</span></h2>
+<p>Las fórmulas de Newton-Cotes aumentan su precisión si se aumenta el número de intervalos en que se divida la función, dicho de otra forma mientras los intervalos sean cada vez más pequeños. Como el intervalo <img class="tex" alt="[a, b]" src="//upload.wikimedia.org/wikipedia/es/math/2/c/3/2c3d331bc98b44e71cb2aae9edadca7e.png" /> generalmente es grande hay métodos que subdividen este intervalo en subintervalos más pequeños y a estos se les aplica las Fórmulas de Newton-Cotes, a la suma de estos subintervalos se le conoce como <i>reglas compuestas</i>. Cabe anotar que la precisión aumenta pero a costa de aumentar la eficiencia del método en cuanto al tiempo de duración y a posibles errores de redondeo.</p>
+<h4><span class="editsection">[<a href="/w/index.php?title=F%C3%B3rmulas_de_Newton%E2%80%93Cotes&amp;action=edit&amp;section=13" title="Editar sección: Regla del trapecio compuesta">editar</a>]</span> <span class="mw-headline" id="Regla_del_trapecio_compuesta">Regla del trapecio compuesta</span></h4>
+<div class="noprint AP rellink"><span style="font-size:88%">Artículo principal:</span> <i><a href="/wiki/Regla_del_trapecio_compuesta" title="Regla del trapecio compuesta" class="mw-redirect">Regla del trapecio compuesta</a></i>.</div>
+<p>Este es un ejemplo de regla compuesta.</p>
+<dl>
+<dd><img class="tex" alt="\int_a^b f(x) dx \sim \frac{b-a}{n} \left( \frac{f(a) + f(b)}{2} + \sum_{i=1}^{n-1} f(x_i) \right)" src="//upload.wikimedia.org/wikipedia/es/math/9/c/2/9c27b4517d9c7222d90ba9bdc0cfa145.png" /></dd>
+</dl>
+<p>Donde &#160; <img class="tex" alt="\displaystyle x_i = a + i \times h" src="//upload.wikimedia.org/wikipedia/es/math/7/9/a/79ac193fb10d0299a9d8d3bcd370d39d.png" /> &#160; son los subintervalos,</p>
+<p>tal que &#160; <img class="tex" alt="\ x_0 &lt; x_1 &lt; \ldots &lt; x_{n-1} &lt; x_n" src="//upload.wikimedia.org/wikipedia/es/math/5/b/c/5bc1eec09bf7b20f0a372fdba2e25ad4.png" /> &#160; y &#160; <img class="tex" alt="\ a = x_0, \; x_n = b " src="//upload.wikimedia.org/wikipedia/es/math/1/b/7/1b70b8d8082651709498de1939301078.png" /></p>
+<p>siendo: &#160; <img class="tex" alt="\ h = \frac {b-a}{n}" src="//upload.wikimedia.org/wikipedia/es/math/2/8/6/286d68c30dba21236d3ef225722c315b.png" /> &#160; la distancia entre los subintervalos.</p>
+<h2><span class="editsection">[<a href="/w/index.php?title=F%C3%B3rmulas_de_Newton%E2%80%93Cotes&amp;action=edit&amp;section=14" title="Editar sección: Referencias">editar</a>]</span> <span class="mw-headline" id="Referencias">Referencias</span></h2>
+<ul>
+<li>Programación y Métodos Numéricos: Integración Numérica, Fórmulas de Newton-Cotes, Fórmulas de Gauss. Prof. Carlos Conde Lázaro Prof. Arturo Hidalgo López Prof. Alfredo López. Marzo de 2007. Departamento de Matemática Aplicada y Métodos Informáticos – ETSIM - UPM</li>
+</ul>
+<h2><span class="editsection">[<a href="/w/index.php?title=F%C3%B3rmulas_de_Newton%E2%80%93Cotes&amp;action=edit&amp;section=15" title="Editar sección: Enlaces externos">editar</a>]</span> <span class="mw-headline" id="Enlaces_externos">Enlaces externos</span></h2>
+<ul>
+<li><a class="external free" href="http://en.wikipedia.org/wiki/Newton_cotes_rules">http://en.wikipedia.org/wiki/Newton_cotes_rules</a></li>
+<li><a class="external free" href="http://de.wikipedia.org/wiki/Newton-Cotes-Formeln">http://de.wikipedia.org/wiki/Newton-Cotes-Formeln</a></li>
+<li><a rel="nofollow" class="external free" href="http://www.mitecnologico.com/Main/MetodoDeNewtonCotes">http://www.mitecnologico.com/Main/MetodoDeNewtonCotes</a></li>
+<li><a rel="nofollow" class="external free" href="http://tcam.qui.uam.es/luism/p605.pdf">http://tcam.qui.uam.es/luism/p605.pdf</a></li>
+<li><a class="external free" href="http://es.wikipedia.org/wiki/Integración_numérica">http://es.wikipedia.org/wiki/Integración_numérica</a></li>
+</ul>
+
+
+<!-- 
+NewPP limit report
+Preprocessor node count: 578/1000000
+Post-expand include size: 1294/2048000 bytes
+Template argument size: 310/2048000 bytes
+Expensive parser function count: 0/500
+-->
+
+<!-- Saved in parser cache with key eswiki:pcache:idhash:2956966-0!0!0!!es!4!* and timestamp 20120511124702 -->
+</div>				<!-- /bodycontent -->
+								<!-- printfooter -->
+				<div class="printfooter">
+				Obtenido de «<a href="http://es.wikipedia.org/w/index.php?title=Fórmulas_de_Newton–Cotes&amp;oldid=52021202">http://es.wikipedia.org/w/index.php?title=Fórmulas_de_Newton–Cotes&amp;oldid=52021202</a>»				</div>
+				<!-- /printfooter -->
+												<!-- catlinks -->
+				<div id='catlinks' class='catlinks'><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/Especial:Categor%C3%ADas" title="Especial:Categorías">Categoría</a>: <ul><li><a href="/wiki/Categor%C3%ADa:Integraci%C3%B3n_num%C3%A9rica" title="Categoría:Integración numérica">Integración numérica</a></li></ul></div></div>				<!-- /catlinks -->
+												<div class="visualClear"></div>
+				<!-- debughtml -->
+								<!-- /debughtml -->
+			</div>
+			<!-- /bodyContent -->
+		</div>
+		<!-- /content -->
+		<!-- header -->
+		<div id="mw-head" class="noprint">
+			
+<!-- 0 -->
+<div id="p-personal" class="">
+	<h5>Herramientas personales</h5>
+	<ul>
+		<li id="pt-login"><a href="/w/index.php?title=Especial:Entrar&amp;returnto=F%C3%B3rmulas+de+Newton%E2%80%93Cotes" title="Te recomendamos iniciar sesión, sin embargo no es obligatorio [o]" accesskey="o">Iniciar sesión / crear cuenta</a></li>
+	</ul>
+</div>
+
+<!-- /0 -->
+			<div id="left-navigation">
+				
+<!-- 0 -->
+<div id="p-namespaces" class="vectorTabs">
+	<h5>Espacios de nombres</h5>
+	<ul>
+					<li  id="ca-nstab-main" class="selected"><span><a href="/wiki/F%C3%B3rmulas_de_Newton%E2%80%93Cotes"  title="Ver el artículo [c]" accesskey="c">Artículo</a></span></li>
+					<li  id="ca-talk" class="new"><span><a href="/w/index.php?title=Discusi%C3%B3n:F%C3%B3rmulas_de_Newton%E2%80%93Cotes&amp;action=edit&amp;redlink=1"  title="Discusión acerca del artículo [t]" accesskey="t">Discusión</a></span></li>
+			</ul>
+</div>
+
+<!-- /0 -->
+
+<!-- 1 -->
+<div id="p-variants" class="vectorMenu emptyPortlet">
+	<h4>
+		</h4>
+	<h5><span>Variantes</span><a href="#"></a></h5>
+	<div class="menu">
+		<ul>
+					</ul>
+	</div>
+</div>
+
+<!-- /1 -->
+			</div>
+			<div id="right-navigation">
+				
+<!-- 0 -->
+<div id="p-views" class="vectorTabs">
+	<h5>Vistas</h5>
+	<ul>
+					<li id="ca-view" class="selected"><span><a href="/wiki/F%C3%B3rmulas_de_Newton%E2%80%93Cotes" >Leer</a></span></li>
+					<li id="ca-edit"><span><a href="/w/index.php?title=F%C3%B3rmulas_de_Newton%E2%80%93Cotes&amp;action=edit"  title="Puedes editar esta página. Utiliza el botón de previsualización antes de guardar [e]" accesskey="e">Editar</a></span></li>
+					<li id="ca-history" class="collapsible"><span><a href="/w/index.php?title=F%C3%B3rmulas_de_Newton%E2%80%93Cotes&amp;action=history"  title="Versiones anteriores de esta página y sus autores [h]" accesskey="h">Ver historial</a></span></li>
+			</ul>
+</div>
+
+<!-- /0 -->
+
+<!-- 1 -->
+<div id="p-cactions" class="vectorMenu emptyPortlet">
+	<h5><span>Acciones</span><a href="#"></a></h5>
+	<div class="menu">
+		<ul>
+					</ul>
+	</div>
+</div>
+
+<!-- /1 -->
+
+<!-- 2 -->
+<div id="p-search">
+	<h5><label for="searchInput">Buscar</label></h5>
+	<form action="/w/index.php" id="searchform">
+				<div id="simpleSearch">
+						<input type="text" name="search" value="" title="Buscar en este wiki [f]" accesskey="f" id="searchInput" />						<button type="submit" name="button" title="Busca páginas con este texto." id="searchButton" width="12" height="13"><img src="//bits.wikimedia.org/static-1.20wmf2/skins/vector/images/search-ltr.png?303-4" alt="Buscar" /></button>								<input type='hidden' name="title" value="Especial:Buscar"/>
+		</div>
+	</form>
+</div>
+
+<!-- /2 -->
+			</div>
+		</div>
+		<!-- /header -->
+		<!-- panel -->
+			<div id="mw-panel" class="noprint">
+				<!-- logo -->
+					<div id="p-logo"><a style="background-image: url(//upload.wikimedia.org/wikipedia/commons/8/8c/Wikipedia-logo-v2-es.png);" href="/wiki/Wikipedia:Portada"  title="Visitar la página principal"></a></div>
+				<!-- /logo -->
+				
+<!-- SEARCH -->
+
+<!-- /SEARCH -->
+
+<!-- navigation -->
+<div class="portal" id='p-navigation'>
+	<h5>Navegación</h5>
+	<div class="body">
+		<ul>
+			<li id="n-mainpage-description"><a href="/wiki/Wikipedia:Portada" title="Visitar la página principal [z]" accesskey="z">Portada</a></li>
+			<li id="n-portal"><a href="/wiki/Portal:Comunidad" title="Acerca del proyecto, lo que puedes hacer, dónde encontrar información">Portal de la comunidad</a></li>
+			<li id="n-currentevents"><a href="/wiki/Portal:Actualidad" title="Información de contexto sobre acontecimientos actuales">Actualidad</a></li>
+			<li id="n-recentchanges"><a href="/wiki/Especial:CambiosRecientes" title="Lista de cambios recientes en el wiki [r]" accesskey="r">Cambios recientes</a></li>
+			<li id="n-newpages"><a href="/wiki/Especial:P%C3%A1ginasNuevas">Páginas nuevas</a></li>
+			<li id="n-randompage"><a href="/wiki/Especial:Aleatoria" title="Cargar una página al azar [x]" accesskey="x">Página aleatoria</a></li>
+			<li id="n-help"><a href="/wiki/Ayuda:Contenidos" title="El lugar para aprender">Ayuda</a></li>
+			<li id="n-sitesupport"><a href="//wikimediafoundation.org/wiki/Special:Landingcheck?landing_page=WMFJA085&amp;language=es&amp;utm_source=donate&amp;utm_medium=sidebar&amp;utm_campaign=20101204SB002" title="Apóyanos">Donaciones</a></li>
+			<li id="n-bug_in_article"><a href="/wiki/Wikipedia:Informes_de_error">Notificar un error</a></li>
+		</ul>
+	</div>
+</div>
+
+<!-- /navigation -->
+
+<!-- coll-print_export -->
+<div class="portal" id='p-coll-print_export'>
+	<h5>Imprimir/exportar</h5>
+	<div class="body">
+		<ul id="collectionPortletList"><li id="coll-create_a_book"><a href="/w/index.php?title=Especial:Libro&amp;bookcmd=book_creator&amp;referer=F%C3%B3rmulas+de+Newton%E2%80%93Cotes" title="Crear un libro o colección de página" rel="nofollow">Crear un libro</a></li><li id="coll-download-as-rl"><a href="/w/index.php?title=Especial:Libro&amp;bookcmd=render_article&amp;arttitle=F%C3%B3rmulas+de+Newton%E2%80%93Cotes&amp;oldid=52021202&amp;writer=rl" title="Descargar una versión PDF de esta página wiki" rel="nofollow">Descargar como PDF</a></li><li id="t-print"><a href="/w/index.php?title=F%C3%B3rmulas_de_Newton%E2%80%93Cotes&amp;printable=yes" title="Versión imprimible de esta página [p]" accesskey="p">Versión para imprimir</a></li></ul>	</div>
+</div>
+
+<!-- /coll-print_export -->
+
+<!-- TOOLBOX -->
+<div class="portal" id='p-tb'>
+	<h5>Herramientas</h5>
+	<div class="body">
+		<ul>
+			<li id="t-whatlinkshere"><a href="/wiki/Especial:LoQueEnlazaAqu%C3%AD/F%C3%B3rmulas_de_Newton%E2%80%93Cotes" title="Lista de todas las páginas del wiki que enlazan aquí [j]" accesskey="j">Lo que enlaza aquí</a></li>
+			<li id="t-recentchangeslinked"><a href="/wiki/Especial:CambiosEnEnlazadas/F%C3%B3rmulas_de_Newton%E2%80%93Cotes" title="Cambios recientes en las páginas que enlazan con ésta [k]" accesskey="k">Cambios en enlazadas</a></li>
+			<li id="t-upload"><a href="//commons.wikimedia.org/wiki/Special:UploadWizard?uselang=es" title="Subir imágenes o archivos multimedia [u]" accesskey="u">Subir archivo</a></li>
+			<li id="t-specialpages"><a href="/wiki/Especial:P%C3%A1ginasEspeciales" title="Lista de todas las páginas especiales [q]" accesskey="q">Páginas especiales</a></li>
+			<li id="t-permalink"><a href="/w/index.php?title=F%C3%B3rmulas_de_Newton%E2%80%93Cotes&amp;oldid=52021202" title="Enlace permanente a esta versión de la página">Enlace permanente</a></li>
+<li id="t-cite"><a href="/w/index.php?title=Especial:Citar&amp;page=F%C3%B3rmulas_de_Newton%E2%80%93Cotes&amp;id=52021202" title="Información de como citar esta página">Citar este artículo</a></li>		</ul>
+	</div>
+</div>
+
+<!-- /TOOLBOX -->
+
+<!-- LANGUAGES -->
+<div class="portal" id='p-lang'>
+	<h5>En otros idiomas</h5>
+	<div class="body">
+		<ul>
+			<li class="interwiki-ar"><a href="//ar.wikipedia.org/wiki/%D8%B5%D9%8A%D8%BA_%D9%86%D9%8A%D9%88%D8%AA%D9%86-%D9%83%D9%88%D8%AA%D8%B3" title="صيغ نيوتن-كوتس" lang="ar" hreflang="ar">العربية</a></li>
+			<li class="interwiki-ca"><a href="//ca.wikipedia.org/wiki/F%C3%B3rmules_de_Newton-Cotes" title="Fórmules de Newton-Cotes" lang="ca" hreflang="ca">Català</a></li>
+			<li class="interwiki-de"><a href="//de.wikipedia.org/wiki/Newton-Cotes-Formeln" title="Newton-Cotes-Formeln" lang="de" hreflang="de">Deutsch</a></li>
+			<li class="interwiki-en"><a href="//en.wikipedia.org/wiki/Newton%E2%80%93Cotes_formulas" title="Newton–Cotes formulas" lang="en" hreflang="en">English</a></li>
+			<li class="interwiki-fr"><a href="//fr.wikipedia.org/wiki/Formule_de_Newton-Cotes" title="Formule de Newton-Cotes" lang="fr" hreflang="fr">Français</a></li>
+			<li class="interwiki-hu"><a href="//hu.wikipedia.org/wiki/Newton%E2%80%93Cotes-formula" title="Newton–Cotes-formula" lang="hu" hreflang="hu">Magyar</a></li>
+			<li class="interwiki-it"><a href="//it.wikipedia.org/wiki/Formule_di_Newton-Cotes" title="Formule di Newton-Cotes" lang="it" hreflang="it">Italiano</a></li>
+			<li class="interwiki-ja"><a href="//ja.wikipedia.org/wiki/%E3%83%8B%E3%83%A5%E3%83%BC%E3%83%88%E3%83%B3%E3%83%BB%E3%82%B3%E3%83%BC%E3%83%84%E3%81%AE%E5%85%AC%E5%BC%8F" title="ニュートン・コーツの公式" lang="ja" hreflang="ja">日本語</a></li>
+			<li class="interwiki-km"><a href="//km.wikipedia.org/wiki/%E1%9E%9A%E1%9E%BC%E1%9E%94%E1%9E%98%E1%9E%93%E1%9F%92%E1%9E%8F%E1%9E%89%E1%9E%BC%E1%9E%8F%E1%9E%BB%E1%9E%93-%E1%9E%80%E1%9E%BC%E1%9E%8F%E1%9F%92%E1%9E%9F" title="រូបមន្តញូតុន-កូត្ស" lang="km" hreflang="km">ភាសាខ្មែរ</a></li>
+			<li class="interwiki-nl"><a href="//nl.wikipedia.org/wiki/Formule_van_Newton-Cotes" title="Formule van Newton-Cotes" lang="nl" hreflang="nl">Nederlands</a></li>
+			<li class="interwiki-pl"><a href="//pl.wikipedia.org/wiki/Metody_Newtona-Cotesa" title="Metody Newtona-Cotesa" lang="pl" hreflang="pl">Polski</a></li>
+			<li class="interwiki-sr"><a href="//sr.wikipedia.org/wiki/%D0%8A%D1%83%D1%82%D0%BD-%D0%9A%D0%BE%D1%83%D1%82%D1%81_%D1%84%D0%BE%D1%80%D0%BC%D1%83%D0%BB%D0%B5" title="Њутн-Коутс формуле" lang="sr" hreflang="sr">Српски / Srpski</a></li>
+			<li class="interwiki-zh"><a href="//zh.wikipedia.org/wiki/%E7%89%9B%E9%A0%93%EF%BC%8D%E5%AF%87%E6%AC%A1%E5%85%AC%E5%BC%8F" title="牛頓－寇次公式" lang="zh" hreflang="zh">中文</a></li>
+		</ul>
+	</div>
+</div>
+
+<!-- /LANGUAGES -->
+			</div>
+		<!-- /panel -->
+		<!-- footer -->
+		<div id="footer">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> Esta página fue modificada por última vez el 11 may 2012, a las 12:47.</li>
+											<li id="footer-info-copyright">El texto está disponible bajo la <a rel="license" href="//es.wikipedia.org/wiki/Wikipedia:Texto_de_la_Licencia_Creative_Commons_Atribuci%C3%B3n/Compartir-Igual_3.0">Licencia Creative Commons Atribución Compartir Igual 3.0</a><a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/" style="display:none;"></a>;
+podrían ser aplicables cláusulas adicionales.
+Lee los <a href="//wikimediafoundation.org/wiki/T%C3%A9rminos_de_Uso">términos de uso</a> para más información.<br />
+Wikipedia&reg; es una marca registrada de la <a href="//www.wikimediafoundation.org/">Fundación Wikimedia, Inc.</a>, una organización sin ánimo de lucro.<br></li><li class="noprint"><a class="internal" href="/wiki/Wikipedia:Contacto">Contacto</a></li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="//wikimediafoundation.org/wiki/Pol%C3%ADtica_de_privacidad" title="wikimedia:Política de privacidad">Política de privacidad</a></li>
+											<li id="footer-places-about"><a href="/wiki/Wikipedia:Acerca_de" title="Wikipedia:Acerca de">Acerca de Wikipedia</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Wikipedia:Limitaci%C3%B3n_general_de_responsabilidad" title="Wikipedia:Limitación general de responsabilidad">Limitación de responsabilidad</a></li>
+											<li id="footer-places-mobileview"><a href="http://es.m.wikipedia.org/w/index.php?title=F%C3%B3rmulas_de_Newton%E2%80%93Cotes&amp;mobileaction=toggle_view_mobile" class="noprint">Versión para móviles</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+					<li id="footer-copyrightico">
+						<a href="//wikimediafoundation.org/"><img src="//bits.wikimedia.org/images/wikimedia-button.png" width="88" height="31" alt="Wikimedia Foundation"/></a>
+					</li>
+					<li id="footer-poweredbyico">
+						<a href="//www.mediawiki.org/"><img src="//bits.wikimedia.org/static-1.20wmf2/skins/common/images/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" width="88" height="31" /></a>
+					</li>
+				</ul>
+						<div style="clear:both"></div>
+		</div>
+		<!-- /footer -->
+		<script type="text/javascript">if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script src="//bits.wikimedia.org/es.wikipedia.org/load.php?debug=false&amp;lang=es&amp;modules=skins.vector&amp;only=scripts&amp;skin=vector&amp;*" type="text/javascript"></script>
+<script type="text/javascript">if(window.mw){
+mw.loader.load(["mediawiki.user","mediawiki.page.ready","mediawiki.legacy.mwsuggest","ext.gadget.a-commons-directo","ext.gadget.refToolbar","ext.gadget.imagenesinfobox","ext.vector.collapsibleNav","ext.vector.collapsibleTabs","ext.vector.editWarning","ext.vector.simpleSearch","ext.UserBuckets","ext.articleFeedback.startup"], null, true);
+}</script>
+<script src="/w/index.php?title=Especial:BannerController&amp;cache=/cn.js&amp;303-4" type="text/javascript"></script>
+<script src="//bits.wikimedia.org/es.wikipedia.org/load.php?debug=false&amp;lang=es&amp;modules=site&amp;only=scripts&amp;skin=vector&amp;*" type="text/javascript"></script>
+<script src="//geoiplookup.wikimedia.org/" type="text/javascript"></script><!-- Served by mw16 in 0.140 secs. -->
+	</body>
+</html>

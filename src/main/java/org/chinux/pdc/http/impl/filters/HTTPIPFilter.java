@@ -5,10 +5,15 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.List;
 
+import org.apache.log4j.Logger;
 import org.chinux.pdc.http.api.HTTPFilter;
+import org.chinux.pdc.http.impl.HTTPBaseFilter;
+import org.chinux.pdc.http.util.ErrorPageProvider;
 import org.chinux.pdc.workers.impl.HTTPProxyEvent;
 
 public class HTTPIPFilter implements HTTPFilter {
+
+	private static Logger log = Logger.getLogger(HTTPBaseFilter.class);
 
 	@Override
 	public boolean isValid(final HTTPProxyEvent event) {
@@ -20,19 +25,22 @@ public class HTTPIPFilter implements HTTPFilter {
 					.toString();
 		} catch (final UnknownHostException e) {
 			e.printStackTrace();
+			return false;
+		}
+		if (dest.split("/").length < 2) {
+			return true;
 		}
 		dest = dest.split("/")[1];
 		if (dest != null) {
 			return !this.matches(ips, dest);
 		}
-		System.err.println("Destination host null\n");
+		this.log.info("Destination host null\n");
 		return true;
 	}
 
 	@Override
 	public ByteBuffer getErrorResponse(final HTTPProxyEvent event) {
-		return ByteBuffer.wrap("The requested IP has been blocked.\n"
-				.getBytes());
+		return ByteBuffer.wrap(ErrorPageProvider.get403());
 	}
 
 	private boolean matches(final List<String> list, final String ip) {

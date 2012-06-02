@@ -40,7 +40,7 @@ public class HTTPResponseEventHandler {
 	}
 
 	public void handle(final ByteArrayOutputStream stream,
-			final ClientDataEvent clientEvent) {
+			final ClientDataEvent clientEvent) throws FilterException {
 
 		stream.reset();
 
@@ -67,15 +67,9 @@ public class HTTPResponseEventHandler {
 			this.processData(stream, rawData);
 		}
 
-		// TODO remove try-catch
 		if (!HTTPBaseFilter.getBaseResponseFilter().isValid(this.event)) {
-			try {
-				throw new FilterException(HTTPBaseFilter
-						.getBaseResponseFilter().getErrorResponse(this.event)
-						.toString());
-			} catch (final FilterException e) {
-				e.printStackTrace();
-			}
+			throw new FilterException(HTTPBaseFilter.getBaseResponseFilter()
+					.getErrorResponse(this.event));
 		}
 	}
 

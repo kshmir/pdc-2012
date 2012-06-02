@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
+import org.chinux.pdc.FilterException;
 import org.chinux.pdc.nio.events.api.DataEvent;
 import org.chinux.pdc.nio.events.impl.ClientDataEvent;
 import org.chinux.pdc.nio.events.impl.ErrorDataEvent;
@@ -113,7 +114,15 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 			final HTTPResponseEventHandler eventHandler = new HTTPResponseEventHandler(
 					event);
 
-			eventHandler.handle(this.outputBuffer, clientEvent);
+			try {
+				eventHandler.handle(this.outputBuffer, clientEvent);
+			} catch (final FilterException e1) {
+				e = new ServerDataEvent(event.getSocketChannel(),
+						e1.getResponse(), this.serverDataReceiver);
+				e.setCanClose(true);
+				e.setCanSend(true);
+				return e;
+			}
 
 			e = new ServerDataEvent(event.getSocketChannel(),
 					ByteBuffer.wrap(this.outputBuffer.toByteArray().clone()),
@@ -157,7 +166,16 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 			serverEvent.setData(ByteBuffer.wrap(concatenator.toByteArray()));
 		}
 
-		final HTTPProxyEvent httpEvent = handler.handle(serverEvent);
+		HTTPProxyEvent httpEvent;
+		try {
+			httpEvent = handler.handle(serverEvent);
+		} catch (final FilterException e1) {
+			final DataEvent e = new ServerDataEvent(serverEvent.getChannel(),
+					e1.getResponse(), this.serverDataReceiver);
+			e.setCanClose(true);
+			e.setCanSend(true);
+			return e;
+		}
 
 		final DataEvent e = new ClientDataEvent(
 				ByteBuffer.wrap(this.outputBuffer.toByteArray()),
