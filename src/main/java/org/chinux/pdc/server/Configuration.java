@@ -12,6 +12,7 @@ public class Configuration {
 	private int maxResSize;
 	private boolean l33t;
 	private boolean rotateImages;
+	private boolean chainProxy;
 
 	public Configuration() {
 		this.blockAll = false;
@@ -21,12 +22,14 @@ public class Configuration {
 		this.maxResSize = -1;
 		this.l33t = false;
 		this.rotateImages = false;
+		this.chainProxy = false;
 	}
 
 	public Configuration(final boolean blockAll, final List<String> blockedIPs,
 			final List<String> blockedURLs,
 			final List<String> blockedMediaTypes, final int maxResSize,
-			final boolean l33t, final boolean rotateImages) {
+			final boolean l33t, final boolean rotateImages,
+			final boolean chainProxy) {
 		this.blockAll = blockAll;
 		this.blockedIPs = blockedIPs;
 		this.blockedURLs = blockedURLs;
@@ -34,6 +37,7 @@ public class Configuration {
 		this.maxResSize = maxResSize;
 		this.l33t = l33t;
 		this.rotateImages = rotateImages;
+		this.chainProxy = chainProxy;
 
 	}
 
@@ -65,12 +69,16 @@ public class Configuration {
 		return this.rotateImages;
 	}
 
+	public boolean isChainProxy() {
+		return this.chainProxy;
+	}
+
 	@Override
 	public String toString() {
 		return "BlockedIPs: " + this.blockedIPs + " BlockedMediaTypes: "
 				+ this.blockedMediaTypes + " BlockedURLs: " + this.blockedURLs
 				+ " MaxResSize: " + this.maxResSize + " L33t: " + this.l33t
 				+ " RotateImages: " + this.rotateImages + " BlockAll: "
-				+ this.blockAll + "\n";
+				+ this.blockAll + " ChainProxy: " + this.chainProxy + "\n";
 	}
 }

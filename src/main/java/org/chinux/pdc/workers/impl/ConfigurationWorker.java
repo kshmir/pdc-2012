@@ -217,6 +217,7 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 		boolean blockAll = configuration.isBlockAll();
 		boolean l33t = configuration.isL33t();
 		boolean rotateImages = configuration.isRotateImages();
+		boolean chainProxy = configuration.isChainProxy();
 		int maxResSize = configuration.getMaxResSize();
 		List<String> blockedIPs = configuration.getBlockedIPs();
 		List<String> blockedURLs = configuration.getBlockedURLs();
@@ -228,6 +229,14 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 			if (this.data.split(" ").length >= 3) {
 				blockAll = Boolean.valueOf(this.data.split(" ")[2]);
 				resp = ("BlockAll set to " + this.data.split(" ")[2] + "\n")
+						.getBytes();
+			} else {
+				resp = "Invalid Parameter\n".getBytes();
+			}
+		} else if (property.equals("chainProxy")) {
+			if (this.data.split(" ").length >= 3) {
+				chainProxy = Boolean.valueOf(this.data.split(" ")[2]);
+				resp = ("ChainProxy set to " + this.data.split(" ")[2] + "\n")
 						.getBytes();
 			} else {
 				resp = "Invalid Parameter\n".getBytes();
@@ -292,7 +301,7 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 		}
 		ConfigurationProvider.setConfiguration(new Configuration(blockAll,
 				blockedIPs, blockedURLs, blockedMediaTypes, maxResSize, l33t,
-				rotateImages));
+				rotateImages, chainProxy));
 		return resp;
 	}
 }

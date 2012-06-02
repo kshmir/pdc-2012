@@ -40,7 +40,8 @@ public class ConfigurationProvider {
 							blockedURLs, blockedMediaTypes, new Integer(
 									prop.getProperty("maxResSize")),
 							new Boolean(prop.getProperty("l33t")), new Boolean(
-									prop.getProperty("rotateImages")));
+									prop.getProperty("rotateImages")),
+							new Boolean(prop.getProperty("chainProxy")));
 				} catch (final IOException e) {
 					System.err
 							.println("Configuration file error. Default configuration loaded");
