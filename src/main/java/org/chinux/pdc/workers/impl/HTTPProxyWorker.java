@@ -156,16 +156,16 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 
 			final HTTPResponseEventHandler eventHandler = new HTTPResponseEventHandler(
 					event);
-			//
-			// try {
-			eventHandler.handle(this.outputBuffer, clientEvent);
-			// } catch (final FilterException e1) {
-			// e = new ServerDataEvent(event.getSocketChannel(),
-			// e1.getResponse(), this.serverDataReceiver);
-			// e.setCanClose(true);
-			// e.setCanSend(true);
-			// return e;
-			// }
+
+			try {
+				eventHandler.handle(this.outputBuffer, clientEvent);
+			} catch (final FilterException e1) {
+				e = new ServerDataEvent(event.getSocketChannel(),
+						e1.getResponse(), this.serverDataReceiver);
+				e.setCanClose(event.next == null);
+				e.setCanSend(true);
+				return e;
+			}
 
 			if (event.getParseClientOffsetData() != null
 					&& event.getParseClientOffsetData().array().length > 0) {

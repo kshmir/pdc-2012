@@ -7,8 +7,10 @@ import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.util.regex.Pattern;
 
+import org.chinux.pdc.FilterException;
 import org.chinux.pdc.http.api.HTTPResponse;
 import org.chinux.pdc.http.api.HTTPResponseHeader;
+import org.chinux.pdc.http.impl.HTTPBaseFilter;
 import org.chinux.pdc.http.impl.HTTPBaseReader;
 import org.chinux.pdc.http.impl.HTTPResponseHeaderImpl;
 import org.chinux.pdc.http.impl.HTTPResponseImpl;
@@ -32,7 +34,7 @@ public class HTTPResponseEventHandler {
 	}
 
 	public void handle(final ByteArrayOutputStream stream,
-			final ClientDataEvent clientEvent) {
+			final ClientDataEvent clientEvent) throws FilterException {
 
 		stream.reset();
 
@@ -60,13 +62,12 @@ public class HTTPResponseEventHandler {
 			this.processData(stream, rawData);
 		}
 
-		// if (this.canDoFilter(this.event)) {
-		// if (!HTTPBaseFilter.getBaseResponseFilter().isValid(this.event))
-		// {
-		// throw new FilterException(HTTPBaseFilter
-		// .getBaseResponseFilter().getErrorResponse(this.event));
-		// }
-		// }
+		if (this.canDoFilter(this.event)) {
+			if (!HTTPBaseFilter.getBaseResponseFilter().isValid(this.event)) {
+				throw new FilterException(HTTPBaseFilter
+						.getBaseResponseFilter().getErrorResponse(this.event));
+			}
+		}
 	}
 
 	private boolean canDoFilter(final HTTPProxyEvent event) {
