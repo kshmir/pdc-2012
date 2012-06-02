@@ -206,9 +206,6 @@ public class HTTPRequestEventHandler {
 		}
 		header.addHeader("Max-Forwards", String.valueOf(currentforwards));
 
-		// System.out
-		// .println("=================== HEADER ========================================== "
-		// + header.getHeader("Max-Forwards"));
 	}
 
 	private void addViaHeader(final HTTPRequestHeader header) {
@@ -220,9 +217,6 @@ public class HTTPRequestEventHandler {
 		header.addHeader("Via", oldviaheader + header.getHTTPVersion()
 				+ " chinuProxy");
 
-		// System.out
-		// .println("=================== HEADER ========================================== "
-		// + header.getHeader("Via"));
 	}
 
 	private void applyReadersToRequest(final HTTPProxyEvent event) {
