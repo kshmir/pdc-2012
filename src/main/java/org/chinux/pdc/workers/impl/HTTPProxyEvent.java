@@ -40,6 +40,7 @@ public class HTTPProxyEvent {
 	public HTTPProxyEvent(final HTTPRequest request, final SocketChannel channel) {
 		this.request = request;
 		this.socketChannel = channel;
+
 	}
 
 	public boolean canClose() {

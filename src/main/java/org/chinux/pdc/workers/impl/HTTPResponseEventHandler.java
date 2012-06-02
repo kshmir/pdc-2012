@@ -7,15 +7,15 @@ import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.util.regex.Pattern;
 
+import org.chinux.pdc.FilterException;
 import org.chinux.pdc.http.api.HTTPResponse;
 import org.chinux.pdc.http.api.HTTPResponseHeader;
+import org.chinux.pdc.http.impl.HTTPBaseFilter;
 import org.chinux.pdc.http.impl.HTTPBaseReader;
 import org.chinux.pdc.http.impl.HTTPResponseHeaderImpl;
 import org.chinux.pdc.http.impl.HTTPResponseImpl;
 import org.chinux.pdc.http.impl.readers.HTTPChunkedResponseTransformReader;
 import org.chinux.pdc.http.impl.readers.HTTPContentLengthReader;
-import org.chinux.pdc.http.impl.readers.HTTPImageResponseReader;
-import org.chinux.pdc.http.impl.readers.HTTPL33tEncoder;
 import org.chinux.pdc.nio.events.impl.ClientDataEvent;
 
 public class HTTPResponseEventHandler {
@@ -34,7 +34,7 @@ public class HTTPResponseEventHandler {
 	}
 
 	public void handle(final ByteArrayOutputStream stream,
-			final ClientDataEvent clientEvent) {
+			final ClientDataEvent clientEvent) throws FilterException {
 
 		stream.reset();
 
@@ -61,6 +61,17 @@ public class HTTPResponseEventHandler {
 		if (this.canProcessData(rawData)) {
 			this.processData(stream, rawData);
 		}
+
+		if (this.canDoFilter(this.event)) {
+			if (!HTTPBaseFilter.getBaseResponseFilter().isValid(this.event)) {
+				throw new FilterException(HTTPBaseFilter
+						.getBaseResponseFilter().getErrorResponse(this.event));
+			}
+		}
+	}
+
+	private boolean canDoFilter(final HTTPProxyEvent event) {
+		return event.getResponse() != null;
 	}
 
 	private boolean matchesHeader(final StringBuilder pendingHeader) {
@@ -133,10 +144,11 @@ public class HTTPResponseEventHandler {
 				}
 			}
 
-			if (this.event.getResponse().getHeaders().getHTTPVersion() != null) {
-				this.event.setCanSend(this.event.getResponse().getHeaders()
-						.getHTTPVersion().equals("1.0"));
-			}
+			// if (this.event.getResponse().getHeaders().getHTTPVersion() !=
+			// null) {
+			// this.event.setCanSend(this.event.getResponse().getHeaders()
+			// .getHTTPVersion().equals("1.0"));
+			// }
 
 			if (headerAndBody.length > 1) {
 				rawData = ByteBuffer.wrap(isoCharset.encode(headerAndBody[1])
@@ -164,11 +176,11 @@ public class HTTPResponseEventHandler {
 			// CRLF ended
 		}
 
-		if (this.hasImageMIME(response)
-				&& event.getEventConfiguration().isRotateImages()) {
-			response.getBodyReader().addResponseReader(
-					new HTTPImageResponseReader(response.getHeaders()), 50);
-		}
+		// if (this.hasImageMIME(response)
+		// && event.getEventConfiguration().isRotateImages()) {
+		// response.getBodyReader().addResponseReader(
+		// new HTTPImageResponseReader(response.getHeaders()), 50);
+		// }
 
 		if (this.hasEncodingChunked(response)) {
 			response.getBodyReader().addResponseReader(
@@ -177,18 +189,31 @@ public class HTTPResponseEventHandler {
 
 		}
 
-		if (this.isGzipped(response)
-				&& (this.isTextPlain(response) || this.hasImageMIME(response))) {
-			// response.getBodyReader().addResponseReader(
-			// new HTTPGzipReader(response.getHeaders()), 20);
-		}
+		// if (this.isGzipped(response)
+		// && (this.isTextPlain(response) || this.hasImageMIME(response))) {
+		// // response.getBodyReader().addResponseReader(
+		// // new HTTPGzipReader(response.getHeaders()), 20);
+		// }
 
 		/* for l33t translation */
-		if (this.isTextPlain(response)
-				&& event.getEventConfiguration().isL33t()) {
-			response.getBodyReader().addResponseReader(
-					new HTTPL33tEncoder(response.getHeaders()), 50);
-		}
+		// if (this.isTextPlain(response)
+		// && event.getEventConfiguration().isL33t()) {
+		// response.getBodyReader().addResponseReader(
+		// new HTTPL33tEncoder(response.getHeaders()), 50);
+		// }
+		//
+		// if (this.isGzipped(response)
+		// && (this.isTextPlain(response) || this.hasImageMIME(response))) {
+		// response.getBodyReader().addResponseReader(
+		// new HTTPGzipReader(response.getHeaders()), 20);
+		// }
+
+		/* for l33t translation */
+		// if (this.isTextPlain(response)
+		// && event.getEventConfiguration().isL33t()) {
+		// response.getBodyReader().addResponseReader(
+		// new HTTPL33tEncoder(response.getHeaders()), 50);
+		// }
 	}
 
 	private boolean isGzipped(final HTTPResponse response) {
