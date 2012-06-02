@@ -9,7 +9,6 @@ import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
 import org.chinux.pdc.nio.dispatchers.EventDispatcher;
 import org.chinux.pdc.nio.events.api.DataEvent;
 import org.chinux.pdc.nio.events.impl.ClientDataEvent;
@@ -21,7 +20,6 @@ import org.chinux.pdc.nio.util.NIOUtil;
 
 public class ClientHandler implements NIOClientHandler, ConnectionCloseHandler {
 
-	private static Logger log = Logger.getLogger(ClientHandler.class);
 	private ByteBuffer readBuffer;
 	private EventDispatcher<DataEvent> dispatcher;
 	private ClientDataReceiver receiver;
@@ -99,10 +97,6 @@ public class ClientHandler implements NIOClientHandler, ConnectionCloseHandler {
 		// Hand the data off to our worker thread
 		final ByteBuffer data = NIOUtil.readBuffer(readBuffer, numRead);
 
-		// System.out.println("CLIENT READ");
-		// System.out.println("==============");
-		// System.out.println(new String(data.array()));
-		// System.out.println("=============="); 
 		final ClientDataEvent event = new ClientDataEvent(data,
 				key.attachment());
 
@@ -125,10 +119,6 @@ public class ClientHandler implements NIOClientHandler, ConnectionCloseHandler {
 
 				final ByteBuffer buf = queue.get(0);
 
-				System.out.println("CLIENT WRITE");
-				System.out.println("==============");
-				System.out.println(new String(buf.array()));
-				System.out.println("==============");
 				socketChannel.write(buf);
 
 				if (buf.remaining() > 0) {
@@ -165,10 +155,7 @@ public class ClientHandler implements NIOClientHandler, ConnectionCloseHandler {
 
 	@Override
 	public void handleUnexpectedDisconnect(final SelectionKey key) {
-		// Clear buffers and stuff
-		// this.dispatcher.processData(new ErrorDataEvent(
-		// ErrorDataEvent.REMOTE_CLIENT_DISCONNECT, key.channel(), key
-		// .attachment()));
+		// TODO: Ver esto
 	}
 
 	@Override
