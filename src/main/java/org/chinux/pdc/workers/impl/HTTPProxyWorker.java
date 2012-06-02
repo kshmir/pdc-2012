@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
+import org.chinux.pdc.FilterException;
 import org.chinux.pdc.nio.dispatchers.ASyncEventDispatcher;
 import org.chinux.pdc.nio.events.api.DataEvent;
 import org.chinux.pdc.nio.events.impl.ClientDataEvent;
@@ -116,7 +117,8 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 					connectionClose = event.getResponse().getHeaders()
 							.getHeader("connection").equals("close");
 				}
-				return (connectionClose || clientEvent.canClose());
+				return (connectionClose && (event.canClose() || clientEvent
+						.canClose()));
 			} else {
 				if (event.getResponse().getHeaders().getHeader("connection") != null) {
 					connectionClose = event.getResponse().getHeaders()
@@ -154,8 +156,16 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 
 			final HTTPResponseEventHandler eventHandler = new HTTPResponseEventHandler(
 					event);
-
+			//
+			// try {
 			eventHandler.handle(this.outputBuffer, clientEvent);
+			// } catch (final FilterException e1) {
+			// e = new ServerDataEvent(event.getSocketChannel(),
+			// e1.getResponse(), this.serverDataReceiver);
+			// e.setCanClose(true);
+			// e.setCanSend(true);
+			// return e;
+			// }
 
 			if (event.getParseClientOffsetData() != null
 					&& event.getParseClientOffsetData().array().length > 0) {
@@ -223,7 +233,16 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 
 		final HTTPRequestEventHandler handler = this.getRequestEventHandler();
 
-		final HTTPProxyEvent httpEvent = handler.handle(serverEvent);
+		HTTPProxyEvent httpEvent;
+		try {
+			httpEvent = handler.handle(serverEvent);
+		} catch (final FilterException e1) {
+			final DataEvent e = new ServerDataEvent(serverEvent.getChannel(),
+					e1.getResponse(), this.serverDataReceiver);
+			e.setCanClose(this.pollEventForChannel(serverEvent.getChannel()) == null);
+			e.setCanSend(true);
+			return e;
+		}
 
 		final DataEvent e = new ClientDataEvent(
 				ByteBuffer.wrap(this.outputBuffer.toByteArray()),

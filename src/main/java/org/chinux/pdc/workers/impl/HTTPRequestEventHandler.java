@@ -12,8 +12,10 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
+import org.chinux.pdc.FilterException;
 import org.chinux.pdc.http.api.HTTPRequest;
 import org.chinux.pdc.http.api.HTTPRequestHeader;
+import org.chinux.pdc.http.impl.HTTPBaseFilter;
 import org.chinux.pdc.http.impl.HTTPBaseReader;
 import org.chinux.pdc.http.impl.HTTPRequestHeaderImpl;
 import org.chinux.pdc.http.impl.HTTPRequestImpl;
@@ -35,7 +37,8 @@ public class HTTPRequestEventHandler {
 	private Map<SocketChannel, HTTPProxyEvent> readingDataSockets = new HashMap<SocketChannel, HTTPProxyEvent>();
 
 	public HTTPProxyEvent handle(final ServerDataEvent serverEvent)
-			throws IOException {
+
+	throws IOException, FilterException {
 		try {
 			HTTPProxyEvent httpEvent = null;
 
@@ -130,7 +133,7 @@ public class HTTPRequestEventHandler {
 		if (request.getBodyReader().isFinished()) {
 			this.readingDataSockets.remove(clientChannel);
 			this.readingServerSockets.remove(clientChannel);
-			event.setCanClose(true);
+			// event.setCanClose(true);
 			httpEvent.setParseClientOffsetData(request.getBodyReader()
 					.getDataOffset());
 		}
@@ -140,10 +143,12 @@ public class HTTPRequestEventHandler {
 	/**
 	 * Reads the current data and tries to build a new HTTPEvent after parsing a
 	 * Request Header
+	 * 
+	 * @throws FilterException
 	 */
 	private HTTPProxyEvent readEventRequestHeader(
 			final SocketChannel clientChannel, HTTPProxyEvent proxyEvent)
-			throws IOException {
+			throws IOException, FilterException {
 		final StringBuilder pendingHeader = this.readingServerSockets
 				.get(clientChannel);
 
@@ -163,8 +168,6 @@ public class HTTPRequestEventHandler {
 			header.removeHeader("Accept-Encoding");
 			header.addHeader("Accept-Encoding", "identity");
 
-			// TODO: Filtering
-
 			final HTTPProxyEvent event = new HTTPProxyEvent(
 					new HTTPRequestImpl(header, new HTTPBaseReader(header)),
 					clientChannel);
@@ -181,9 +184,14 @@ public class HTTPRequestEventHandler {
 
 			proxyEvent = event;
 
-			if (proxyEvent.canSend()) {
-				this.outputBuffer.write(isoCharset.encode(
-						CharBuffer.wrap(header.toString())).array());
+			if (!HTTPBaseFilter.getBaseRequestFilter().isValid(event)) {
+				throw new FilterException(HTTPBaseFilter.getBaseRequestFilter()
+						.getErrorResponse(event));
+			} else {
+				if (proxyEvent.canSend()) {
+					this.outputBuffer.write(isoCharset.encode(
+							CharBuffer.wrap(header.toString())).array());
+				}
 			}
 
 			if (headerAndBody.length > 1) {

@@ -27,11 +27,15 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 	private String username = null;
 	private Map<String, String> users;
 	private Pattern ipPattern = Pattern
-			.compile("(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)");
+			.compile("(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/(0|8|16|24|32)");
 
 	@Override
 	public DataEvent DoWork(final DataEvent dataEvent) {
-		this.data = new String(dataEvent.getData().array()).split("\n")[0];
+		final String str = new String(dataEvent.getData().array());
+		if (str.length() < 2) {
+			return dataEvent;
+		}
+		this.data = str.split("\n")[0];
 		this.users = new HashMap<String, String>();
 		final String command = this.data.split(" ")[0];
 		ServerDataEvent event;
@@ -213,6 +217,7 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 		boolean blockAll = configuration.isBlockAll();
 		boolean l33t = configuration.isL33t();
 		boolean rotateImages = configuration.isRotateImages();
+		boolean chainProxy = configuration.isChainProxy();
 		int maxResSize = configuration.getMaxResSize();
 		List<String> blockedIPs = configuration.getBlockedIPs();
 		List<String> blockedURLs = configuration.getBlockedURLs();
@@ -224,6 +229,14 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 			if (this.data.split(" ").length >= 3) {
 				blockAll = Boolean.valueOf(this.data.split(" ")[2]);
 				resp = ("BlockAll set to " + this.data.split(" ")[2] + "\n")
+						.getBytes();
+			} else {
+				resp = "Invalid Parameter\n".getBytes();
+			}
+		} else if (property.equals("chainProxy")) {
+			if (this.data.split(" ").length >= 3) {
+				chainProxy = Boolean.valueOf(this.data.split(" ")[2]);
+				resp = ("ChainProxy set to " + this.data.split(" ")[2] + "\n")
 						.getBytes();
 			} else {
 				resp = "Invalid Parameter\n".getBytes();
@@ -288,7 +301,7 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 		}
 		ConfigurationProvider.setConfiguration(new Configuration(blockAll,
 				blockedIPs, blockedURLs, blockedMediaTypes, maxResSize, l33t,
-				rotateImages));
+				rotateImages, chainProxy));
 		return resp;
 	}
 }
