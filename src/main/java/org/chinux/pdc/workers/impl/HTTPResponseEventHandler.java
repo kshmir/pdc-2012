@@ -161,7 +161,7 @@ public class HTTPResponseEventHandler {
 		// Si tiene content-length usamos el content-length reader
 		if (this.hasContentLength(response) || this.mustDecodeChunked(response)) {
 			response.getBodyReader().addResponseReader(
-					new HTTPContentLengthReader(response.getHeaders()), 100);
+					new HTTPContentLengthReader(response.getHeaders()), 20);
 		} else if (!this.hasContentLength(response)
 				&& !this.hasEncodingChunked(response)) {
 			// CRLF ended

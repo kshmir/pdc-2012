@@ -30,7 +30,6 @@ public class HTTPBaseReader implements HTTPDelimiterReader {
 					if (arg0 == null && arg1 == null) {
 						return 0;
 					}
-
 					if (arg1 == null) {
 						return 1;
 					}
@@ -79,7 +78,7 @@ public class HTTPBaseReader implements HTTPDelimiterReader {
 			}
 		}
 
-		if (this.mustConcatHeaders) {
+		if (this.mustConcatHeaders && this.finished) {
 			data = this.concatHeader(data);
 		}
 		return data;
