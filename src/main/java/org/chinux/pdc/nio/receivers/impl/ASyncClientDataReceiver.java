@@ -35,79 +35,101 @@ public class ASyncClientDataReceiver extends ClientDataReceiver implements
 		final InetSocketAddress socketHost = new InetSocketAddress(host,
 				this.connectionPort);
 
-		SocketChannel socketChannel;
+		synchronized (this.attachmentIPMap) {
+			synchronized (this.changeRequests) {
+				synchronized (this.pendingData) {
 
-		socketChannel = this.clientIPMap.get(event.getAttachment());
+					final InetAddress oldHost = this.attachmentIPMap.get(event
+							.getAttachment());
 
-		if (socketChannel == null) {
+					if (oldHost != null && !oldHost.equals(host)) {
+						this.clientIPMap.remove(event.getAttachment());
+					}
+					SocketChannel socketChannel;
 
-			socketChannel = this.pool.getObject(socketHost);
+					final boolean isNotNew = false;
 
-			if (socketChannel == null) {
+					// this.so
 
-				try {
-					socketChannel = SocketChannel.open();
-					socketChannel.configureBlocking(false);
-					socketChannel.connect(socketHost);
+					socketChannel = this.clientIPMap.get(event.getAttachment());
 
-				} catch (final IOException e) {
-					e.printStackTrace();
+					if (socketChannel == null) {
+
+						socketChannel = this.pool.getObject(socketHost);
+
+						if (socketChannel == null) {
+							socketChannel = this.makeSocketChannel(socketHost);
+						}
+
+						this.attachmentIPMap.put(event.getAttachment(), host);
+						this.clientIPMap.put(event.getAttachment(),
+								socketChannel);
+					}
+
+					// Queue a channel registration since the caller is not
+					// the
+					// selecting thread. As part of the registration we'll
+					// register
+					// an interest in connection events. These are raised
+					// when a
+					// channel
+					// is ready to complete connection establishment.
+
+					if (!socketChannel.isConnected()
+							&& this.pendingData.get(event.getAttachment()) == null) {
+						this.makeSocketChannelFromOld(socketChannel,
+								event.getAttachment());
+
+					} else {
+						System.out.println("Changing ops to write!");
+						this.changeRequests.add(new ChangeRequest(
+								socketChannel, ChangeRequest.CHANGEOPS,
+								SelectionKey.OP_WRITE, event.getAttachment()));
+					}
+
 				}
-			}
 
-			this.clientIPMap.put(event.getAttachment(), socketChannel);
-
-			// Queue a channel registration since the caller is not
-			// the
-			// selecting thread. As part of the registration we'll
-			// register
-			// an interest in connection events. These are raised
-			// when a
-			// channel
-			// is ready to complete connection establishment.
-
-			if (!socketChannel.isConnected()) {
-				this.changeRequests.add(new ChangeRequest(socketChannel,
-						ChangeRequest.REGISTER, SelectionKey.OP_CONNECT, event
-								.getAttachment()));
-
-			} else {
-
-				if (socketChannel.keyFor(this.selector) == null) {
-					this.changeRequests.add(new ChangeRequest(socketChannel,
-							ChangeRequest.REGISTER, SelectionKey.OP_WRITE,
-							event.getAttachment()));
-				} else {
-					this.changeRequests.add(new ChangeRequest(socketChannel,
-							ChangeRequest.CHANGEOPS, SelectionKey.OP_WRITE,
-							event.getAttachment()));
+				ArrayList<ByteBuffer> queue = this.pendingData.get(event
+						.getAttachment());
+				if (queue == null) {
+					queue = new ArrayList<ByteBuffer>();
+					this.pendingData.put(event.getAttachment(), queue);
 				}
+
+				queue.add(event.getData());
+
 			}
 		}
-
-		ArrayList<ByteBuffer> queue = this.pendingData.get(event
-				.getAttachment());
-		if (queue == null) {
-			queue = new ArrayList<ByteBuffer>();
-			this.pendingData.put(event.getAttachment(), queue);
-		}
-		queue.add(event.getData());
 
 		// Finally, wake up our selecting thread so it can make the required
 		// changes
 		this.selector.wakeup();
 	}
 
+	private SocketChannel makeSocketChannel(final InetSocketAddress socketHost) {
+		SocketChannel socketChannel = null;
+		try {
+			socketChannel = SocketChannel.open();
+			socketChannel.configureBlocking(false);
+			socketChannel.connect(socketHost);
+
+		} catch (final IOException e) {
+			e.printStackTrace();
+			socketChannel = null; // TODO: Que onda?
+		}
+		return socketChannel;
+	}
+
 	@Override
 	public synchronized void closeConnection(final DataEvent dataEvent) {
 
 		if (dataEvent instanceof ClientDataEvent) {
-			this.handleConnectionClose(this.clientIPMap
-					.get(((ClientDataEvent) dataEvent).getAttachment()));
-			// final ClientDataEvent clientEvent = (ClientDataEvent) dataEvent;
-			// this.changeRequests.add(new ChangeRequest(this.clientIPMap
-			// .get(((ClientDataEvent) dataEvent).getAttachment()),
-			// ChangeRequest.CLOSE, 0, clientEvent.getAttachment()));
+			// this.handleConnectionClose(this.clientIPMap
+			// .get(((ClientDataEvent) dataEvent).getAttachment()));
+			final ClientDataEvent clientEvent = (ClientDataEvent) dataEvent;
+			this.changeRequests.add(new ChangeRequest(this.clientIPMap
+					.get(((ClientDataEvent) dataEvent).getAttachment()),
+					ChangeRequest.CLOSE, 0, clientEvent.getAttachment()));
 		}
 	}
 
@@ -115,53 +137,75 @@ public class ASyncClientDataReceiver extends ClientDataReceiver implements
 	public synchronized boolean handlePendingChanges()
 			throws ClosedChannelException {
 
-		if (!this.changeRequests.isEmpty()) {
-			this.log.debug("Handling pending changes...");
-			final ChangeRequest change = this.changeRequests.remove(0);
+		synchronized (this.changeRequests) {
+			if (!this.changeRequests.isEmpty()) {
+				this.log.debug("Handling pending changes...");
+				final ChangeRequest change = this.changeRequests.remove(0);
 
-			SelectionKey key;
+				SelectionKey key;
 
-			if (change != null) {
-				switch (change.type) {
-				case ChangeRequest.CLOSE:
-					if (change.socket.isConnected()
-							&& this.pendingData.get(change.attachment) != null
-							&& this.pendingData.get(change.attachment).size() > 0) {
-						this.changeRequests.add(change);
-						return false;
-					}
-
-					if (change.socket.isConnected()) {
-						this.doClose(change.socket);
-					}
-
-					break;
-				case ChangeRequest.CHANGEOPS:
-					key = change.socket.keyFor(this.selector);
-					if (key != null && key.isValid()) {
-						key.interestOps(change.ops);
-						key.attach(change.attachment);
-					} else {
-						if (change.socket.isConnected()) {
-							change.socket.register(this.selector, change.ops,
-									change.attachment);
-						} else {
-							throw new RuntimeException(
-									"I expected this socket to be connected, we must reconnect :(");
+				if (change != null) {
+					switch (change.type) {
+					case ChangeRequest.CLOSE:
+						if (change.socket.isConnected()
+								&& this.pendingData.get(change.attachment) != null
+								&& this.pendingData.get(change.attachment)
+										.size() > 0) {
+							this.changeRequests.add(change);
+							return false;
 						}
+
+						if (change.socket.isConnected()) {
+							this.doClose(change.socket);
+						}
+
+						break;
+					case ChangeRequest.CHANGEOPS:
+						key = change.socket.keyFor(this.selector);
+
+						if (key != null && key.isValid()) {
+							System.out.println("Attaching!");
+							key.interestOps(change.ops);
+							key.attach(change.attachment);
+						} else {
+							if (change.socket.isConnected()) {
+								System.out.println("Registering back!");
+								change.socket.register(this.selector,
+										change.ops, change.attachment);
+							} else {
+								System.out.println("Using a new socket!");
+								this.makeSocketChannelFromOld(change.socket,
+										change.attachment);
+								return true;
+								// throw new RuntimeException(
+								// "I expected this socket to be connected, we must reconnect :(");
+							}
+						}
+						break;
+					case ChangeRequest.REGISTER:
+						change.socket.register(this.selector, change.ops,
+								change.attachment);
+						break;
 					}
-					break;
-				case ChangeRequest.REGISTER:
-					change.socket.register(this.selector, change.ops,
-							change.attachment);
-					break;
 				}
+			} else {
+				return false;
 			}
-		} else {
-			return false;
 		}
 
 		return this.changeRequests.size() > 0;
+	}
+
+	private void makeSocketChannelFromOld(final SocketChannel oldSocket,
+			final Object attachment) {
+		final SocketChannel newSocket = this
+				.makeSocketChannel(new InetSocketAddress(this.attachmentIPMap
+						.get(attachment), this.connectionPort));
+
+		this.clientIPMap.remove(oldSocket);
+		this.clientIPMap.put(attachment, newSocket);
+		this.changeRequests.add(new ChangeRequest(newSocket,
+				ChangeRequest.REGISTER, SelectionKey.OP_CONNECT, attachment));
 	}
 
 	private void doClose(final SocketChannel socket) {

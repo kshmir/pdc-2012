@@ -13,7 +13,6 @@ import org.apache.log4j.Logger;
 import org.chinux.pdc.nio.dispatchers.EventDispatcher;
 import org.chinux.pdc.nio.events.api.DataEvent;
 import org.chinux.pdc.nio.events.impl.ClientDataEvent;
-import org.chinux.pdc.nio.events.impl.ErrorDataEvent;
 import org.chinux.pdc.nio.handlers.api.NIOClientHandler;
 import org.chinux.pdc.nio.receivers.api.ClientDataReceiver;
 import org.chinux.pdc.nio.receivers.impl.ASyncClientDataReceiver;
@@ -38,7 +37,7 @@ public class ClientHandler implements NIOClientHandler, ConnectionCloseHandler {
 
 		this.setReceiver(receiver);
 		this.dispatcher = dispatcher;
-		this.readBuffer = ByteBuffer.allocate(1024);
+		this.readBuffer = ByteBuffer.allocate(1480);
 		this.pendingData = this.receiver.getPendingData();
 		this.connectionCloseHandler = this;
 	}
@@ -100,6 +99,10 @@ public class ClientHandler implements NIOClientHandler, ConnectionCloseHandler {
 		// Hand the data off to our worker thread
 		final ByteBuffer data = NIOUtil.readBuffer(readBuffer, numRead);
 
+		// System.out.println("CLIENT READ");
+		// System.out.println("==============");
+		// System.out.println(new String(data.array()));
+		// System.out.println("=============="); 
 		final ClientDataEvent event = new ClientDataEvent(data,
 				key.attachment());
 
@@ -118,8 +121,14 @@ public class ClientHandler implements NIOClientHandler, ConnectionCloseHandler {
 					.attachment());
 
 			// Write until there's not more data ...
-			while (queue != null && !queue.isEmpty()) {
+			while (!queue.isEmpty()) {
+
 				final ByteBuffer buf = queue.get(0);
+
+				System.out.println("CLIENT WRITE");
+				System.out.println("==============");
+				System.out.println(new String(buf.array()));
+				System.out.println("==============");
 				socketChannel.write(buf);
 
 				if (buf.remaining() > 0) {
@@ -130,9 +139,6 @@ public class ClientHandler implements NIOClientHandler, ConnectionCloseHandler {
 			}
 
 			if (queue == null || queue.isEmpty()) {
-				if (queue == null) {
-					System.out.println("Race condition");
-				}
 				key.interestOps(SelectionKey.OP_READ);
 			}
 		}
@@ -160,9 +166,9 @@ public class ClientHandler implements NIOClientHandler, ConnectionCloseHandler {
 	@Override
 	public void handleUnexpectedDisconnect(final SelectionKey key) {
 		// Clear buffers and stuff
-		this.dispatcher.processData(new ErrorDataEvent(
-				ErrorDataEvent.REMOTE_CLIENT_DISCONNECT, key.channel(), key
-						.attachment()));
+		// this.dispatcher.processData(new ErrorDataEvent(
+		// ErrorDataEvent.REMOTE_CLIENT_DISCONNECT, key.channel(), key
+		// .attachment()));
 	}
 
 	@Override

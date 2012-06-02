@@ -11,15 +11,17 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import org.apache.log4j.Logger;
+import org.chinux.pdc.http.api.HTTPDelimiterReader;
 import org.chinux.pdc.http.api.HTTPMessageHeader;
 import org.chinux.pdc.http.api.HTTPReader;
 
-public class HTTPBaseReader implements HTTPReader {
+public class HTTPBaseReader implements HTTPDelimiterReader {
 
 	private static Logger log = Logger.getLogger(HTTPBaseReader.class);
 	private boolean finished;
 	private boolean mustConcatHeaders;
 	private HTTPMessageHeader header;
+	private ByteBuffer offsetByteBuffer = null;
 	private Map<HTTPReader, Integer> priorityMap = new HashMap<HTTPReader, Integer>();
 	private Set<HTTPReader> readers = new TreeSet<HTTPReader>(
 			new Comparator<HTTPReader>() {
@@ -55,9 +57,19 @@ public class HTTPBaseReader implements HTTPReader {
 
 	@Override
 	public ByteBuffer processData(ByteBuffer data) {
+
 		this.finished = true;
+
+		if (data.array().length == 0) {
+			return ByteBuffer.allocate(0);
+		}
 		for (final HTTPReader reader : this.readers) {
 			data = reader.processData(data);
+
+			if (reader instanceof HTTPDelimiterReader && reader.isFinished()) {
+				this.offsetByteBuffer = ((HTTPDelimiterReader) reader)
+						.getDataOffset();
+			}
 
 			if (data == null) {
 				this.finished = false;
@@ -100,5 +112,14 @@ public class HTTPBaseReader implements HTTPReader {
 			}
 		}
 		return false;
+	}
+
+	@Override
+	public ByteBuffer getDataOffset() {
+		if (this.offsetByteBuffer == null) {
+			return ByteBuffer.allocate(0);
+		} else {
+			return this.offsetByteBuffer;
+		}
 	}
 }

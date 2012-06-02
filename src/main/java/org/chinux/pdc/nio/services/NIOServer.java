@@ -66,7 +66,6 @@ public class NIOServer implements Runnable {
 				if (!hasChanges) {
 					this.selector.select();
 				} else {
-					// System.out.println("Selection non block");
 					this.selector.selectNow();
 				}
 

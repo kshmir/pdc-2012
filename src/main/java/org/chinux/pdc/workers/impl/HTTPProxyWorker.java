@@ -5,13 +5,16 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.Set;
-import java.util.Stack;
 
 import org.apache.log4j.Logger;
+import org.chinux.pdc.nio.dispatchers.ASyncEventDispatcher;
 import org.chinux.pdc.nio.events.api.DataEvent;
 import org.chinux.pdc.nio.events.impl.ClientDataEvent;
 import org.chinux.pdc.nio.events.impl.ErrorDataEvent;
@@ -24,29 +27,41 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 	private Logger logger = Logger.getLogger(this.getClass());
 	private final ByteArrayOutputStream outputBuffer = new ByteArrayOutputStream();
 
-	private Map<SocketChannel, Stack<HTTPProxyEvent>> eventsForChannel = new HashMap<SocketChannel, Stack<HTTPProxyEvent>>();
+	private Map<SocketChannel, Deque<HTTPProxyEvent>> eventsForChannel = new HashMap<SocketChannel, Deque<HTTPProxyEvent>>();
+
+	private Map<SocketChannel, PriorityQueue<ClientDataEvent>> incomingEventsQueue = new HashMap<SocketChannel, PriorityQueue<ClientDataEvent>>();
 
 	private void addEventForChannel(final SocketChannel channel,
 			final HTTPProxyEvent event) {
 		if (this.eventsForChannel.get(channel) == null) {
-			this.eventsForChannel.put(channel, new Stack<HTTPProxyEvent>());
+			this.eventsForChannel
+					.put(channel, new LinkedList<HTTPProxyEvent>());
 		}
 
-		this.eventsForChannel.get(channel).push(event);
+		for (final HTTPProxyEvent e : this.eventsForChannel.get(channel)) {
+			if (event == e) {
+				return;
+			}
+		}
+
+		this.eventsForChannel.get(channel).addLast(event);
 	}
 
-	private HTTPProxyEvent peekEventForChannel(final SocketChannel channel) {
-		return (this.eventsForChannel.get(channel) == null) ? null
-				: this.eventsForChannel.get(channel).peek();
+	private HTTPProxyEvent pollEventForChannel(final SocketChannel channel) {
+		return (this.eventsForChannel.get(channel) == null || this.eventsForChannel
+				.get(channel).size() == 0) ? null : this.eventsForChannel.get(
+				channel).getFirst();
 	}
 
 	private HTTPProxyEvent popEventForChannel(final SocketChannel channel) {
 		return (this.eventsForChannel.get(channel) == null || this.eventsForChannel
 				.get(channel).size() == 0) ? null : this.eventsForChannel.get(
-				channel).pop();
+				channel).removeFirst();
 	}
 
-	private Map<SocketChannel, ByteBuffer> lastBufferForSocket = new HashMap<SocketChannel, ByteBuffer>();
+	private Map<SocketChannel, ByteBuffer> lastServerBufferForSocket = new HashMap<SocketChannel, ByteBuffer>();
+
+	private Map<SocketChannel, ByteBuffer> lastClientBufferForSocket = new HashMap<SocketChannel, ByteBuffer>();
 
 	private Set<HTTPProxyEvent> receivedRequests = new HashSet<HTTPProxyEvent>();
 
@@ -54,6 +69,12 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 	private DataReceiver<DataEvent> serverDataReceiver = null;
 
 	private HTTPRequestEventHandler requestEventHandler;
+	private ASyncEventDispatcher<DataEvent> eventDispatcher;
+
+	public void setEventDispatcher(
+			final ASyncEventDispatcher<DataEvent> eventDispatcher) {
+		this.eventDispatcher = eventDispatcher;
+	}
 
 	public void setClientDataReceiver(
 			final DataReceiver<DataEvent> clientDataReceiver) {
@@ -69,16 +90,8 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 		return !event.getSocketChannel().isConnected();
 	}
 
-	private boolean isEndOfRequest(final ClientDataEvent clientEvent) {
-		final HTTPProxyEvent event = (HTTPProxyEvent) clientEvent
-				.getAttachment();
-
-		final HTTPProxyEvent validEvent = this.peekEventForChannel(event
-				.getSocketChannel());
-
-		if (event != validEvent) {
-			throw new RuntimeException("BOOM!");
-		}
+	private boolean isEndOfRequest(final ClientDataEvent clientEvent,
+			final HTTPProxyEvent event) {
 
 		if (event.getResponse() != null) {
 			boolean connectionClose = true;
@@ -100,9 +113,8 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 		}
 	}
 
-	private boolean isEndOfConnection(final ClientDataEvent clientEvent) {
-		final HTTPProxyEvent event = (HTTPProxyEvent) clientEvent
-				.getAttachment();
+	private boolean isEndOfConnection(final ClientDataEvent clientEvent,
+			final HTTPProxyEvent event) {
 
 		if (event.getResponse() != null) {
 			boolean connectionClose = false;
@@ -121,19 +133,28 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 				} else {
 					return false;
 				}
-				return (connectionClose || clientEvent.canClose())
-						&& event.canClose();
+				return (connectionClose) && event.canClose();
 			}
 		} else {
 			return false;
 		}
 	}
 
+	int first = 0;
+
 	@Override
 	protected DataEvent DoWork(final ClientDataEvent clientEvent)
 			throws IOException {
-		final HTTPProxyEvent event = (HTTPProxyEvent) clientEvent
-				.getAttachment();
+
+		// System.out.println("INCOMING DATA EVENT");
+		// System.out.println("----");
+		// System.out.println(new String(clientEvent.getData().array()));
+		// System.out.println("----");
+		HTTPProxyEvent event = (HTTPProxyEvent) clientEvent.getAttachment();
+		event = this.pollEventForChannel(event.getSocketChannel());
+		if (event == null) {
+			event = (HTTPProxyEvent) clientEvent.getAttachment();
+		}
 
 		DataEvent e = null;
 		if (this.clientDisconnectedForEvent(event)) {
@@ -149,34 +170,59 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 
 			eventHandler.handle(this.outputBuffer, clientEvent);
 
+			if (event.getParseClientOffsetData() != null
+					&& event.getParseClientOffsetData().array().length > 0) {
+
+				final ClientDataEvent nextEvent = new ClientDataEvent(
+						event.getParseClientOffsetData(), event.next);
+
+				nextEvent.setCanClose(event.canClose());
+				nextEvent.setCanSend(event.canSend());
+
+				this.eventDispatcher.processDataUrgent(nextEvent);
+
+			}
 			e = new ServerDataEvent(event.getSocketChannel(),
 					ByteBuffer.wrap(this.outputBuffer.toByteArray().clone()),
 					this.serverDataReceiver);
 
 			// TODO: Aprolijar esto
-			if (this.isEndOfRequest(clientEvent)) {
-				this.logger
-						.info("Reenviando RESPONSE: "
-								+ event.getResponse().getHeaders()
-										.returnStatusCode()
-								+ " "
-								+ event.getRequest().getHeaders()
-										.getRequestURI());
-				final ClientDataEvent tellToClose = new ClientDataEvent(null,
-						this.clientDataReceiver, null, event, null);
-				this.clientDataReceiver.closeConnection(tellToClose);
-				this.receivedRequests.remove(event);
-			}
+			if (this.isEndOfConnection(clientEvent, event)) {
 
-			// TODO: Aprolijar esto
-			if (this.isEndOfConnection(clientEvent)) {
-				e.setCanClose(clientEvent.canClose());
+				this.logger.info("CERRANDO CON RESPONSE: "
+						+ event.getSocketChannel().socket().getPort() + " "
+						+ event.getResponse().getHeaders().returnStatusCode()
+						+ " "
+						+ event.getRequest().getHeaders().getHeader("host")
+						+ event.getRequest().getHeaders().getRequestURI());
+				e.setCanClose(true);
+
+				// final ClientDataEvent tellToClose = new ClientDataEvent(null,
+				// this.clientDataReceiver, null, event, null);
+				// this.clientDataReceiver.closeConnection(tellToClose);
 			}
 			e.setCanSend(event.canSend());
+
+			// TODO: Aprolijar esto
+			if (this.isEndOfRequest(clientEvent, event)) {
+				this.logger.info("Reenviando RESPONSE: "
+						+ event.getSocketChannel().socket().getPort() + " "
+						+ event.getResponse().getHeaders().returnStatusCode()
+						+ " "
+						+ event.getRequest().getHeaders().getHeader("host")
+						+ event.getRequest().getHeaders().getRequestURI());
+
+				this.receivedRequests.remove(event);
+				// System.out.println("====> POPPING PROXYEVENT");
+				this.popEventForChannel(event.getSocketChannel());
+				// System.out.println("----");
+				// System.out.println(event.getResponse().getHeaders().toString());
+				// System.out.println("----");
+
+			}
+
 			this.logger.debug("Sending event to server: " + e);
 		}
-
-		this.logger.debug(clientEvent.getData());
 
 		return e;
 	}
@@ -186,15 +232,6 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 			throws IOException {
 
 		final HTTPRequestEventHandler handler = this.getRequestEventHandler();
-
-		if (this.lastBufferForSocket.containsKey(serverEvent.getChannel())) {
-			final ByteArrayOutputStream concatenator = new ByteArrayOutputStream();
-			concatenator.write(this.lastBufferForSocket.get(
-					serverEvent.getChannel()).array());
-			concatenator.write(serverEvent.getData().array());
-			serverEvent.setData(ByteBuffer.wrap(concatenator.toByteArray()));
-
-		}
 
 		final HTTPProxyEvent httpEvent = handler.handle(serverEvent);
 
@@ -214,23 +251,38 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 			if (httpEvent.canClose()) {
 				if (httpEvent.getRequest() != null) {
 					this.logger.info("Reenviando REQUEST: "
+							+ httpEvent.getSocketChannel().socket().getPort()
+							+ " "
 							+ httpEvent.getRequest().getHeaders().getMethod()
 							+ " "
+							+ httpEvent.getRequest().getHeaders()
+									.getHeader("host")
 							+ httpEvent.getRequest().getHeaders()
 									.getRequestURI());
 
 				}
 
-				httpEvent.previous = this.peekEventForChannel(httpEvent
+				final HTTPProxyEvent ev = this.pollEventForChannel(httpEvent
 						.getSocketChannel());
-				this.addEventForChannel(httpEvent.getSocketChannel(), httpEvent);
+
+				if (ev != null) {
+					ev.next = httpEvent;
+				}
+
+				if (httpEvent.getParseOffsetData() != null
+						&& httpEvent.getParseOffsetData().array().length > 0) {
+
+					final ServerDataEvent nextEvent = new ServerDataEvent(
+							serverEvent.getChannel(), ByteBuffer.wrap(httpEvent
+									.getParseOffsetData().array().clone()),
+							this.serverDataReceiver);
+
+					this.eventDispatcher.processDataUrgent(nextEvent);
+
+				}
 			}
 
-			if (httpEvent.getParseOffsetData() != null) {
-				this.lastBufferForSocket.put(serverEvent.getChannel(),
-						httpEvent.getParseOffsetData());
-				this.logger.debug("Buffering for next event...");
-			}
+			this.addEventForChannel(httpEvent.getSocketChannel(), httpEvent);
 
 			e.setCanSend(httpEvent.canSend());
 			this.logger.debug("Sending event to client:" + e);

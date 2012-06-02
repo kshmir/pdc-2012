@@ -35,7 +35,7 @@ public class ServerHandler implements NIOServerHandler, DataReceiver<DataEvent> 
 
 	public ServerHandler(final EventDispatcher<DataEvent> dispatcher) {
 		this.dispatcher = dispatcher;
-		this.readBuffer = ByteBuffer.allocate(1024);
+		this.readBuffer = ByteBuffer.allocate(1480);
 	}
 
 	@Override
@@ -44,7 +44,7 @@ public class ServerHandler implements NIOServerHandler, DataReceiver<DataEvent> 
 	}
 
 	@Override
-	public void receiveEvent(final DataEvent dataEvent) {
+	public synchronized void receiveEvent(final DataEvent dataEvent) {
 
 		if (!(dataEvent instanceof ServerDataEvent)) {
 			throw new RuntimeException("Must receive a NIOServerDataEvent");
@@ -57,8 +57,6 @@ public class ServerHandler implements NIOServerHandler, DataReceiver<DataEvent> 
 
 		synchronized (this.changeRequests) {
 			// Indicate we want the interest ops set changed
-			this.changeRequests.add(new ChangeRequest(socket,
-					ChangeRequest.CHANGEOPS, SelectionKey.OP_WRITE));
 
 			// And queue the data we want written
 			synchronized (this.pendingData) {
@@ -69,6 +67,9 @@ public class ServerHandler implements NIOServerHandler, DataReceiver<DataEvent> 
 				}
 				queue.add(data);
 			}
+
+			this.changeRequests.add(new ChangeRequest(socket,
+					ChangeRequest.CHANGEOPS, SelectionKey.OP_WRITE));
 		}
 
 		// Finally, wake up our selecting thread so it can make the required
@@ -77,7 +78,7 @@ public class ServerHandler implements NIOServerHandler, DataReceiver<DataEvent> 
 	}
 
 	@Override
-	public void closeConnection(final DataEvent dataEvent) {
+	public synchronized void closeConnection(final DataEvent dataEvent) {
 
 		if (dataEvent instanceof ErrorDataEvent) {
 
@@ -186,18 +187,23 @@ public class ServerHandler implements NIOServerHandler, DataReceiver<DataEvent> 
 						.get(socketChannel);
 
 				// Write until there's not more data ...
-				while (queue != null && !queue.isEmpty()) {
+				while (!queue.isEmpty()) {
 					final ByteBuffer buf = queue.get(0);
 
 					socketChannel.write(buf);
 					if (buf.remaining() > 0) {
+						System.out.println("FILLEDDD!!");
 						// ... or the socket's buffer fills up
 						break;
 					}
 					queue.remove(0);
 				}
 
-				if (queue == null || queue.isEmpty()) {
+				if (queue.isEmpty()) {
+
+					// if (queue == null) {
+					// throw new RuntimeException("JO!");
+					// }
 					// We wrote away all data, so we're no longer interested
 					// in writing on this socket. Switch back to waiting for
 					// data.
@@ -265,8 +271,8 @@ public class ServerHandler implements NIOServerHandler, DataReceiver<DataEvent> 
 
 		}
 
-		this.dispatcher.processData(new ErrorDataEvent(
-				ErrorDataEvent.PROXY_CLIENT_DISCONNECT, change.socket, null));
+		// this.dispatcher.processData(new ErrorDataEvent(
+		// ErrorDataEvent.PROXY_CLIENT_DISCONNECT, change.socket, null));
 	}
 
 	@Override
@@ -278,7 +284,7 @@ public class ServerHandler implements NIOServerHandler, DataReceiver<DataEvent> 
 
 		}
 
-		this.dispatcher.processData(new ErrorDataEvent(
-				ErrorDataEvent.PROXY_CLIENT_DISCONNECT, key.channel(), null));
+		// this.dispatcher.processData(new ErrorDataEvent(
+		// ErrorDataEvent.PROXY_CLIENT_DISCONNECT, key.channel(), null));
 	}
 }
