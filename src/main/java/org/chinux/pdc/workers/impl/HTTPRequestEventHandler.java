@@ -125,6 +125,8 @@ public class HTTPRequestEventHandler {
 			this.readingDataSockets.remove(clientChannel);
 			this.readingServerSockets.remove(clientChannel);
 			event.setCanClose(true);
+			httpEvent.setParseClientOffsetData(request.getBodyReader()
+					.getDataOffset());
 		}
 		return httpEvent;
 	}
@@ -153,7 +155,7 @@ public class HTTPRequestEventHandler {
 					headerString);
 
 			header.removeHeader("Accept-Encoding");
-			// header.addHeader("Accept-Encoding", "identity");
+			header.addHeader("Accept-Encoding", "identity");
 
 			// TODO: Filtering
 

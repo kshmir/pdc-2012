@@ -19,12 +19,13 @@ import org.chinux.pdc.server.ConfigurationProvider;
  */
 public class HTTPProxyEvent {
 
-	public HTTPProxyEvent previous;
+	public HTTPProxyEvent next;
 
 	private HTTPRequest request;
 	private HTTPResponse response;
 	private SocketChannel socketChannel;
-	private ByteBuffer parseOffsetData;
+	private ByteBuffer parseServerOffsetData;
+	private ByteBuffer parseClientOffsetData;
 	private Charset dataCharset = Charset.forName("ISO-8859-1"); // Por ahora re
 																	// va
 
@@ -68,13 +69,6 @@ public class HTTPProxyEvent {
 		} else if (!this.getSocketChannel().equals(other.getSocketChannel())) {
 			return false;
 		}
-		if (this.getRequest() == null) {
-			if (other.getRequest() != null) {
-				return false;
-			}
-		} else if (!this.getRequest().equals(other.getRequest())) {
-			return false;
-		}
 		return true;
 	}
 
@@ -110,10 +104,6 @@ public class HTTPProxyEvent {
 				* result
 				+ ((this.getSocketChannel() == null) ? 0 : this
 						.getSocketChannel().hashCode());
-		result = prime
-				* result
-				+ ((this.getRequest() == null) ? 0 : this.getRequest()
-						.hashCode());
 		return result;
 	}
 
@@ -146,10 +136,18 @@ public class HTTPProxyEvent {
 	}
 
 	public ByteBuffer getParseOffsetData() {
-		return this.parseOffsetData;
+		return this.parseServerOffsetData;
 	}
 
 	public void setParseOffsetData(final ByteBuffer parseOffsetData) {
-		this.parseOffsetData = parseOffsetData;
+		this.parseServerOffsetData = parseOffsetData;
+	}
+
+	public ByteBuffer getParseClientOffsetData() {
+		return this.parseClientOffsetData;
+	}
+
+	public void setParseClientOffsetData(final ByteBuffer parseClientOffsetData) {
+		this.parseClientOffsetData = parseClientOffsetData;
 	}
 }

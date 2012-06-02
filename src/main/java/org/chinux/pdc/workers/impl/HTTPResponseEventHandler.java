@@ -15,7 +15,6 @@ import org.chinux.pdc.http.impl.HTTPResponseHeaderImpl;
 import org.chinux.pdc.http.impl.HTTPResponseImpl;
 import org.chinux.pdc.http.impl.readers.HTTPChunkedResponseTransformReader;
 import org.chinux.pdc.http.impl.readers.HTTPContentLengthReader;
-import org.chinux.pdc.http.impl.readers.HTTPGzipReader;
 import org.chinux.pdc.http.impl.readers.HTTPImageResponseReader;
 import org.chinux.pdc.http.impl.readers.HTTPL33tEncoder;
 import org.chinux.pdc.nio.events.impl.ClientDataEvent;
@@ -59,7 +58,6 @@ public class HTTPResponseEventHandler {
 				// TODO: Catch this exception when an invalid header comes in
 				rawData = this.buildEventResponse(stream, pendingHeader);
 			} else {
-				System.out.println(pendingHeader);
 			}
 		}
 
@@ -102,6 +100,8 @@ public class HTTPResponseEventHandler {
 
 		if (response.getBodyReader().isFinished()) {
 			this.event.setCanClose(true);
+			this.event.setParseClientOffsetData(response.getBodyReader()
+					.getDataOffset());
 		}
 	}
 
@@ -182,8 +182,8 @@ public class HTTPResponseEventHandler {
 
 		if (this.isGzipped(response)
 				&& (this.isTextPlain(response) || this.hasImageMIME(response))) {
-			response.getBodyReader().addResponseReader(
-					new HTTPGzipReader(response.getHeaders()), 20);
+			// response.getBodyReader().addResponseReader(
+			// new HTTPGzipReader(response.getHeaders()), 20);
 		}
 
 		/* for l33t translation */

@@ -23,8 +23,17 @@ public class ASyncEventDispatcher<T extends DataEvent> implements Runnable,
 	@Override
 	public void processData(final T event) {
 		synchronized (this.events) {
+
 			this.events.addLast(event);
 			this.events.notify();
+
+		}
+	}
+
+	public void processDataUrgent(final T event) {
+		synchronized (this.events) {
+
+			this.events.addFirst(event);
 		}
 	}
 
@@ -44,24 +53,27 @@ public class ASyncEventDispatcher<T extends DataEvent> implements Runnable,
 					}
 				}
 				dataEvent = this.events.poll();
-			}
-			T event;
-			try {
-				event = this.worker.DoWork(dataEvent);
 
-				if (event.canSend()) {
-					event.getReceiver().receiveEvent(event);
+				// System.out.println();
+				T event;
+				try {
+					event = this.worker.DoWork(dataEvent);
+
+					if (event.canSend()) {
+						event.getReceiver().receiveEvent(event);
+					}
+
+					if (event.canClose()) {
+						event.getReceiver().closeConnection(event);
+					}
+
+				} catch (final IOException e) {
+					this.log.error("Unexpected exception", e);
+				} catch (final Exception e) {
+					this.log.error("Unexpected exception", e);
 				}
-
-				if (event.canClose()) {
-					event.getReceiver().closeConnection(event);
-				}
-
-			} catch (final IOException e) {
-				this.log.error("Unexpected exception", e);
-			} catch (final Exception e) {
-				this.log.error("Unexpected exception", e);
 			}
 		}
 	}
+
 }

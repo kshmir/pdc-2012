@@ -26,7 +26,8 @@
 	
 	<bean id="httpProxyWorker" class="org.chinux.pdc.workers.impl.HTTPProxyWorker">
 		<property name="clientDataReceiver" ref="clientDataReceiver"/>
-		<property name="serverDataReceiver" ref="serverHandler"/>	
+		<property name="serverDataReceiver" ref="serverHandler"/>
+		<property name="eventDispatcher" ref="eventDispatcher"/>	
 	</bean>
 	
 	<bean id="configurationWorker" class="org.chinux.pdc.workers.impl.ConfigurationWorker"/>
