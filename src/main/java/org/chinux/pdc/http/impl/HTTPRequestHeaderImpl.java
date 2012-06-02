@@ -84,6 +84,11 @@ public class HTTPRequestHeaderImpl implements HTTPRequestHeader {
 	}
 
 	@Override
+	public String getHTTPVersion() {
+		return this.version.split("/")[1];
+	}
+
+	@Override
 	public String toString() {
 
 		final StringBuilder builder = new StringBuilder();

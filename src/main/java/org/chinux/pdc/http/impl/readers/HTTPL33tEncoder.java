@@ -11,27 +11,71 @@ import org.chinux.pdc.http.api.HTTPResponseHeader;
 
 public class HTTPL33tEncoder implements HTTPReader {
 
-	public static Charset isoCharset = Charset.forName("ISO-8859-1");
-	private CharsetEncoder encoder = null;
-	private CharsetDecoder decoder = null;
+	private Charset charset = Charset.forName("ISO-8859-1");
+	private CharsetEncoder encoder = this.charset.newEncoder();
+	private CharsetDecoder decoder = this.charset.newDecoder();
 	private HTTPResponseHeader responseHeader;
-	private Charset charset;
 	private boolean isFinished = false;
 
 	public HTTPL33tEncoder(final HTTPResponseHeader responseHeader) {
 		this.responseHeader = responseHeader;
-		this.charset = (responseHeader.getCharset() == null) ? isoCharset
+
+		this.charset = (responseHeader.getCharset() == null) ? this.charset
 				: responseHeader.getCharset();
 
 		this.encoder = this.charset.newEncoder();
 		this.decoder = this.charset.newDecoder();
 	}
 
+	private String buff = null;
+	private int currentContentLenght = 0;
+	private Integer bytesToRead = null;
+
+	private int bytesRead = 0;
+
 	@Override
 	public ByteBuffer processData(final ByteBuffer data) {
-		final String aux = this.byteBufferToString(data);
+		String aux;
+		/* get the number of bytes of the original response */
+		if (this.is300Response() || this.getBytesToRead() == 0) {
+			if (data.array().length == 0) {
+				this.isFinished = true;
+			}
+			return data;
+		}
+		/* get the number of bytes currently read */
+		this.bytesRead += data.array().length;
+
+		if ((aux = this.byteBufferToString(data)) == null) {
+			this.isFinished = false;
+			// return null;
+		}
+		if (this.buff != null) {
+			aux = this.buff + aux;
+		}
 		final String out = translate(aux);
-		return this.stringToByteBuffer(out);
+
+		final ByteBuffer ans;
+		if ((ans = this.stringToByteBuffer(out)) == null) {
+			this.isFinished = false;
+			// return null;
+		}
+		/*
+		 * if the number of bytes read is greater or equal to the original
+		 * number of bytes of the response, then the reader has finished
+		 * processing
+		 */
+		if (this.bytesRead >= this.bytesToRead) {
+			this.currentContentLenght += ans.array().length;
+			this.responseHeader.removeHeader("Content-lenght");
+			this.responseHeader.addHeader("Content-lenght",
+					String.valueOf(this.currentContentLenght));
+			this.isFinished = true;
+			return data;
+		} else {
+			return null;
+		}
+
 	}
 
 	@Override
@@ -41,15 +85,15 @@ public class HTTPL33tEncoder implements HTTPReader {
 
 	@Override
 	public boolean modifiesHeaders() {
-		return false;
+		return true;
 	}
 
 	public static String translate(final String str) {
 		String out = str;
 		final String[] english = { "A", "a", "B", "C", "E", "G", "g", "H", "I",
-				"i", "L", "O", "R", "S", "T", "X", "Z" };
+				"i", "L", "O", "R", "S", "X", "Z" };
 		final String[] leet = { "4", "@", "8", "(", "|)", "3", "6", "9", "#",
-				"1", "!", "1", "0", "12", "5", "7", "†", "x", "2" };
+				"1", "!", "1", "0", "12", "5", "7", "x", "2" };
 
 		for (int i = 0; i < english.length; i++) {
 			out = out.replaceAll(english[i], leet[i]);
@@ -59,11 +103,10 @@ public class HTTPL33tEncoder implements HTTPReader {
 
 	private ByteBuffer stringToByteBuffer(final String msg) {
 		try {
-			// TODO: Esto tira exception, hay que arreglarlo, si no se puede
-			// encodear hay que esperar a que se pueda!!!
+			this.buff = null;
 			return this.encoder.encode(CharBuffer.wrap(msg));
 		} catch (final Exception e) {
-			e.printStackTrace();
+			this.buff = msg;
 		}
 		return null;
 	}
@@ -80,6 +123,20 @@ public class HTTPL33tEncoder implements HTTPReader {
 			return "";
 		}
 		return data;
+	}
+
+	private int getBytesToRead() {
+		if (this.responseHeader.getHeader("content-length") != null
+				&& this.bytesToRead == null) {
+			this.bytesToRead = Integer.valueOf(this.responseHeader
+					.getHeader("content-length"));
+		}
+		return this.bytesToRead;
+	}
+
+	private boolean is300Response() {
+		return this.responseHeader.returnStatusCode() >= 300
+				&& this.responseHeader.returnStatusCode() <= 399;
 	}
 
 }
