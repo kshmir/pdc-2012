@@ -1,5 +1,6 @@
 package org.chinux.pdc.http.impl;
 
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -34,6 +35,18 @@ public class HTTPRequestHeaderImpl implements HTTPRequestHeader {
 		if (match.find()) {
 			this.method = match.group(1);
 			this.URI = match.group(2);
+			if (this.URI.startsWith("http")) {
+				try {
+					String params = "";
+					if (this.URI.indexOf("?") != -1) {
+						params = this.URI.substring(this.URI.indexOf("?"));
+					}
+					this.URI = new java.net.URI(this.URI).getPath() + params;
+				} catch (final URISyntaxException e) {
+
+				}
+			}
+
 			this.version = match.group(3);
 		}
 
@@ -45,15 +58,6 @@ public class HTTPRequestHeaderImpl implements HTTPRequestHeader {
 		if (this.method.equals("GET")) {
 			if (!this.URI.contains("?")) {
 				return;
-			}
-
-			match = parametersPattern.matcher(this.URI.substring(this.URI
-					.indexOf('?') + 1));
-			String[] values = null;
-			while (match.find()) {
-				values = match.group(1).split("=");
-				this.parameters.put(values[0], (values.length > 1) ? values[1]
-						: "");
 			}
 		}
 
@@ -83,12 +87,6 @@ public class HTTPRequestHeaderImpl implements HTTPRequestHeader {
 	@Override
 	public String getRequestURI() {
 		return this.URI;
-	}
-
-	@Override
-	public String getParameter(final String name) {
-		return this.parameters.containsKey(name) ? this.parameters.get(name)
-				: null;
 	}
 
 	@Override

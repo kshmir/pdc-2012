@@ -18,6 +18,9 @@ import org.chinux.pdc.server.ConfigurationProvider;
  * @author cris
  */
 public class HTTPProxyEvent {
+
+	public HTTPProxyEvent previous;
+
 	private HTTPRequest request;
 	private HTTPResponse response;
 	private SocketChannel socketChannel;
@@ -143,10 +146,10 @@ public class HTTPProxyEvent {
 	}
 
 	public ByteBuffer getParseOffsetData() {
-		return parseOffsetData;
+		return this.parseOffsetData;
 	}
 
-	public void setParseOffsetData(ByteBuffer parseOffsetData) {
+	public void setParseOffsetData(final ByteBuffer parseOffsetData) {
 		this.parseOffsetData = parseOffsetData;
 	}
 }

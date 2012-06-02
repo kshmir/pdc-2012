@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 
 import org.apache.log4j.Logger;
 import org.chinux.pdc.nio.events.api.DataEvent;
@@ -22,6 +23,28 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 	private static Charset isoCharset = Charset.forName("ISO-8859-1");
 	private Logger logger = Logger.getLogger(this.getClass());
 	private final ByteArrayOutputStream outputBuffer = new ByteArrayOutputStream();
+
+	private Map<SocketChannel, Stack<HTTPProxyEvent>> eventsForChannel = new HashMap<SocketChannel, Stack<HTTPProxyEvent>>();
+
+	private void addEventForChannel(final SocketChannel channel,
+			final HTTPProxyEvent event) {
+		if (this.eventsForChannel.get(channel) == null) {
+			this.eventsForChannel.put(channel, new Stack<HTTPProxyEvent>());
+		}
+
+		this.eventsForChannel.get(channel).push(event);
+	}
+
+	private HTTPProxyEvent peekEventForChannel(final SocketChannel channel) {
+		return (this.eventsForChannel.get(channel) == null) ? null
+				: this.eventsForChannel.get(channel).peek();
+	}
+
+	private HTTPProxyEvent popEventForChannel(final SocketChannel channel) {
+		return (this.eventsForChannel.get(channel) == null || this.eventsForChannel
+				.get(channel).size() == 0) ? null : this.eventsForChannel.get(
+				channel).pop();
+	}
 
 	private Map<SocketChannel, ByteBuffer> lastBufferForSocket = new HashMap<SocketChannel, ByteBuffer>();
 
@@ -50,9 +73,18 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 		final HTTPProxyEvent event = (HTTPProxyEvent) clientEvent
 				.getAttachment();
 
+		final HTTPProxyEvent validEvent = this.peekEventForChannel(event
+				.getSocketChannel());
+
+		if (event != validEvent) {
+			throw new RuntimeException("BOOM!");
+		}
+
 		if (event.getResponse() != null) {
 			boolean connectionClose = true;
-			if (event.getResponse().getHeaders().getHTTPVersion().equals("1.0")) {
+			if (event.getResponse().getHeaders().getHTTPVersion() != null
+					&& event.getResponse().getHeaders().getHTTPVersion()
+							.equals("1.0")) {
 				if (event.getResponse().getHeaders().getHeader("connection") != null) {
 					connectionClose = event.getResponse().getHeaders()
 							.getHeader("connection").equals("close");
@@ -74,7 +106,9 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 
 		if (event.getResponse() != null) {
 			boolean connectionClose = false;
-			if (event.getResponse().getHeaders().getHTTPVersion().equals("1.0")) {
+			if (event.getResponse().getHeaders().getHTTPVersion() != null
+					&& event.getResponse().getHeaders().getHTTPVersion()
+							.equals("1.0")) {
 				if (event.getResponse().getHeaders().getHeader("connection") != null) {
 					connectionClose = event.getResponse().getHeaders()
 							.getHeader("connection").equals("close");
@@ -107,7 +141,7 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 					null);
 			e.setCanClose(true);
 			e.setCanSend(false);
-
+			this.logger.debug("Closing sockets for local socket disconnect!");
 		} else {
 
 			final HTTPResponseEventHandler eventHandler = new HTTPResponseEventHandler(
@@ -128,6 +162,10 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 								+ " "
 								+ event.getRequest().getHeaders()
 										.getRequestURI());
+				final ClientDataEvent tellToClose = new ClientDataEvent(null,
+						this.clientDataReceiver, null, event, null);
+				this.clientDataReceiver.closeConnection(tellToClose);
+				this.receivedRequests.remove(event);
 			}
 
 			// TODO: Aprolijar esto
@@ -135,7 +173,7 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 				e.setCanClose(clientEvent.canClose());
 			}
 			e.setCanSend(event.canSend());
-
+			this.logger.debug("Sending event to server: " + e);
 		}
 
 		this.logger.debug(clientEvent.getData());
@@ -155,6 +193,7 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 					serverEvent.getChannel()).array());
 			concatenator.write(serverEvent.getData().array());
 			serverEvent.setData(ByteBuffer.wrap(concatenator.toByteArray()));
+
 		}
 
 		final HTTPProxyEvent httpEvent = handler.handle(serverEvent);
@@ -179,22 +218,28 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 							+ " "
 							+ httpEvent.getRequest().getHeaders()
 									.getRequestURI());
+
 				}
+
+				httpEvent.previous = this.peekEventForChannel(httpEvent
+						.getSocketChannel());
+				this.addEventForChannel(httpEvent.getSocketChannel(), httpEvent);
 			}
 
 			if (httpEvent.getParseOffsetData() != null) {
 				this.lastBufferForSocket.put(serverEvent.getChannel(),
 						httpEvent.getParseOffsetData());
+				this.logger.debug("Buffering for next event...");
 			}
 
 			e.setCanSend(httpEvent.canSend());
+			this.logger.debug("Sending event to client:" + e);
 
 		} else {
 			e.setCanClose(false);
 			e.setCanSend(false);
-		}
 
-		this.logger.debug("Server answer event:" + e);
+		}
 
 		return e;
 	}
@@ -218,6 +263,7 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 			errorEvent.setCanClose(false);
 			errorEvent.setCanSend(false);
 			answerDataEvent = errorEvent;
+			this.logger.debug("Handling error of proxy client disconnect!");
 			break;
 		case ErrorDataEvent.REMOTE_CLIENT_DISCONNECT:
 
@@ -230,6 +276,7 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 			// TODO: Return data before closing!!!
 			answerDataEvent.setCanSend(false);
 			answerDataEvent.setCanClose(false);
+			this.logger.debug("Handling error of remote client disconnect!");
 			break;
 		}
 

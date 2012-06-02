@@ -19,9 +19,6 @@ public interface HTTPRequestHeader extends HTTPMessageHeader {
 	 */
 	public String getRequestURI();
 
-	/** Returns the value of the specified parameter. */
-	public String getParameter(String name);
-
 	public void removeHeader(String name);
 
 	public void addHeader(String name, String value);

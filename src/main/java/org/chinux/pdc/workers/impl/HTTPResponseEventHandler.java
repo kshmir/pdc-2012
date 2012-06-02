@@ -58,6 +58,8 @@ public class HTTPResponseEventHandler {
 				// can fit in the same space.
 				// TODO: Catch this exception when an invalid header comes in
 				rawData = this.buildEventResponse(stream, pendingHeader);
+			} else {
+				System.out.println(pendingHeader);
 			}
 		}
 
@@ -105,47 +107,52 @@ public class HTTPResponseEventHandler {
 
 	private ByteBuffer buildEventResponse(final ByteArrayOutputStream stream,
 			final StringBuilder pendingHeader) {
-		ByteBuffer rawData;
-		final String[] headerAndBody = pendingHeader.toString().split(
-				"\\r\\n\\r\\n", 2);
-		final String headerString = headerAndBody[0];
 
-		final HTTPResponseHeader header = new HTTPResponseHeaderImpl(
-				headerString);
+		try {
+			ByteBuffer rawData;
+			final String[] headerAndBody = pendingHeader.toString().split(
+					"\\r\\n\\r\\n", 2);
+			final String headerString = headerAndBody[0];
 
-		final HTTPResponse response = new HTTPResponseImpl(header,
-				new HTTPBaseReader(header));
+			final HTTPResponseHeader header = new HTTPResponseHeaderImpl(
+					headerString);
 
-		logger.debug(header.toString());
+			final HTTPResponse response = new HTTPResponseImpl(header,
+					new HTTPBaseReader(header));
 
-		this.event.setResponse(response);
+			this.event.setResponse(response);
 
-		this.applyReadersToResponse(this.event);
+			this.applyReadersToResponse(this.event);
 
-		this.event.setCanSend(!this.event.getResponse().getBodyReader()
-				.modifiesHeaders());
+			this.event.setCanSend(!this.event.getResponse().getBodyReader()
+					.modifiesHeaders());
 
-		if (this.event.canSend()) {
-			try {
-				stream.write(isoCharset.encode(
-						CharBuffer.wrap(header.toString())).array());
-			} catch (final IOException e) {
-				e.printStackTrace();
+			if (this.event.canSend()) {
+				try {
+					stream.write(isoCharset.encode(
+							CharBuffer.wrap(header.toString())).array());
+				} catch (final IOException e) {
+					e.printStackTrace();
+				}
 			}
+
+			if (this.event.getResponse().getHeaders().getHTTPVersion() != null) {
+				this.event.setCanSend(this.event.getResponse().getHeaders()
+						.getHTTPVersion().equals("1.0"));
+			}
+
+			if (headerAndBody.length > 1) {
+				rawData = ByteBuffer.wrap(isoCharset.encode(headerAndBody[1])
+						.array().clone());
+			} else {
+				rawData = ByteBuffer.allocate(0);
+			}
+			return rawData;
+		} catch (final Exception e) {
+			e.printStackTrace();
 		}
 
-		if (this.event.getResponse().getHeaders().getHTTPVersion() != null) {
-			this.event.setCanSend(this.event.getResponse().getHeaders()
-					.getHTTPVersion().equals("1.0"));
-		}
-
-		if (headerAndBody.length > 1) {
-			rawData = ByteBuffer.wrap(isoCharset.encode(headerAndBody[1])
-					.array().clone());
-		} else {
-			rawData = ByteBuffer.allocate(0);
-		}
-		return rawData;
+		return null;
 	}
 
 	// Loads the readers to the HTTPResponse based on the event we have
