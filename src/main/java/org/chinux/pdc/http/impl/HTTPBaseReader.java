@@ -10,14 +10,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.apache.log4j.Logger;
 import org.chinux.pdc.http.api.HTTPDelimiterReader;
 import org.chinux.pdc.http.api.HTTPMessageHeader;
 import org.chinux.pdc.http.api.HTTPReader;
 
 public class HTTPBaseReader implements HTTPDelimiterReader {
 
-	private static Logger log = Logger.getLogger(HTTPBaseReader.class);
 	private boolean finished;
 	private boolean mustConcatHeaders;
 	private HTTPMessageHeader header;

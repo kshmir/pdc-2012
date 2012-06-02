@@ -17,7 +17,7 @@ import org.chinux.pdc.nio.services.util.ChangeRequest;
 public class ASyncClientDataReceiver extends ClientDataReceiver implements
 		ConnectionCloseHandler {
 
-	private TimeoutablePool pool = new TimeoutablePool(30);
+	private TimeoutableSocketPool pool = new TimeoutableSocketPool(30);
 
 	@Override
 	public synchronized void receiveEvent(final DataEvent dataEvent) {
@@ -43,15 +43,12 @@ public class ASyncClientDataReceiver extends ClientDataReceiver implements
 							.getAttachment());
 
 					if (oldHost != null && !oldHost.equals(host)) {
-						this.clientIPMap.remove(event.getAttachment());
+						this.attachmentSocketMap.remove(event.getAttachment());
 					}
 					SocketChannel socketChannel;
 
-					final boolean isNotNew = false;
-
-					// this.so
-
-					socketChannel = this.clientIPMap.get(event.getAttachment());
+					socketChannel = this.attachmentSocketMap.get(event
+							.getAttachment());
 
 					if (socketChannel == null) {
 
@@ -62,7 +59,7 @@ public class ASyncClientDataReceiver extends ClientDataReceiver implements
 						}
 
 						this.attachmentIPMap.put(event.getAttachment(), host);
-						this.clientIPMap.put(event.getAttachment(),
+						this.attachmentSocketMap.put(event.getAttachment(),
 								socketChannel);
 					}
 
@@ -81,7 +78,6 @@ public class ASyncClientDataReceiver extends ClientDataReceiver implements
 								event.getAttachment());
 
 					} else {
-						System.out.println("Changing ops to write!");
 						this.changeRequests.add(new ChangeRequest(
 								socketChannel, ChangeRequest.CHANGEOPS,
 								SelectionKey.OP_WRITE, event.getAttachment()));
@@ -124,10 +120,8 @@ public class ASyncClientDataReceiver extends ClientDataReceiver implements
 	public synchronized void closeConnection(final DataEvent dataEvent) {
 
 		if (dataEvent instanceof ClientDataEvent) {
-			// this.handleConnectionClose(this.clientIPMap
-			// .get(((ClientDataEvent) dataEvent).getAttachment()));
 			final ClientDataEvent clientEvent = (ClientDataEvent) dataEvent;
-			this.changeRequests.add(new ChangeRequest(this.clientIPMap
+			this.changeRequests.add(new ChangeRequest(this.attachmentSocketMap
 					.get(((ClientDataEvent) dataEvent).getAttachment()),
 					ChangeRequest.CLOSE, 0, clientEvent.getAttachment()));
 		}
@@ -144,7 +138,13 @@ public class ASyncClientDataReceiver extends ClientDataReceiver implements
 
 				SelectionKey key;
 
-				if (change != null) {
+				if (change.socket == null) {
+					this.pendingData.remove(change.attachment);
+					this.attachmentSocketMap.remove(change.attachment);
+					this.attachmentIPMap.remove(change.attachment);
+				}
+
+				if (change != null && change.socket != null) {
 					switch (change.type) {
 					case ChangeRequest.CLOSE:
 						if (change.socket.isConnected()
@@ -155,6 +155,10 @@ public class ASyncClientDataReceiver extends ClientDataReceiver implements
 							return false;
 						}
 
+						this.pendingData.remove(change.attachment);
+						this.attachmentSocketMap.remove(change.attachment);
+						this.attachmentIPMap.remove(change.attachment);
+
 						if (change.socket.isConnected()) {
 							this.doClose(change.socket);
 						}
@@ -164,21 +168,16 @@ public class ASyncClientDataReceiver extends ClientDataReceiver implements
 						key = change.socket.keyFor(this.selector);
 
 						if (key != null && key.isValid()) {
-							System.out.println("Attaching!");
 							key.interestOps(change.ops);
 							key.attach(change.attachment);
 						} else {
 							if (change.socket.isConnected()) {
-								System.out.println("Registering back!");
 								change.socket.register(this.selector,
 										change.ops, change.attachment);
 							} else {
-								System.out.println("Using a new socket!");
 								this.makeSocketChannelFromOld(change.socket,
 										change.attachment);
 								return true;
-								// throw new RuntimeException(
-								// "I expected this socket to be connected, we must reconnect :(");
 							}
 						}
 						break;
@@ -202,8 +201,8 @@ public class ASyncClientDataReceiver extends ClientDataReceiver implements
 				.makeSocketChannel(new InetSocketAddress(this.attachmentIPMap
 						.get(attachment), this.connectionPort));
 
-		this.clientIPMap.remove(oldSocket);
-		this.clientIPMap.put(attachment, newSocket);
+		this.attachmentSocketMap.remove(oldSocket);
+		this.attachmentSocketMap.put(attachment, newSocket);
 		this.changeRequests.add(new ChangeRequest(newSocket,
 				ChangeRequest.REGISTER, SelectionKey.OP_CONNECT, attachment));
 	}

@@ -4,13 +4,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
-import java.nio.charset.Charset;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
-import java.util.PriorityQueue;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -23,13 +21,10 @@ import org.chinux.pdc.nio.receivers.api.DataReceiver;
 
 public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 
-	private static Charset isoCharset = Charset.forName("ISO-8859-1");
 	private Logger logger = Logger.getLogger(this.getClass());
 	private final ByteArrayOutputStream outputBuffer = new ByteArrayOutputStream();
 
 	private Map<SocketChannel, Deque<HTTPProxyEvent>> eventsForChannel = new HashMap<SocketChannel, Deque<HTTPProxyEvent>>();
-
-	private Map<SocketChannel, PriorityQueue<ClientDataEvent>> incomingEventsQueue = new HashMap<SocketChannel, PriorityQueue<ClientDataEvent>>();
 
 	private void addEventForChannel(final SocketChannel channel,
 			final HTTPProxyEvent event) {
@@ -58,10 +53,6 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 				.get(channel).size() == 0) ? null : this.eventsForChannel.get(
 				channel).removeFirst();
 	}
-
-	private Map<SocketChannel, ByteBuffer> lastServerBufferForSocket = new HashMap<SocketChannel, ByteBuffer>();
-
-	private Map<SocketChannel, ByteBuffer> lastClientBufferForSocket = new HashMap<SocketChannel, ByteBuffer>();
 
 	private Set<HTTPProxyEvent> receivedRequests = new HashSet<HTTPProxyEvent>();
 
@@ -146,10 +137,6 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 	protected DataEvent DoWork(final ClientDataEvent clientEvent)
 			throws IOException {
 
-		// System.out.println("INCOMING DATA EVENT");
-		// System.out.println("----");
-		// System.out.println(new String(clientEvent.getData().array()));
-		// System.out.println("----");
 		HTTPProxyEvent event = (HTTPProxyEvent) clientEvent.getAttachment();
 		event = this.pollEventForChannel(event.getSocketChannel());
 		if (event == null) {
@@ -176,10 +163,12 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 				final ClientDataEvent nextEvent = new ClientDataEvent(
 						event.getParseClientOffsetData(), event.next);
 
-				nextEvent.setCanClose(event.canClose());
-				nextEvent.setCanSend(event.canSend());
+				if (event.next != null) {
+					nextEvent.setCanClose(event.canClose());
+					nextEvent.setCanSend(event.canSend());
 
-				this.eventDispatcher.processDataUrgent(nextEvent);
+					this.eventDispatcher.processDataUrgent(nextEvent);
+				}
 
 			}
 			e = new ServerDataEvent(event.getSocketChannel(),
@@ -197,9 +186,9 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 						+ event.getRequest().getHeaders().getRequestURI());
 				e.setCanClose(true);
 
-				// final ClientDataEvent tellToClose = new ClientDataEvent(null,
-				// this.clientDataReceiver, null, event, null);
-				// this.clientDataReceiver.closeConnection(tellToClose);
+				final ClientDataEvent tellToClose = new ClientDataEvent(null,
+						this.clientDataReceiver, null, event, null);
+				this.clientDataReceiver.closeConnection(tellToClose);
 			}
 			e.setCanSend(event.canSend());
 
@@ -213,15 +202,16 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 						+ event.getRequest().getHeaders().getRequestURI());
 
 				this.receivedRequests.remove(event);
-				// System.out.println("====> POPPING PROXYEVENT");
 				this.popEventForChannel(event.getSocketChannel());
-				// System.out.println("----");
-				// System.out.println(event.getResponse().getHeaders().toString());
-				// System.out.println("----");
-
 			}
 
 			this.logger.debug("Sending event to server: " + e);
+		}
+
+		if (this.eventsForChannel.get(event.getSocketChannel()) != null
+				&& this.eventsForChannel.get(event.getSocketChannel()).size() == 0) {
+			this.eventsForChannel.remove(event.getSocketChannel());
+			this.receivedRequests.remove(event);
 		}
 
 		return e;
@@ -308,26 +298,23 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 	protected DataEvent DoWork(final ErrorDataEvent errorEvent)
 			throws IOException {
 
-		ErrorDataEvent answerDataEvent = null;
+		DataEvent answerDataEvent = null;
 		switch (errorEvent.getErrorType()) {
 		case ErrorDataEvent.PROXY_CLIENT_DISCONNECT:
-			// Nothing is done here yet.
-			errorEvent.setCanClose(false);
-			errorEvent.setCanSend(false);
-			answerDataEvent = errorEvent;
-			this.logger.debug("Handling error of proxy client disconnect!");
+
+			final ClientDataEvent e = new ClientDataEvent(null,
+					this.clientDataReceiver, null, errorEvent.getAttachment(),
+					null);
+
+			e.setCanClose(true);
+			e.setCanSend(false);
+			answerDataEvent = e;
+
 			break;
 		case ErrorDataEvent.REMOTE_CLIENT_DISCONNECT:
 
-			final HTTPProxyEvent event = (HTTPProxyEvent) errorEvent.getOwner();
-			answerDataEvent = new ErrorDataEvent(
-					ErrorDataEvent.REMOTE_CLIENT_DISCONNECT,
-					errorEvent.getAttachment(), event.getSocketChannel());
-			// We must tell the server to close itself
-			answerDataEvent.getReceivers().addReceiver(this.serverDataReceiver);
-			// TODO: Return data before closing!!!
-			answerDataEvent.setCanSend(false);
-			answerDataEvent.setCanClose(false);
+			answerDataEvent = errorEvent;
+
 			this.logger.debug("Handling error of remote client disconnect!");
 			break;
 		}

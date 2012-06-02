@@ -4,7 +4,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import org.apache.log4j.Logger;
 import org.chinux.pdc.http.api.HTTPReader;
 import org.chinux.pdc.http.util.ChunkedInputEndDetector;
 
@@ -12,7 +11,6 @@ public class HTTPChunkedResponseEndDetectorReader implements HTTPReader {
 
 	private ByteArrayOutputStream stream = new ByteArrayOutputStream();
 	private ChunkedInputEndDetector chunkedEndDetector = new ChunkedInputEndDetector();
-	private Logger log = Logger.getLogger(this.getClass());
 
 	private boolean isFinished = false;
 
