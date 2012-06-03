@@ -1,12 +1,10 @@
 package org.chinux.pdc.workers.impl;
 
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -14,61 +12,94 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.chinux.pdc.nio.events.api.DataEvent;
+import org.chinux.pdc.nio.events.impl.ErrorDataEvent;
 import org.chinux.pdc.nio.events.impl.ServerDataEvent;
 import org.chinux.pdc.server.Configuration;
 import org.chinux.pdc.server.ConfigurationProvider;
+import org.chinux.pdc.server.LoginService;
+import org.chinux.pdc.server.LoginService.Code;
+import org.chinux.pdc.server.User;
 import org.chinux.pdc.workers.api.Worker;
 
 public class ConfigurationWorker implements Worker<DataEvent> {
 
+	private String propertiespath;
 	private String data;
-	private boolean logged = false;
+	public boolean logged = false;
 	private boolean helo = false;
-	private String username = null;
-	private Map<String, String> users;
+	private Map<String, User> users;
 	private Pattern ipPattern = Pattern
 			.compile("(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/(0|8|16|24|32)");
 
+	private LoginService loginservice;
+
+	public ConfigurationWorker(final String propertiespath) {
+		this.propertiespath = propertiespath;
+	}
+
 	@Override
 	public DataEvent DoWork(final DataEvent dataEvent) {
-		final String str = new String(dataEvent.getData().array());
-		if (str.length() < 2) {
+		ServerDataEvent event;
+		/* if there is an error.. */
+		if (dataEvent instanceof ErrorDataEvent) {
+			this.resetWorkerState();
 			return dataEvent;
 		}
-		this.data = str.split("\n")[0];
-		this.users = new HashMap<String, String>();
-		final String command = this.data.split(" ")[0];
-		ServerDataEvent event;
-		byte[] resp = null;
-
+		/* obtains the command to process */
+		final String command = this.obtainCommand(dataEvent);
+		/* initial salutation */
 		if (!this.helo) {
 			return this.helo(dataEvent, command);
 		}
-
+		/* if the user is not logged , it should be */
 		if (!this.logged) {
-			final Properties props = new Properties();
-			try {
-				final FileInputStream fis = new FileInputStream(
-						"src/main/resources/users.properties");
-				props.load(fis);
-				fis.close();
-
-			} catch (final FileNotFoundException e) {
-				e.printStackTrace();
-			} catch (final IOException e) {
-				e.printStackTrace();
-			}
-			final String users[] = props.getProperty("user").split(",");
-			final String passwords[] = props.getProperty("password").split(",");
-			for (int i = 0; i < users.length && i < passwords.length; i++) {
-				this.users.put(users[i], passwords[i]);
-			}
-			return this.login(dataEvent, command);
+			this.loginservice = LoginService.getInstance(this.propertiespath);
+			final Code code = this.loginservice.login(dataEvent, command);
+			this.logged = this.loginservice.isLogged(code);
+			return this.loginservice.createResponseEvent(code, dataEvent);
 		}
+		/* changes the proxy configuration */
+		event = this.processConfiguration(dataEvent, command);
+		return event;
+	}
 
+	private ServerDataEvent processConfiguration(final DataEvent dataEvent,
+			final String command) {
+		ServerDataEvent event;
+		byte[] resp;
 		final Configuration configuration = ConfigurationProvider
 				.getConfiguration();
 
+		resp = this.processCommand(command, configuration);
+
+		event = new ServerDataEvent(((ServerDataEvent) dataEvent).getChannel(),
+				ByteBuffer.wrap(resp), dataEvent.getReceiver());
+		event.setCanClose(false);
+		event.setCanSend(true);
+		return event;
+	}
+
+	private void resetWorkerState() {
+		this.helo = false;
+		this.logged = false;
+		this.loginservice = null;
+		LoginService.resetInstance();
+		this.quit();
+	}
+
+	private String obtainCommand(final DataEvent dataEvent) {
+		if (new String(dataEvent.getData().array()).split("\n").length != 0) {
+			this.data = new String(dataEvent.getData().array()).split("\n")[0];
+		} else {
+			this.data = "";
+		}
+		final String command = this.data.split(" ")[0];
+		return command;
+	}
+
+	private byte[] processCommand(final String command,
+			final Configuration configuration) {
+		byte[] resp;
 		if (command.equals("GET")) {
 			if (this.data.split(" ").length <= 1) {
 				resp = "Invalid Parameter\n".getBytes();
@@ -89,12 +120,7 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 		} else {
 			resp = "Invalid Command\n".getBytes();
 		}
-
-		event = new ServerDataEvent(((ServerDataEvent) dataEvent).getChannel(),
-				ByteBuffer.wrap(resp), dataEvent.getReceiver());
-		event.setCanClose(false);
-		event.setCanSend(true);
-		return event;
+		return resp;
 	}
 
 	private void quit() {
@@ -132,7 +158,6 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 		} catch (final IOException e) {
 			e.printStackTrace();
 		}
-		this.username = null;
 		this.helo = false;
 		this.logged = false;
 	}
@@ -146,29 +171,6 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 			this.helo = true;
 			resp = "250 Hello user, I am glad to meet you\nEnter user name: "
 					.getBytes();
-		}
-		event = new ServerDataEvent(((ServerDataEvent) dataEvent).getChannel(),
-				ByteBuffer.wrap(resp), dataEvent.getReceiver());
-		event.setCanClose(false);
-		event.setCanSend(true);
-		return event;
-	}
-
-	private DataEvent login(final DataEvent dataEvent, final String command) {
-		ServerDataEvent event;
-		byte[] resp;
-		if (this.username != null) {
-			if (!this.users.containsKey(this.username)
-					|| command.trim().compareTo(this.users.get(this.username)) != 0) {
-				resp = "Login Incorrect\n".getBytes();
-				this.username = null;
-			} else {
-				this.logged = true;
-				resp = "250 Login OK\n".getBytes();
-			}
-		} else {
-			this.username = command.trim();
-			resp = "Enter password: ".getBytes();
 		}
 		event = new ServerDataEvent(((ServerDataEvent) dataEvent).getChannel(),
 				ByteBuffer.wrap(resp), dataEvent.getReceiver());
