@@ -76,22 +76,26 @@ public class HTTPBaseFilter implements HTTPFilter {
 	public boolean isValid(final HTTPProxyEvent event) {
 		for (final HTTPFilter filter : this.filters) {
 			if (!filter.isValid(event)) {
-				if (filter instanceof HTTPIPFilter) {
-					this.monitorObject.increaseIpBlocksQuant();
-				} else if (filter instanceof HTTPAllAccessFilter) {
-					this.monitorObject.increaseAllAccessBlocksQuant();
-				} else if (filter instanceof HTTPUriFilter) {
-					this.monitorObject.increaseUrlBlocksQuant();
-				} else if (filter instanceof HTTPMediaTypesFilter) {
-					this.monitorObject.increaseContentTypeBlocksQuant();
-				} else if (filter instanceof HTTPSizeFilter) {
-					this.monitorObject.increaseTooBigResourceBlocksQuant();
-				}
+				updateMonitorObject(filter);
 				this.rejectedFilter = filter;
 				return false;
 			}
 		}
 		return true;
+	}
+
+	private void updateMonitorObject(final HTTPFilter filter) {
+		if (filter instanceof HTTPIPFilter) {
+			this.monitorObject.increaseIpBlocksQuant();
+		} else if (filter instanceof HTTPAllAccessFilter) {
+			this.monitorObject.increaseAllAccessBlocksQuant();
+		} else if (filter instanceof HTTPUriFilter) {
+			this.monitorObject.increaseUrlBlocksQuant();
+		} else if (filter instanceof HTTPMediaTypesFilter) {
+			this.monitorObject.increaseContentTypeBlocksQuant();
+		} else if (filter instanceof HTTPSizeFilter) {
+			this.monitorObject.increaseTooBigResourceBlocksQuant();
+		}
 	}
 
 	@Override

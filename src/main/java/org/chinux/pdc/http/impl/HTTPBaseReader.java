@@ -70,7 +70,7 @@ public class HTTPBaseReader implements HTTPDelimiterReader {
 			// TODO: count the transformations
 			data = reader.processData(data);
 
-			updateMonitorObject(reader);
+			this.updateMonitorObject(reader);
 
 			if (reader instanceof HTTPDelimiterReader && reader.isFinished()) {
 				this.offsetByteBuffer = ((HTTPDelimiterReader) reader)
@@ -94,12 +94,16 @@ public class HTTPBaseReader implements HTTPDelimiterReader {
 	private void updateMonitorObject(final HTTPReader reader) {
 		if (reader instanceof HTTPL33tEncoder) {
 			synchronized (this) {
-				this.monitorObject.increaseText2L33tQuant();
+				if (reader.isFinished()) {
+					this.monitorObject.increaseText2L33tQuant();
+				}
 			}
 		}
 		if (reader instanceof HTTPImageResponseReader) {
 			synchronized (this) {
-				this.monitorObject.increaseImageFlipsQuant();
+				if (reader.isFinished()) {
+					this.monitorObject.increaseImageFlipsQuant();
+				}
 			}
 		}
 	}

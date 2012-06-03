@@ -13,12 +13,36 @@ public class MonitorObject {
 	private int contentTypeBlocksQuant;
 	private int tooBigResourceBlocksQuant;
 	private int urlBlocksQuant;
+	private int clientConnectionsQuant;
+	private int originServerConnectionsQuant;
+	private int connectionsQuant;
 
 	public MonitorObject() {
-		this.fromClientsTransferedBytes = 0;
-		this.fromServersTransferedBytes = 0;
-		this.openedConnectionsQuant = 0;
-		this.totalblocksQuant = 0;
+	}
+
+	public void setConnectionsQuant(final int connectionsQuant) {
+		this.connectionsQuant = connectionsQuant;
+	}
+
+	public int getConnectionsQuant() {
+		return this.connectionsQuant;
+	}
+
+	public int getClientConnectionsQuant() {
+		return this.clientConnectionsQuant;
+	}
+
+	public void setClientConnectionsQuant(final int clientConnectionsQuant) {
+		this.clientConnectionsQuant = clientConnectionsQuant;
+	}
+
+	public int getOriginServerConnectionsQuant() {
+		return this.originServerConnectionsQuant;
+	}
+
+	public void setOriginServerConnectionsQuant(
+			final int originServerConnectionsQuant) {
+		this.originServerConnectionsQuant = originServerConnectionsQuant;
 	}
 
 	public void increaseUrlBlocksQuant() {

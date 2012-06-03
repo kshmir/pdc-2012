@@ -37,6 +37,11 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 					.put(channel, new LinkedList<HTTPProxyEvent>());
 		}
 
+		synchronized (this) {
+			this.monitorObject
+					.setConnectionsQuant(this.eventsForChannel.size());
+		}
+
 		for (final HTTPProxyEvent e : this.eventsForChannel.get(channel)) {
 			if (event == e) {
 				return;

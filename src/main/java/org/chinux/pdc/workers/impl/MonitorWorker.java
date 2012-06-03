@@ -89,6 +89,7 @@ public class MonitorWorker extends LogueableWorker {
 		int allblocks = 0;
 		int ctypeblocks = 0;
 		int sizeblocks = 0;
+		int totalconnections = 0;
 
 		synchronized (this) {
 			totalBytes = this.monitorObject.getTotalTransferedBytes();
@@ -105,22 +106,48 @@ public class MonitorWorker extends LogueableWorker {
 			allblocks = this.monitorObject.getAllAccessBlocksQuant();
 			ctypeblocks = this.monitorObject.getContentTypeBlocksQuant();
 			sizeblocks = this.monitorObject.getTooBigResourceBlocksQuant();
+			totalconnections = this.monitorObject.getConnectionsQuant();
 		}
 
-		final String resp = "Bytes Transferred from clients:" + fromClientBytes
-				+ "\n" + "Bytes Transferred from servers: " + fromServersBytes
-				+ "\n" + "Total Bytes Transferred: " + totalBytes + "\n"
-				+ "Image Flips Quantity: " + imageFlips + "\n"
-				+ "Text to L33t Transformations Quantity: " + testToL33t + "\n"
-				+ "Total Transformations Quantity: " + totalTrans + "\n"
-				+ "All Access Blocks Quantity: " + allblocks + "\n"
-				+ "Ip Blocks Quantity: " + ipblocks + "\n"
-				+ "Url Blocks Quantity: " + urlblocks
+		final String resp = "===================== PROXY MONITOR INFORMATION =========================\n"
+				+ "Bytes Transferred from clients:                                        "
+				+ fromClientBytes
 				+ "\n"
-				// till here
-				+ "Media Types Blocks Quantity: " + ctypeblocks + "\n"
-				+ "Size Blocks Quantity: " + sizeblocks + "\n"
-				+ "Total Blocks Quantity: " + totalblocks + "\n";
+				+ "Bytes Transferred from servers:                                        "
+				+ fromServersBytes
+				+ "\n"
+				+ "Total Bytes Transferred:                                               "
+				+ totalBytes
+				+ "\n"
+				+ "Image Flips Quantity:                                                  "
+				+ imageFlips
+				+ "\n"
+				+ "Text to L33t Transformations Quantity:                                 "
+				+ testToL33t
+				+ "\n"
+				+ "Total Transformations Quantity:                                        "
+				+ totalTrans
+				+ "\n"
+				+ "All Access Blocks Quantity:                                            "
+				+ allblocks
+				+ "\n"
+				+ "Ip Blocks Quantity:                                                    "
+				+ ipblocks
+				+ "\n"
+				+ "Url Blocks Quantity:                                                   "
+				+ urlblocks
+				+ "\n"
+				+ "Media Types Blocks Quantity:                                           "
+				+ ctypeblocks
+				+ "\n"
+				+ "Size Blocks Quantity:                                                  "
+				+ sizeblocks
+				+ "\n"
+				+ "Total Blocks Quantity:                                                 "
+				+ totalblocks
+				+ "\n"
+				+ "Total Connections Quantity:                                            "
+				+ totalconnections + "\n\n";
 		final ServerDataEvent event = new ServerDataEvent(
 				((ServerDataEvent) dataEvent).getChannel(),
 				ByteBuffer.wrap(resp.getBytes()), dataEvent.getReceiver());
