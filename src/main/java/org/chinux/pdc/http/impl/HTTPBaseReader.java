@@ -13,9 +13,13 @@ import java.util.TreeSet;
 import org.chinux.pdc.http.api.HTTPDelimiterReader;
 import org.chinux.pdc.http.api.HTTPMessageHeader;
 import org.chinux.pdc.http.api.HTTPReader;
+import org.chinux.pdc.http.impl.readers.HTTPImageResponseReader;
+import org.chinux.pdc.http.impl.readers.HTTPL33tEncoder;
+import org.chinux.pdc.server.MonitorObject;
 
 public class HTTPBaseReader implements HTTPDelimiterReader {
 
+	private MonitorObject monitorObject;
 	private boolean finished;
 	private boolean mustConcatHeaders;
 	private HTTPMessageHeader header;
@@ -39,9 +43,11 @@ public class HTTPBaseReader implements HTTPDelimiterReader {
 				}
 			});
 
-	public HTTPBaseReader(final HTTPMessageHeader header) {
+	public HTTPBaseReader(final HTTPMessageHeader header,
+			final MonitorObject monitorObject) {
 		this.header = header;
 		this.finished = true;
+		this.monitorObject = monitorObject;
 	}
 
 	public void addResponseReader(final HTTPReader reader, final int priority) {
@@ -61,7 +67,10 @@ public class HTTPBaseReader implements HTTPDelimiterReader {
 			return ByteBuffer.allocate(0);
 		}
 		for (final HTTPReader reader : this.readers) {
+			// TODO: count the transformations
 			data = reader.processData(data);
+
+			updateMonitorObject(reader);
 
 			if (reader instanceof HTTPDelimiterReader && reader.isFinished()) {
 				this.offsetByteBuffer = ((HTTPDelimiterReader) reader)
@@ -80,6 +89,19 @@ public class HTTPBaseReader implements HTTPDelimiterReader {
 			data = this.concatHeader(data);
 		}
 		return data;
+	}
+
+	private void updateMonitorObject(final HTTPReader reader) {
+		if (reader instanceof HTTPL33tEncoder) {
+			synchronized (this) {
+				this.monitorObject.increaseText2L33tQuant();
+			}
+		}
+		if (reader instanceof HTTPImageResponseReader) {
+			synchronized (this) {
+				this.monitorObject.increaseImageFlipsQuant();
+			}
+		}
 	}
 
 	private ByteBuffer concatHeader(final ByteBuffer data) {

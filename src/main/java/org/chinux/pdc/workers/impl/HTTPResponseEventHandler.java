@@ -19,9 +19,11 @@ import org.chinux.pdc.http.impl.readers.HTTPContentLengthReader;
 import org.chinux.pdc.http.impl.readers.HTTPImageResponseReader;
 import org.chinux.pdc.http.impl.readers.HTTPL33tEncoder;
 import org.chinux.pdc.nio.events.impl.ClientDataEvent;
+import org.chinux.pdc.server.MonitorObject;
 
 public class HTTPResponseEventHandler {
 
+	private MonitorObject monitorObject;
 	private static Charset isoCharset = Charset.forName("ISO-8859-1");
 
 	private static Pattern headerCutPattern = Pattern.compile("(\\r\\n\\r\\n)",
@@ -29,10 +31,12 @@ public class HTTPResponseEventHandler {
 
 	private HTTPProxyEvent event;
 
-	public HTTPResponseEventHandler(final HTTPProxyEvent event) {
+	public HTTPResponseEventHandler(final HTTPProxyEvent event,
+			final MonitorObject monitorObject) {
 		this.event = event;
 		this.event.setCanClose(false);
 		this.event.setCanSend(false);
+		this.monitorObject = monitorObject;
 	}
 
 	public void handle(final ByteArrayOutputStream stream,
@@ -130,7 +134,7 @@ public class HTTPResponseEventHandler {
 			this.addViaHeader(header);
 
 			final HTTPResponse response = new HTTPResponseImpl(header,
-					new HTTPBaseReader(header));
+					new HTTPBaseReader(header, this.monitorObject));
 
 			this.event.setResponse(response);
 

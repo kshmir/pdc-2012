@@ -20,8 +20,11 @@ import org.chinux.pdc.http.impl.HTTPBaseReader;
 import org.chinux.pdc.http.impl.HTTPRequestHeaderImpl;
 import org.chinux.pdc.http.impl.HTTPRequestImpl;
 import org.chinux.pdc.nio.events.impl.ServerDataEvent;
+import org.chinux.pdc.server.MonitorObject;
 
 public class HTTPRequestEventHandler {
+
+	private MonitorObject monitorObject;
 
 	private static Charset isoCharset = Charset.forName("ISO-8859-1");
 	private static Logger logger = Logger
@@ -36,9 +39,14 @@ public class HTTPRequestEventHandler {
 
 	private Map<SocketChannel, HTTPProxyEvent> readingDataSockets = new HashMap<SocketChannel, HTTPProxyEvent>();
 
-	public HTTPProxyEvent handle(final ServerDataEvent serverEvent)
+	public HTTPRequestEventHandler(final ByteArrayOutputStream answerStream,
+			final MonitorObject monitorObject) {
+		this.outputBuffer = answerStream;
+		this.monitorObject = monitorObject;
+	}
 
-	throws IOException, FilterException {
+	public HTTPProxyEvent handle(final ServerDataEvent serverEvent)
+			throws IOException, FilterException {
 		try {
 			HTTPProxyEvent httpEvent = null;
 
@@ -87,10 +95,6 @@ public class HTTPRequestEventHandler {
 	private boolean isReadingRequestData(final SocketChannel socketChannel) {
 		return this.readingDataSockets.containsKey(socketChannel)
 				&& this.rawData != null;
-	}
-
-	public HTTPRequestEventHandler(final ByteArrayOutputStream answerStream) {
-		this.outputBuffer = answerStream;
 	}
 
 	private IPAddressResolver resolver = new IPAddressResolver();
@@ -171,8 +175,8 @@ public class HTTPRequestEventHandler {
 			this.addMaxForwardsHeader(header);
 
 			final HTTPProxyEvent event = new HTTPProxyEvent(
-					new HTTPRequestImpl(header, new HTTPBaseReader(header)),
-					clientChannel);
+					new HTTPRequestImpl(header, new HTTPBaseReader(header,
+							this.monitorObject)), clientChannel);
 
 			if (!(header.getMethod().equals("GET"))) {
 				event.setCanSend(true);

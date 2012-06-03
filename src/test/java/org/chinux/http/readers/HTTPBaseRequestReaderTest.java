@@ -6,6 +6,7 @@ import org.chinux.pdc.http.api.HTTPReader;
 import org.chinux.pdc.http.api.HTTPRequestHeader;
 import org.chinux.pdc.http.impl.HTTPBaseReader;
 import org.chinux.pdc.http.impl.HTTPRequestHeaderImpl;
+import org.chinux.pdc.server.MonitorObject;
 import org.chinux.util.TestUtils;
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -18,10 +19,12 @@ public class HTTPBaseRequestReaderTest {
 	@Ignore
 	@Test
 	public void processDataGETTest() {
+		final MonitorObject monitorObject = new MonitorObject();
 
 		final HTTPRequestHeader requestheader1 = new HTTPRequestHeaderImpl(
 				TestUtils.stringFromFile("http/requests/request1.txt"));
-		final HTTPReader requestreader1 = new HTTPBaseReader(requestheader1);
+		final HTTPReader requestreader1 = new HTTPBaseReader(requestheader1,
+				monitorObject);
 		Assert.assertFalse(requestreader1.isFinished());
 		final byte[] ans1 = requestreader1.processData(
 				ByteBuffer.wrap(this.data.getBytes())).array();
@@ -32,11 +35,13 @@ public class HTTPBaseRequestReaderTest {
 	@Ignore
 	@Test
 	public void processDataHEADTest() {
+		final MonitorObject monitorObject = new MonitorObject();
 
 		final String request2 = "HEAD / HTTP/1.1\r\n";
 		final HTTPRequestHeader requestheader2 = new HTTPRequestHeaderImpl(
 				request2);
-		final HTTPReader requestreader2 = new HTTPBaseReader(requestheader2);
+		final HTTPReader requestreader2 = new HTTPBaseReader(requestheader2,
+				monitorObject);
 		Assert.assertFalse(requestreader2.isFinished());
 		final byte[] ans2 = requestreader2.processData(
 				ByteBuffer.wrap(this.data.getBytes())).array();
@@ -47,9 +52,11 @@ public class HTTPBaseRequestReaderTest {
 	@Ignore
 	@Test
 	public void processDataPOSTTest() {
+		final MonitorObject monitorObject = new MonitorObject();
 		final HTTPRequestHeader requestheader3 = new HTTPRequestHeaderImpl(
 				TestUtils.stringFromFile("http/requests/request4.txt"));
-		final HTTPReader requestreader3 = new HTTPBaseReader(requestheader3);
+		final HTTPReader requestreader3 = new HTTPBaseReader(requestheader3,
+				monitorObject);
 		Assert.assertFalse(requestreader3.isFinished());
 		final byte[] ans3 = requestreader3.processData(
 				ByteBuffer.wrap(this.data.getBytes())).array();

@@ -80,17 +80,26 @@ public class MonitorWorker extends LogueableWorker {
 		int totalBytes = 0;
 		int fromClientBytes = 0;
 		int fromServersBytes = 0;
+		int totalTrans = 0;
+		int imageFlips = 0;
+		int testToL33t = 0;
 		synchronized (this) {
 			totalBytes = this.monitorObject.getTotalTransferedBytes();
 			fromClientBytes = this.monitorObject
 					.getFromClientsTransferedBytes();
 			fromServersBytes = this.monitorObject
 					.getFromServersTransferedBytes();
+			totalTrans = this.monitorObject.getTransformationsQuant();
+			imageFlips = this.monitorObject.getImageFlipsQuant();
+			testToL33t = this.monitorObject.getText2L33tQuant();
 		}
 
-		final String resp = "Bytes Transfered from clients:" + fromClientBytes
-				+ "\n" + "Bytes Transfered from servers:" + fromServersBytes
-				+ "\n" + "Total Bytes Transfered:" + totalBytes + "\n";
+		final String resp = "Bytes Transferred from clients:" + fromClientBytes
+				+ "\n" + "Bytes Transferred from servers: " + fromServersBytes
+				+ "\n" + "Total Bytes Transferred: " + totalBytes + "\n"
+				+ "Image Flips Quantity: " + imageFlips + "\n"
+				+ "Text to L33t Transformations Quantity: " + testToL33t + "\n"
+				+ "Total Transformations Quantity: " + totalTrans + "\n";
 		final ServerDataEvent event = new ServerDataEvent(
 				((ServerDataEvent) dataEvent).getChannel(),
 				ByteBuffer.wrap(resp.getBytes()), dataEvent.getReceiver());

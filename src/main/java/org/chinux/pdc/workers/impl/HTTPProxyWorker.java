@@ -156,11 +156,11 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 			event = (HTTPProxyEvent) clientEvent.getAttachment();
 		}
 
-		/* TODO: NEW MINE */
 		synchronized (this) {
 			this.monitorObject.addFromServersBytes(clientEvent.getData()
 					.array().length);
 		}
+
 		DataEvent e = null;
 		if (this.clientDisconnectedForEvent(event)) {
 			e = new ClientDataEvent(null, this.clientDataReceiver, null, event,
@@ -171,7 +171,7 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 		} else {
 
 			final HTTPResponseEventHandler eventHandler = new HTTPResponseEventHandler(
-					event);
+					event, this.monitorObject);
 
 			try {
 				eventHandler.handle(this.outputBuffer, clientEvent);
@@ -329,7 +329,7 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 	private HTTPRequestEventHandler getRequestEventHandler() {
 		if (this.requestEventHandler == null) {
 			this.requestEventHandler = new HTTPRequestEventHandler(
-					this.outputBuffer);
+					this.outputBuffer, this.monitorObject);
 		}
 		return this.requestEventHandler;
 	}
