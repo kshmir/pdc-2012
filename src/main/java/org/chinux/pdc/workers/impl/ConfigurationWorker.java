@@ -19,22 +19,15 @@ import org.chinux.pdc.server.ConfigurationProvider;
 import org.chinux.pdc.server.LoginService;
 import org.chinux.pdc.server.LoginService.Code;
 import org.chinux.pdc.server.User;
-import org.chinux.pdc.workers.api.Worker;
 
-public class ConfigurationWorker implements Worker<DataEvent> {
+public class ConfigurationWorker extends LogueableWorker {
 
-	private String propertiespath;
-	private String data;
-	public boolean logged = false;
-	private boolean helo = false;
 	private Map<String, User> users;
 	private Pattern ipPattern = Pattern
 			.compile("(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/(0|8|16|24|32)");
 
-	private LoginService loginservice;
-
 	public ConfigurationWorker(final String propertiespath) {
-		this.propertiespath = propertiespath;
+		super(propertiespath);
 	}
 
 	@Override
@@ -79,22 +72,13 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 		return event;
 	}
 
-	private void resetWorkerState() {
+	@Override
+	void resetWorkerState() {
 		this.helo = false;
 		this.logged = false;
 		this.loginservice = null;
 		LoginService.resetInstance();
 		this.quit();
-	}
-
-	private String obtainCommand(final DataEvent dataEvent) {
-		if (new String(dataEvent.getData().array()).split("\n").length != 0) {
-			this.data = new String(dataEvent.getData().array()).split("\n")[0];
-		} else {
-			this.data = "";
-		}
-		final String command = this.data.split(" ")[0];
-		return command;
 	}
 
 	private byte[] processCommand(final String command,
@@ -123,7 +107,8 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 		return resp;
 	}
 
-	private void quit() {
+	@Override
+	void quit() {
 		final Configuration configuration = ConfigurationProvider
 				.getConfiguration();
 		final Properties prop = new Properties();
@@ -160,23 +145,6 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 		}
 		this.helo = false;
 		this.logged = false;
-	}
-
-	private DataEvent helo(final DataEvent dataEvent, final String command) {
-		ServerDataEvent event;
-		byte[] resp;
-		if (command.compareTo("HELO") != 0) {
-			resp = "".getBytes();
-		} else {
-			this.helo = true;
-			resp = "250 Hello user, I am glad to meet you\nEnter user name: "
-					.getBytes();
-		}
-		event = new ServerDataEvent(((ServerDataEvent) dataEvent).getChannel(),
-				ByteBuffer.wrap(resp), dataEvent.getReceiver());
-		event.setCanClose(false);
-		event.setCanSend(true);
-		return event;
 	}
 
 	private byte[] get(final String property, final Configuration configuration) {
@@ -306,4 +274,5 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 				rotateImages, chainProxy));
 		return resp;
 	}
+
 }

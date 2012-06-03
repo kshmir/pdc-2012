@@ -292,4 +292,5 @@ public class ServerHandler implements NIOServerHandler, DataReceiver<DataEvent> 
 		this.dispatcher.processData(new ErrorDataEvent(
 				ErrorDataEvent.PROXY_CLIENT_DISCONNECT, key.channel(), null));
 	}
+
 }

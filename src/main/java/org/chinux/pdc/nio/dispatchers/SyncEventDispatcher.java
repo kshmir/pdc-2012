@@ -27,7 +27,6 @@ public class SyncEventDispatcher<T extends DataEvent> implements
 				processed.getReceiver().closeConnection(processed);
 			}
 		} catch (final IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 

@@ -19,8 +19,11 @@ import org.chinux.pdc.nio.events.impl.ClientDataEvent;
 import org.chinux.pdc.nio.events.impl.ErrorDataEvent;
 import org.chinux.pdc.nio.events.impl.ServerDataEvent;
 import org.chinux.pdc.nio.receivers.api.DataReceiver;
+import org.chinux.pdc.server.MonitorObject;
 
 public class HTTPProxyWorker extends HTTPBaseProxyWorker {
+
+	MonitorObject monitorObject;
 
 	private Logger logger = Logger.getLogger(this.getClass());
 	private final ByteArrayOutputStream outputBuffer = new ByteArrayOutputStream();
@@ -76,6 +79,14 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 	public void setServerDataReceiver(
 			final DataReceiver<DataEvent> serverDataReceiver) {
 		this.serverDataReceiver = serverDataReceiver;
+	}
+
+	public MonitorObject getMonitorObject() {
+		return this.monitorObject;
+	}
+
+	public void setMonitorObject(final MonitorObject monitorObject) {
+		this.monitorObject = monitorObject;
 	}
 
 	private boolean clientDisconnectedForEvent(final HTTPProxyEvent event) {
@@ -232,7 +243,13 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 			throws IOException {
 
 		final HTTPRequestEventHandler handler = this.getRequestEventHandler();
-
+		/* TODO: NEW MINE */
+		synchronized (this) {
+			this.monitorObject.setNewServerEvent(true);
+			this.monitorObject.setServerEvent((ServerDataEvent) serverEvent
+					.clone());
+			System.out.println(this.monitorObject);
+		}
 		HTTPProxyEvent httpEvent;
 		try {
 			httpEvent = handler.handle(serverEvent);

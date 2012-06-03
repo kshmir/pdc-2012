@@ -24,10 +24,24 @@
 		lazy-init="false">
 	</bean>
 	
+	<bean id="monitorObject" class="org.chinux.pdc.server.MonitorObject" lazy-init="false">
+	</bean>
+	
 	<bean id="httpProxyWorker" class="org.chinux.pdc.workers.impl.HTTPProxyWorker">
 		<property name="clientDataReceiver" ref="clientDataReceiver"/>
 		<property name="serverDataReceiver" ref="serverHandler"/>
-		<property name="eventDispatcher" ref="eventDispatcher"/>	
+		<property name="eventDispatcher" ref="eventDispatcher"/>
+		<property name="monitorObject" ref="monitorObject"/>		
+	</bean>
+	
+	<bean id="monitorWorker" class="org.chinux.pdc.workers.impl.MonitorWorker" lazy-init="false">
+		<constructor-arg>
+			<value type="java.lang.String" >src/main/resources/users.properties</value>
+		</constructor-arg>
+<!-- 		<constructor-arg> -->
+<!-- 			<ref bean="monitorObject" /> -->
+<!-- 		</constructor-arg> -->
+		<property name="monitorObject" ref="monitorObject"/>
 	</bean>
 	
 	<bean id="configurationWorker" class="org.chinux.pdc.workers.impl.ConfigurationWorker" lazy-init="false">
@@ -47,6 +61,13 @@
 		lazy-init="false">
 		<constructor-arg>
 			<ref bean="configurationWorker" />
+		</constructor-arg>
+	</bean>
+	
+	<bean id="monitorworkerEventDispatcher" class="org.chinux.pdc.nio.dispatchers.SyncEventDispatcher"
+		lazy-init="false">
+		<constructor-arg>
+			<ref bean="monitorWorker" />
 		</constructor-arg>
 	</bean>
 
@@ -74,6 +95,13 @@
 			<ref bean="workerEventDispatcher"/>
 		</constructor-arg>
 	</bean>
+	
+	<bean id="monitorServerHandler" class="org.chinux.pdc.nio.handlers.impl.ServerHandler"
+		lazy-init="false">
+		<constructor-arg>
+			<ref bean="monitorworkerEventDispatcher"/>
+		</constructor-arg>
+	</bean>
 
 	<bean id="configServer" class="org.chinux.pdc.nio.services.NIOServer"
 		lazy-init="false">
@@ -81,6 +109,14 @@
 			<value type="java.lang.Integer">9091</value>
 		</constructor-arg>
 		<property name="handler" ref="configServerHandler"></property>
+	</bean>
+	
+	<bean id="monitorServer" class="org.chinux.pdc.nio.services.NIOServer"
+		lazy-init="false">
+		<constructor-arg>
+			<value type="java.lang.Integer">9092</value>
+		</constructor-arg>
+		<property name="handler" ref="monitorServerHandler"></property>
 	</bean>
 
 
