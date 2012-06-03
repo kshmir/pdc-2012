@@ -16,6 +16,8 @@ import org.chinux.pdc.http.impl.HTTPResponseHeaderImpl;
 import org.chinux.pdc.http.impl.HTTPResponseImpl;
 import org.chinux.pdc.http.impl.readers.HTTPChunkedResponseTransformReader;
 import org.chinux.pdc.http.impl.readers.HTTPContentLengthReader;
+import org.chinux.pdc.http.impl.readers.HTTPImageResponseReader;
+import org.chinux.pdc.http.impl.readers.HTTPL33tEncoder;
 import org.chinux.pdc.nio.events.impl.ClientDataEvent;
 
 public class HTTPResponseEventHandler {
@@ -125,7 +127,7 @@ public class HTTPResponseEventHandler {
 			final HTTPResponseHeader header = new HTTPResponseHeaderImpl(
 					headerString);
 
-			addViaHeader(header);
+			this.addViaHeader(header);
 
 			final HTTPResponse response = new HTTPResponseImpl(header,
 					new HTTPBaseReader(header));
@@ -174,10 +176,6 @@ public class HTTPResponseEventHandler {
 		}
 		header.addHeader("Via", oldviaheader + header.getHTTPVersion()
 				+ " chinuProxy");
-
-		System.out
-				.println("=================== HEADER ========================================== "
-						+ header.getHeader("Via"));
 	}
 
 	// Loads the readers to the HTTPResponse based on the event we have
@@ -192,11 +190,11 @@ public class HTTPResponseEventHandler {
 			// CRLF ended
 		}
 
-		// if (this.hasImageMIME(response)
-		// && event.getEventConfiguration().isRotateImages()) {
-		// response.getBodyReader().addResponseReader(
-		// new HTTPImageResponseReader(response.getHeaders()), 50);
-		// }
+		if (this.hasImageMIME(response)
+				&& event.getEventConfiguration().isRotateImages()) {
+			response.getBodyReader().addResponseReader(
+					new HTTPImageResponseReader(response.getHeaders()), 50);
+		}
 
 		if (this.hasEncodingChunked(response)) {
 			response.getBodyReader().addResponseReader(
@@ -205,31 +203,13 @@ public class HTTPResponseEventHandler {
 
 		}
 
-		// if (this.isGzipped(response)
-		// && (this.isTextPlain(response) || this.hasImageMIME(response))) {
-		// // response.getBodyReader().addResponseReader(
-		// // new HTTPGzipReader(response.getHeaders()), 20);
-		// }
-
 		/* for l33t translation */
-		// if (this.isTextPlain(response)
-		// && event.getEventConfiguration().isL33t()) {
-		// response.getBodyReader().addResponseReader(
-		// new HTTPL33tEncoder(response.getHeaders()), 50);
-		// }
-		//
-		// if (this.isGzipped(response)
-		// && (this.isTextPlain(response) || this.hasImageMIME(response))) {
-		// response.getBodyReader().addResponseReader(
-		// new HTTPGzipReader(response.getHeaders()), 20);
-		// }
+		if (this.isTextPlain(response)
+				&& event.getEventConfiguration().isL33t()) {
+			response.getBodyReader().addResponseReader(
+					new HTTPL33tEncoder(response.getHeaders()), 50);
+		}
 
-		/* for l33t translation */
-		// if (this.isTextPlain(response)
-		// && event.getEventConfiguration().isL33t()) {
-		// response.getBodyReader().addResponseReader(
-		// new HTTPL33tEncoder(response.getHeaders()), 50);
-		// }
 	}
 
 	private boolean isGzipped(final HTTPResponse response) {

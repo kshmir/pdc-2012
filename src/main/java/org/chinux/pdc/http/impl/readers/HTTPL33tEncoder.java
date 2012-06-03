@@ -1,5 +1,7 @@
 package org.chinux.pdc.http.impl.readers;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
@@ -15,6 +17,7 @@ public class HTTPL33tEncoder implements HTTPReader {
 	private CharsetEncoder encoder = this.charset.newEncoder();
 	private CharsetDecoder decoder = this.charset.newDecoder();
 	private HTTPResponseHeader responseHeader;
+	private ByteArrayOutputStream stream = new ByteArrayOutputStream();
 	private boolean isFinished = false;
 
 	public HTTPL33tEncoder(final HTTPResponseHeader responseHeader) {
@@ -60,19 +63,28 @@ public class HTTPL33tEncoder implements HTTPReader {
 			this.isFinished = false;
 			// return null;
 		}
+
+		if (ans.array() != null) {
+			try {
+				this.stream.write(ans.array());
+			} catch (final IOException e) {
+			}
+		}
 		/*
 		 * if the number of bytes read is greater or equal to the original
 		 * number of bytes of the response, then the reader has finished
 		 * processing
 		 */
 		if (this.bytesRead >= this.bytesToRead) {
-			this.currentContentLenght += ans.array().length;
-			this.responseHeader.removeHeader("Content-lenght");
-			this.responseHeader.addHeader("Content-lenght",
+			final byte[] array = this.stream.toByteArray();
+			this.currentContentLenght = array.length;
+			this.responseHeader.removeHeader("Content-length");
+			this.responseHeader.addHeader("Content-length",
 					String.valueOf(this.currentContentLenght));
 			this.isFinished = true;
-			return data;
+			return ByteBuffer.wrap(array);
 		} else {
+
 			return null;
 		}
 

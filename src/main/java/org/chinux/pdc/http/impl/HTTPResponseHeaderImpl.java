@@ -61,7 +61,7 @@ public class HTTPResponseHeaderImpl implements HTTPResponseHeader {
 
 	@Override
 	public boolean containsHeader(final String name) {
-		return this.headers.containsKey(name);
+		return this.headers.containsKey(name.toLowerCase());
 	}
 
 	@Override
