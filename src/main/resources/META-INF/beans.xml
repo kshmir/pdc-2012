@@ -14,9 +14,15 @@
 		<property name="targetMethod" value="initLogging" />
 		<property name="arguments">
 			<list>
-				<value>src/main/resources/log4j.properties</value>
+				<value>classpath:log4j.properties</value>
 			</list>
 		</property>
+	</bean>
+
+	<bean id="propertyConfigurer"
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="systemPropertiesModeName" value="SYSTEM_PROPERTIES_MODE_FALLBACK" />
+		<property name="searchSystemEnvironment" value="true" />
 	</bean>
 
 
@@ -74,7 +80,7 @@
 	<bean id="configServer" class="org.chinux.pdc.nio.services.NIOServer"
 		lazy-init="false">
 		<constructor-arg>
-			<value type="java.lang.Integer">9091</value>
+			<value type="java.lang.Integer">${configport}</value>
 		</constructor-arg>
 		<property name="handler" ref="configServerHandler"></property>
 	</bean>
@@ -83,7 +89,7 @@
 	<bean id="server" class="org.chinux.pdc.nio.services.NIOServer"
 		lazy-init="false">
 		<constructor-arg>
-			<value type="java.lang.Integer">9090</value>
+			<value type="java.lang.Integer">${proxyport}</value>
 		</constructor-arg>
 		<property name="handler" ref="serverHandler"></property>
 	</bean>

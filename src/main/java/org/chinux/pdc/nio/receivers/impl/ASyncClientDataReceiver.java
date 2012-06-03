@@ -11,6 +11,7 @@ import java.util.ArrayList;
 
 import org.chinux.pdc.nio.events.api.DataEvent;
 import org.chinux.pdc.nio.events.impl.ClientDataEvent;
+import org.chinux.pdc.nio.events.impl.ErrorDataEvent;
 import org.chinux.pdc.nio.receivers.api.ClientDataReceiver;
 import org.chinux.pdc.nio.services.util.ChangeRequest;
 
@@ -23,6 +24,12 @@ public class ASyncClientDataReceiver extends ClientDataReceiver implements
 	public synchronized void receiveEvent(final DataEvent dataEvent) {
 
 		this.log.debug("Receiving data event " + dataEvent);
+
+		if (dataEvent instanceof ErrorDataEvent) {
+			final ErrorDataEvent event = (ErrorDataEvent) dataEvent;
+			this.makeSocketChannelFromOld(
+					(SocketChannel) event.getAttachment(), event.getOwner());
+		}
 
 		if (!(dataEvent instanceof ClientDataEvent)) {
 			throw new RuntimeException("Must receive a NIOClientDataEvent!");
@@ -205,6 +212,12 @@ public class ASyncClientDataReceiver extends ClientDataReceiver implements
 		this.attachmentSocketMap.put(attachment, newSocket);
 		this.changeRequests.add(new ChangeRequest(newSocket,
 				ChangeRequest.REGISTER, SelectionKey.OP_CONNECT, attachment));
+
+		try {
+			oldSocket.close();
+		} catch (final IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private void doClose(final SocketChannel socket) {

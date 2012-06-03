@@ -1,8 +1,6 @@
 package org.chinux.pdc.workers.impl;
 
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -38,7 +36,7 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 		this.data = str.split("\n")[0];
 		this.users = new HashMap<String, String>();
 		final String command = this.data.split(" ")[0];
-		ServerDataEvent event;
+		final ServerDataEvent event;
 		byte[] resp = null;
 
 		if (!this.helo) {
@@ -48,10 +46,8 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 		if (!this.logged) {
 			final Properties props = new Properties();
 			try {
-				final FileInputStream fis = new FileInputStream(
-						"src/main/resources/users.properties");
-				props.load(fis);
-				fis.close();
+				props.load(this.getClass().getResourceAsStream(
+						"/users.properties"));
 
 			} catch (final FileNotFoundException e) {
 				e.printStackTrace();
@@ -98,40 +94,7 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 	}
 
 	private void quit() {
-		final Configuration configuration = ConfigurationProvider
-				.getConfiguration();
-		final Properties prop = new Properties();
-		String aux = "";
-		prop.put("blockAll", configuration.isBlockAll() ? "true" : "false");
-		for (final String str : configuration.getBlockedIPs()) {
-			aux += str + ",";
-		}
-		prop.put("blockedIPs", aux);
-		aux = "";
-		for (final String str : configuration.getBlockedURLs()) {
-			aux += str + ",";
-		}
-		prop.put("blockedURLs", aux);
-		aux = "";
-		for (final String str : configuration.getBlockedMediaTypes()) {
-			aux += str + ",";
-		}
-		prop.put("blockedMediaTypes", aux);
-		prop.put("maxResSize",
-				new Integer(configuration.getMaxResSize()).toString());
-		prop.put("l33t", configuration.isL33t() ? "true" : "false");
-		prop.put("rotateImages", configuration.isRotateImages() ? "true"
-				: "false");
-		try {
-			final FileOutputStream fos = new FileOutputStream(
-					"src/main/resources/configuration.properties");
-			prop.store(fos, "pdc2012");
-			fos.close();
-		} catch (final FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (final IOException e) {
-			e.printStackTrace();
-		}
+		// No save no more!
 		this.username = null;
 		this.helo = false;
 		this.logged = false;
