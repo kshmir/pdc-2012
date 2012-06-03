@@ -332,6 +332,9 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 			break;
 		case ErrorDataEvent.REMOTE_CLIENT_DISCONNECT:
 
+			errorEvent.setCanSend(true);
+			errorEvent.getReceivers().addReceiver(this.clientDataReceiver);
+
 			answerDataEvent = errorEvent;
 
 			this.logger.debug("Handling error of remote client disconnect!");

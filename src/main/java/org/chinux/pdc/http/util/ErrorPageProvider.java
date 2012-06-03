@@ -1,9 +1,9 @@
 package org.chinux.pdc.http.util;
 
-import java.io.File;
-import java.io.FileInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 
 public class ErrorPageProvider {
 
@@ -11,23 +11,22 @@ public class ErrorPageProvider {
 
 	public synchronized static byte[] get403() {
 		if (page403 == null) {
-			final File file = new File("src/main/resources/403.html");
-			page403 = new byte[(int) file.length()];
-			FileInputStream fis = null;
+			final InputStream in = ErrorPageProvider.class
+					.getResourceAsStream("/403.html");
+			final ByteArrayOutputStream inStream = new ByteArrayOutputStream();
 			try {
-				fis = new FileInputStream(file);
+				int i = 0;
+				while ((i = in.read()) != -1) {
+					inStream.write(i);
+				}
 			} catch (final FileNotFoundException e) {
 				e.printStackTrace();
+			} catch (final IOException e) {
+				e.printStackTrace();
 			}
-			if (fis != null) {
-				try {
-					fis.read(page403);
-				} catch (final IOException e) {
-					e.printStackTrace();
-				}
-			}
+
+			page403 = inStream.toByteArray();
 		}
 		return page403;
 	}
-
 }

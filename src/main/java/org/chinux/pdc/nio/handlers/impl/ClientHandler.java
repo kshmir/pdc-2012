@@ -12,6 +12,7 @@ import java.util.Map;
 import org.chinux.pdc.nio.dispatchers.EventDispatcher;
 import org.chinux.pdc.nio.events.api.DataEvent;
 import org.chinux.pdc.nio.events.impl.ClientDataEvent;
+import org.chinux.pdc.nio.events.impl.ErrorDataEvent;
 import org.chinux.pdc.nio.handlers.api.NIOClientHandler;
 import org.chinux.pdc.nio.receivers.api.ClientDataReceiver;
 import org.chinux.pdc.nio.receivers.impl.ASyncClientDataReceiver;
@@ -110,27 +111,32 @@ public class ClientHandler implements NIOClientHandler, ConnectionCloseHandler {
 	public void handleWrite(final SelectionKey key) throws IOException {
 		final SocketChannel socketChannel = (SocketChannel) key.channel();
 
-		synchronized (this.pendingData) {
-			final ArrayList<ByteBuffer> queue = this.pendingData.get(key
-					.attachment());
+		try {
+			synchronized (this.pendingData) {
+				final ArrayList<ByteBuffer> queue = this.pendingData.get(key
+						.attachment());
 
-			// Write until there's not more data ...
-			while (queue != null && !queue.isEmpty()) {
+				// Write until there's not more data ...
+				while (queue != null && !queue.isEmpty()) {
 
-				final ByteBuffer buf = queue.get(0);
+					final ByteBuffer buf = queue.get(0);
 
-				socketChannel.write(buf);
+					socketChannel.write(buf);
 
-				if (buf.remaining() > 0) {
-					// ... or the socket's buffer fills up
-					break;
+					if (buf.remaining() > 0) {
+						// ... or the socket's buffer fills up
+						break;
+					}
+					queue.remove(0);
 				}
-				queue.remove(0);
-			}
 
-			if (queue == null || queue.isEmpty()) {
-				key.interestOps(SelectionKey.OP_READ);
+				if (queue == null || queue.isEmpty()) {
+					key.interestOps(SelectionKey.OP_READ);
+				}
 			}
+		} catch (final IOException ioe) {
+			ioe.printStackTrace();
+			this.handleUnexpectedDisconnect(key);
 		}
 	}
 
@@ -155,7 +161,11 @@ public class ClientHandler implements NIOClientHandler, ConnectionCloseHandler {
 
 	@Override
 	public void handleUnexpectedDisconnect(final SelectionKey key) {
-		// TODO: Ver esto
+		final ErrorDataEvent errorEvent = new ErrorDataEvent(
+				ErrorDataEvent.REMOTE_CLIENT_DISCONNECT, key.channel(),
+				key.attachment());
+
+		this.dispatcher.processData(errorEvent);
 	}
 
 	@Override
