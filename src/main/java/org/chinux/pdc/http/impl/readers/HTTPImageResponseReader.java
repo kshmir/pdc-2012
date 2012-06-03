@@ -91,6 +91,10 @@ public class HTTPImageResponseReader implements HTTPReader {
 			e.printStackTrace();
 		}
 
+		if (img == null) {
+			throw new RuntimeException();
+		}
+
 		final BufferedImage flipped = this.verticalflip(img);
 		try {
 			ImageIO.write(flipped, "png", out);

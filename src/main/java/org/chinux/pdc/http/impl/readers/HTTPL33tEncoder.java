@@ -64,7 +64,7 @@ public class HTTPL33tEncoder implements HTTPReader {
 			// return null;
 		}
 
-		if (ans.array() != null) {
+		if (ans != null) {
 			try {
 				this.stream.write(ans.array());
 			} catch (final IOException e) {

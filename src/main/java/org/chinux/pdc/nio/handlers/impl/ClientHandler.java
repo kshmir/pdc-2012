@@ -115,7 +115,7 @@ public class ClientHandler implements NIOClientHandler, ConnectionCloseHandler {
 					.attachment());
 
 			// Write until there's not more data ...
-			while (!queue.isEmpty()) {
+			while (queue != null && !queue.isEmpty()) {
 
 				final ByteBuffer buf = queue.get(0);
 
