@@ -14,18 +14,12 @@ public class MonitorWorker extends LogueableWorker {
 
 	public MonitorObject monitorObject;
 
-	// public MonitorWorker(final String propertiespath,
-	// final MonitorObject monitor) {
-	// super(propertiespath);
-	// this.monitor = monitor;
-	// }
-
 	public MonitorObject getMonitorObject() {
 		return this.monitorObject;
 	}
 
 	public void setMonitorObject(final MonitorObject monitorObject) {
-		this.monitorObject = this.monitorObject;
+		this.monitorObject = monitorObject;
 	}
 
 	public MonitorWorker(final String propertiespath) {
@@ -44,7 +38,6 @@ public class MonitorWorker extends LogueableWorker {
 		final String command = this.obtainCommand(dataEvent);
 		/* initial salutation */
 		if (!this.helo) {
-			System.out.println("===================================== HELO");
 			return this.helo(dataEvent, command);
 		}
 		/* if the user is not logged , it should be */
@@ -54,7 +47,6 @@ public class MonitorWorker extends LogueableWorker {
 			this.logged = this.loginservice.isLogged(code);
 			return this.loginservice.createResponseEvent(code, dataEvent);
 		}
-		System.out.println("===================================== LOGGED");
 		/* gets monitored info */
 		event = this.getMonitoredInfo(dataEvent);
 		return event;
@@ -85,22 +77,25 @@ public class MonitorWorker extends LogueableWorker {
 	}
 
 	private ServerDataEvent getMonitoredInfo(final DataEvent dataEvent) {
-		int bytesTransfered = 0;
+		int totalBytes = 0;
+		int fromClientBytes = 0;
+		int fromServersBytes = 0;
 		synchronized (this) {
-			if (this.monitorObject.isNewServerEvent()) {
-				bytesTransfered = this.monitorObject.getServerEvent().getData()
-						.array().length;
-				System.out
-						.println("===================================== MONITOROBJECT");
-			}
+			totalBytes = this.monitorObject.getTotalTransferedBytes();
+			fromClientBytes = this.monitorObject
+					.getFromClientsTransferedBytes();
+			fromServersBytes = this.monitorObject
+					.getFromServersTransferedBytes();
 		}
 
-		final String resp = "Bytes Transfered from client:" + bytesTransfered;
+		final String resp = "Bytes Transfered from clients:" + fromClientBytes
+				+ "\n" + "Bytes Transfered from servers:" + fromServersBytes
+				+ "\n" + "Total Bytes Transfered:" + totalBytes + "\n";
 		final ServerDataEvent event = new ServerDataEvent(
 				((ServerDataEvent) dataEvent).getChannel(),
-				ByteBuffer.wrap(resp.getBytes()));
-
+				ByteBuffer.wrap(resp.getBytes()), dataEvent.getReceiver());
+		event.setCanClose(false);
+		event.setCanSend(true);
 		return event;
 	}
-
 }
