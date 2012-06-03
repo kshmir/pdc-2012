@@ -109,44 +109,94 @@ public class MonitorWorker extends LogueableWorker {
 			totalconnections = this.monitorObject.getConnectionsQuant();
 		}
 
-		final String resp = "===================== PROXY MONITOR INFORMATION =========================\n"
-				+ "Bytes Transferred from clients:                                        "
+		String totalkb = "";
+		if (totalBytes > 1024) {
+			totalkb = " ("
+					+ String.valueOf(truncate(
+							Double.valueOf(totalBytes) / 1024, 2)) + " KB)";
+		}
+
+		String totalmb = "";
+		if (totalBytes > (1024 * 1024)) {
+			totalmb = " ("
+					+ String.valueOf(truncate(Double.valueOf(totalBytes)
+							/ (1024 * 1024), 2)) + " MB)";
+		}
+
+		String clientkb = "";
+		if (fromClientBytes > 1024) {
+			clientkb = " ("
+					+ String.valueOf(truncate(
+							Double.valueOf(fromClientBytes) / 1024, 2))
+					+ " KB)";
+		}
+
+		String clientmb = "";
+		if (fromClientBytes > (1024 * 1024)) {
+			clientmb = " ("
+					+ String.valueOf(truncate(Double.valueOf(fromClientBytes)
+							/ (1024 * 1024), 2)) + " MB)";
+		}
+
+		String serverkb = "";
+		if (fromServersBytes > 1024) {
+			serverkb = " ("
+					+ String.valueOf(truncate(
+							Double.valueOf(fromServersBytes) / 1024, 2))
+					+ " KB)";
+		}
+
+		String servermb = "";
+		if (fromServersBytes > (1024 * 1024)) {
+			servermb = " ("
+					+ String.valueOf(truncate(Double.valueOf(fromServersBytes)
+							/ (1024 * 1024), 2)) + " MB)";
+		}
+
+		final String resp = "======================= PROXY MONITOR INFORMATION ===========================\n"
+				+ "Bytes Transferred from clients:                               "
 				+ fromClientBytes
+				+ clientkb
+				+ clientmb
 				+ "\n"
-				+ "Bytes Transferred from servers:                                        "
+				+ "Bytes Transferred from servers:                               "
 				+ fromServersBytes
+				+ serverkb
+				+ servermb
 				+ "\n"
-				+ "Total Bytes Transferred:                                               "
+				+ "Total Bytes Transferred:                                      "
 				+ totalBytes
+				+ totalkb
+				+ totalmb
 				+ "\n"
-				+ "Image Flips Quantity:                                                  "
+				+ "Image Flips Quantity:                                         "
 				+ imageFlips
 				+ "\n"
-				+ "Text to L33t Transformations Quantity:                                 "
+				+ "Text to L33t Transformations Quantity:                        "
 				+ testToL33t
 				+ "\n"
-				+ "Total Transformations Quantity:                                        "
+				+ "Total Transformations Quantity:                               "
 				+ totalTrans
 				+ "\n"
-				+ "All Access Blocks Quantity:                                            "
+				+ "All Access Blocks Quantity:                                   "
 				+ allblocks
 				+ "\n"
-				+ "Ip Blocks Quantity:                                                    "
+				+ "Ip Blocks Quantity:                                           "
 				+ ipblocks
 				+ "\n"
-				+ "Url Blocks Quantity:                                                   "
+				+ "Url Blocks Quantity:                                          "
 				+ urlblocks
 				+ "\n"
-				+ "Media Types Blocks Quantity:                                           "
+				+ "Media Types Blocks Quantity:                                  "
 				+ ctypeblocks
 				+ "\n"
-				+ "Size Blocks Quantity:                                                  "
+				+ "Size Blocks Quantity:                                         "
 				+ sizeblocks
 				+ "\n"
-				+ "Total Blocks Quantity:                                                 "
+				+ "Total Blocks Quantity:                                        "
 				+ totalblocks
 				+ "\n"
-				+ "Total Connections Quantity:                                            "
+				+ "Total Connections Quantity:                                   "
 				+ totalconnections + "\n\n";
 		final ServerDataEvent event = new ServerDataEvent(
 				((ServerDataEvent) dataEvent).getChannel(),
@@ -154,5 +204,10 @@ public class MonitorWorker extends LogueableWorker {
 		event.setCanClose(false);
 		event.setCanSend(true);
 		return event;
+	}
+
+	public static double truncate(final double value, final int places) {
+		final double multiplier = Math.pow(10, places);
+		return Math.floor(multiplier * value) / multiplier;
 	}
 }
