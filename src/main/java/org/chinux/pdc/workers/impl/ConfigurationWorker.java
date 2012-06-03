@@ -29,7 +29,7 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 	private boolean helo = false;
 	private Map<String, User> users;
 	private Pattern ipPattern = Pattern
-			.compile("(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/(0|8|16|24|32)");
+			.compile("(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/(8|16|24|32)");
 
 	private LoginService loginservice;
 
@@ -116,7 +116,7 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 			}
 		} else if (command.equals("LOGOUT")) {
 			this.quit();
-			resp = "250 Logout OK\n".getBytes();
+			resp = "Logout OK\nEnter user name: ".getBytes();
 		} else {
 			resp = "Invalid Command\n".getBytes();
 		}
@@ -158,7 +158,6 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 		} catch (final IOException e) {
 			e.printStackTrace();
 		}
-		this.helo = false;
 		this.logged = false;
 	}
 
@@ -169,7 +168,7 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 			resp = "".getBytes();
 		} else {
 			this.helo = true;
-			resp = "250 Hello user, I am glad to meet you\nEnter user name: "
+			resp = "Hello user, I am glad to meet you\nEnter user name: "
 					.getBytes();
 		}
 		event = new ServerDataEvent(((ServerDataEvent) dataEvent).getChannel(),
@@ -180,31 +179,31 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 	}
 
 	private byte[] get(final String property, final Configuration configuration) {
-		if (property.equals("blockAll")) {
+		if (property.toLowerCase().equals("blockall")) {
 			return ((new Boolean(configuration.isBlockAll())).toString() + "\n")
 					.getBytes();
-		} else if (property.equals("l33t")) {
+		} else if (property.toLowerCase().equals("l33t")) {
 			return ((new Boolean(configuration.isL33t())).toString() + "\n")
 					.getBytes();
-		} else if (property.equals("rotateImages")) {
+		} else if (property.toLowerCase().equals("rotateimages")) {
 			return ((new Boolean(configuration.isRotateImages())).toString() + "\n")
 					.getBytes();
-		} else if (property.equals("maxResSize")) {
+		} else if (property.toLowerCase().equals("maxressize")) {
 			return ((new Integer(configuration.getMaxResSize())).toString() + "\n")
 					.getBytes();
-		} else if (property.equals("blockedIPs")) {
+		} else if (property.toLowerCase().equals("blockedips")) {
 			String resp = "";
 			for (final String str : configuration.getBlockedIPs()) {
 				resp += str + " ";
 			}
 			return (resp + "\n").getBytes();
-		} else if (property.equals("blockedURLs")) {
+		} else if (property.toLowerCase().equals("blockedurls")) {
 			String resp = "";
 			for (final String str : configuration.getBlockedURLs()) {
 				resp += str + " ";
 			}
 			return (resp + "\n").getBytes();
-		} else if (property.equals("blockedMediaTypes")) {
+		} else if (property.toLowerCase().equals("blockedmediatypes")) {
 			String resp = "";
 			for (final String str : configuration.getBlockedMediaTypes()) {
 				resp += str + " ";
@@ -227,7 +226,7 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 		byte[] resp = null;
 		resp = "Configuration changed\n".getBytes();
 
-		if (property.equals("blockAll")) {
+		if (property.toLowerCase().equals("blockall")) {
 			if (this.data.split(" ").length >= 3) {
 				blockAll = Boolean.valueOf(this.data.split(" ")[2]);
 				resp = ("BlockAll set to " + this.data.split(" ")[2] + "\n")
@@ -235,7 +234,7 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 			} else {
 				resp = "Invalid Parameter\n".getBytes();
 			}
-		} else if (property.equals("chainProxy")) {
+		} else if (property.toLowerCase().equals("chainproxy")) {
 			if (this.data.split(" ").length >= 3) {
 				chainProxy = Boolean.valueOf(this.data.split(" ")[2]);
 				resp = ("ChainProxy set to " + this.data.split(" ")[2] + "\n")
@@ -243,7 +242,7 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 			} else {
 				resp = "Invalid Parameter\n".getBytes();
 			}
-		} else if (property.equals("l33t")) {
+		} else if (property.toLowerCase().equals("l33t")) {
 			if (this.data.split(" ").length >= 3) {
 				l33t = Boolean.valueOf(this.data.split(" ")[2]);
 				resp = ("l33t set to " + this.data.split(" ")[2] + "\n")
@@ -251,7 +250,7 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 			} else {
 				resp = "Invalid Parameter\n".getBytes();
 			}
-		} else if (property.equals("rotateImages")) {
+		} else if (property.toLowerCase().equals("rotateimages")) {
 			if (this.data.split(" ").length >= 3) {
 				rotateImages = Boolean.valueOf(this.data.split(" ")[2]);
 				resp = ("RotateImages set to " + this.data.split(" ")[2] + "\n")
@@ -259,7 +258,7 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 			} else {
 				resp = "Invalid Parameter\n".getBytes();
 			}
-		} else if (property.equals("maxResSize")) {
+		} else if (property.toLowerCase().equals("maxressize")) {
 			if (this.data.split(" ").length >= 3) {
 				maxResSize = Integer.valueOf(this.data.split(" ")[2]);
 				resp = ("MaxResSize set to " + this.data.split(" ")[2] + "\n")
@@ -267,9 +266,10 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 			} else {
 				resp = "Invalid Parameter\n".getBytes();
 			}
-		} else if (property.equals("blockedIPs")) {
+		} else if (property.toLowerCase().equals("blockedips")) {
 			blockedIPs = new ArrayList<String>();
 			if (this.data.split(" ").length >= 3) {
+				blockedIPs.addAll(configuration.getBlockedIPs());
 				for (final String str : this.data.split(" ")[2].split(",")) {
 					final Matcher match = this.ipPattern.matcher(str);
 					if (match.find()) {
@@ -281,17 +281,19 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 				}
 			}
 			resp = ("BlockedIPs set to " + blockedIPs + "\n").getBytes();
-		} else if (property.equals("blockedURLs")) {
+		} else if (property.toLowerCase().equals("blockedurls")) {
 			blockedURLs = new ArrayList<String>();
 			if (this.data.split(" ").length >= 3) {
+				blockedURLs.addAll(configuration.getBlockedURLs());
 				for (final String str : this.data.split(" ")[2].split(",")) {
 					blockedURLs.add(str);
 				}
 			}
 			resp = ("BlockedURLs set to " + blockedURLs + "\n").getBytes();
-		} else if (property.equals("blockedMediaTypes")) {
+		} else if (property.toLowerCase().equals("blockedmediatypes")) {
 			blockedMediaTypes = new ArrayList<String>();
 			if (this.data.split(" ").length >= 3) {
+				blockedMediaTypes.addAll(configuration.getBlockedMediaTypes());
 				for (final String str : this.data.split(" ")[2].split(",")) {
 					blockedMediaTypes.add(str);
 				}
