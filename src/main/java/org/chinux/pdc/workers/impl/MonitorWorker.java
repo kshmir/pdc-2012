@@ -83,6 +83,13 @@ public class MonitorWorker extends LogueableWorker {
 		int totalTrans = 0;
 		int imageFlips = 0;
 		int testToL33t = 0;
+		int totalblocks = 0;
+		int ipblocks = 0;
+		int urlblocks = 0;
+		int allblocks = 0;
+		int ctypeblocks = 0;
+		int sizeblocks = 0;
+
 		synchronized (this) {
 			totalBytes = this.monitorObject.getTotalTransferedBytes();
 			fromClientBytes = this.monitorObject
@@ -92,6 +99,12 @@ public class MonitorWorker extends LogueableWorker {
 			totalTrans = this.monitorObject.getTransformationsQuant();
 			imageFlips = this.monitorObject.getImageFlipsQuant();
 			testToL33t = this.monitorObject.getText2L33tQuant();
+			totalblocks = this.monitorObject.getTotalblocksQuant();
+			ipblocks = this.monitorObject.getIpBlocksQuant();
+			urlblocks = this.monitorObject.getUrlBlocksQuant();
+			allblocks = this.monitorObject.getAllAccessBlocksQuant();
+			ctypeblocks = this.monitorObject.getContentTypeBlocksQuant();
+			sizeblocks = this.monitorObject.getTooBigResourceBlocksQuant();
 		}
 
 		final String resp = "Bytes Transferred from clients:" + fromClientBytes
@@ -99,7 +112,15 @@ public class MonitorWorker extends LogueableWorker {
 				+ "\n" + "Total Bytes Transferred: " + totalBytes + "\n"
 				+ "Image Flips Quantity: " + imageFlips + "\n"
 				+ "Text to L33t Transformations Quantity: " + testToL33t + "\n"
-				+ "Total Transformations Quantity: " + totalTrans + "\n";
+				+ "Total Transformations Quantity: " + totalTrans + "\n"
+				+ "All Access Blocks Quantity: " + allblocks + "\n"
+				+ "Ip Blocks Quantity: " + ipblocks + "\n"
+				+ "Url Blocks Quantity: " + urlblocks
+				+ "\n"
+				// till here
+				+ "Media Types Blocks Quantity: " + ctypeblocks + "\n"
+				+ "Size Blocks Quantity: " + sizeblocks + "\n"
+				+ "Total Blocks Quantity: " + totalblocks + "\n";
 		final ServerDataEvent event = new ServerDataEvent(
 				((ServerDataEvent) dataEvent).getChannel(),
 				ByteBuffer.wrap(resp.getBytes()), dataEvent.getReceiver());

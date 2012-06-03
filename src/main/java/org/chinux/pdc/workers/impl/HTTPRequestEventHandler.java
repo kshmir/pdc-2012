@@ -190,9 +190,10 @@ public class HTTPRequestEventHandler {
 
 			proxyEvent = event;
 
-			if (!HTTPBaseFilter.getBaseRequestFilter().isValid(event)) {
-				throw new FilterException(HTTPBaseFilter.getBaseRequestFilter()
-						.getErrorResponse(event));
+			if (!HTTPBaseFilter.getBaseRequestFilter(this.monitorObject)
+					.isValid(event)) {
+				throw new FilterException(HTTPBaseFilter.getBaseRequestFilter(
+						this.monitorObject).getErrorResponse(event));
 			} else {
 				if (proxyEvent.canSend()) {
 					this.outputBuffer.write(isoCharset.encode(

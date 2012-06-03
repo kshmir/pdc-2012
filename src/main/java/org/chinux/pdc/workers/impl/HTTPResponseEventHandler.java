@@ -69,9 +69,10 @@ public class HTTPResponseEventHandler {
 		}
 
 		if (this.canDoFilter(this.event)) {
-			if (!HTTPBaseFilter.getBaseResponseFilter().isValid(this.event)) {
-				throw new FilterException(HTTPBaseFilter
-						.getBaseResponseFilter().getErrorResponse(this.event));
+			if (!HTTPBaseFilter.getBaseResponseFilter(this.monitorObject)
+					.isValid(this.event)) {
+				throw new FilterException(HTTPBaseFilter.getBaseResponseFilter(
+						this.monitorObject).getErrorResponse(this.event));
 			}
 		}
 	}

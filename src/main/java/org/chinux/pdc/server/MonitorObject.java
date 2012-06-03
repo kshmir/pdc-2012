@@ -8,12 +8,90 @@ public class MonitorObject {
 	private int totalblocksQuant;
 	private int imageFlipsQuant;
 	private int text2L33tQuant;
+	private int allAccessBlocksQuant;
+	private int ipBlocksQuant;
+	private int contentTypeBlocksQuant;
+	private int tooBigResourceBlocksQuant;
+	private int urlBlocksQuant;
 
 	public MonitorObject() {
 		this.fromClientsTransferedBytes = 0;
 		this.fromServersTransferedBytes = 0;
 		this.openedConnectionsQuant = 0;
 		this.totalblocksQuant = 0;
+	}
+
+	public void increaseUrlBlocksQuant() {
+		this.urlBlocksQuant += 1;
+	}
+
+	public int getUrlBlocksQuant() {
+		return this.urlBlocksQuant;
+	}
+
+	public void setUrlBlocksQuant(final int urlBlocksQuant) {
+		this.urlBlocksQuant = urlBlocksQuant;
+	}
+
+	public void increaseAllAccessBlocksQuant() {
+		this.allAccessBlocksQuant += 1;
+	}
+
+	public void increaseIpBlocksQuant() {
+		this.ipBlocksQuant += 1;
+	}
+
+	public void increaseContentTypeBlocksQuant() {
+		this.contentTypeBlocksQuant += 1;
+	}
+
+	public void increaseTooBigResourceBlocksQuant() {
+		this.tooBigResourceBlocksQuant += 1;
+	}
+
+	public int getTotalBlocksQuant() {
+		return this.allAccessBlocksQuant + this.ipBlocksQuant
+				+ this.contentTypeBlocksQuant + this.tooBigResourceBlocksQuant;
+	}
+
+	public int getOpenedConnectionsQuant() {
+		return this.openedConnectionsQuant;
+	}
+
+	public void setOpenedConnectionsQuant(final int openedConnectionsQuant) {
+		this.openedConnectionsQuant = openedConnectionsQuant;
+	}
+
+	public int getAllAccessBlocksQuant() {
+		return this.allAccessBlocksQuant;
+	}
+
+	public void setAllAccessBlocksQuant(final int allAccessBlocksQuant) {
+		this.allAccessBlocksQuant = allAccessBlocksQuant;
+	}
+
+	public int getIpBlocksQuant() {
+		return this.ipBlocksQuant;
+	}
+
+	public void setIpBlocksQuant(final int ipBlocksQuant) {
+		this.ipBlocksQuant = ipBlocksQuant;
+	}
+
+	public int getContentTypeBlocksQuant() {
+		return this.contentTypeBlocksQuant;
+	}
+
+	public void setContentTypeBlocksQuant(final int contentTypeBlocksQuant) {
+		this.contentTypeBlocksQuant = contentTypeBlocksQuant;
+	}
+
+	public int getTooBigResourceBlocksQuant() {
+		return this.tooBigResourceBlocksQuant;
+	}
+
+	public void setTooBigResourceBlocksQuant(final int tooBigResourceBlocksQuant) {
+		this.tooBigResourceBlocksQuant = tooBigResourceBlocksQuant;
 	}
 
 	public void increaseText2L33tQuant() {
