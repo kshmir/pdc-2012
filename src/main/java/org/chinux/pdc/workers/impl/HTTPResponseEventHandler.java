@@ -114,7 +114,7 @@ public class HTTPResponseEventHandler {
 			final HTTPResponseHeader header = new HTTPResponseHeaderImpl(
 					headerString);
 
-			addViaHeader(header);
+			this.addViaHeader(header);
 
 			final HTTPResponse response = new HTTPResponseImpl(header,
 					new HTTPBaseReader(header));
@@ -163,9 +163,6 @@ public class HTTPResponseEventHandler {
 		header.addHeader("Via", oldviaheader + header.getHTTPVersion()
 				+ " chinuProxy");
 
-		System.out
-				.println("=================== HEADER ========================================== "
-						+ header.getHeader("Via"));
 	}
 
 	// Loads the readers to the HTTPResponse based on the event we have
