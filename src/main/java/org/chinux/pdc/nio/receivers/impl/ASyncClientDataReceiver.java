@@ -14,9 +14,13 @@ import org.chinux.pdc.nio.events.impl.ClientDataEvent;
 import org.chinux.pdc.nio.events.impl.ErrorDataEvent;
 import org.chinux.pdc.nio.receivers.api.ClientDataReceiver;
 import org.chinux.pdc.nio.services.util.ChangeRequest;
+import org.chinux.pdc.server.MonitorObject;
+import org.chinux.pdc.server.api.Monitoreable;
 
 public class ASyncClientDataReceiver extends ClientDataReceiver implements
-		ConnectionCloseHandler {
+		ConnectionCloseHandler, Monitoreable {
+
+	private MonitorObject monitorObject;
 
 	private TimeoutableSocketPool pool = new TimeoutableSocketPool(30);
 
@@ -250,6 +254,21 @@ public class ASyncClientDataReceiver extends ClientDataReceiver implements
 	@Override
 	public void handleConnectionClose(final SocketChannel socket) {
 		this.doClose(socket);
+	}
+
+	public MonitorObject getMonitorObject() {
+		return this.monitorObject;
+	}
+
+	public void setMonitorObject(final MonitorObject monitorObject) {
+		this.monitorObject = monitorObject;
+	}
+
+	@Override
+	public void updateMonitorObject() {
+		synchronized (this) {
+			this.monitorObject.setTimedConnections(this.pool.getElementsSize());
+		}
 	}
 
 }

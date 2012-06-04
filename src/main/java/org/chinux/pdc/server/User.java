@@ -9,6 +9,7 @@ public class User {
 	private int srcport;
 	private InetAddress host;
 	private boolean logged;
+	private boolean greeted;
 
 	public User(final String username, final String password,
 			final int srcport, final InetAddress host) {
@@ -18,6 +19,24 @@ public class User {
 		this.srcport = srcport;
 		this.host = host;
 		this.logged = false;
+		this.greeted = false;
+	}
+
+	public User(final int srcport, final InetAddress host) {
+		this.username = null;
+		this.password = null;
+		this.srcport = srcport;
+		this.host = host;
+		this.logged = false;
+		this.greeted = false;
+	}
+
+	public boolean isGreeted() {
+		return this.greeted;
+	}
+
+	public void setGreeted(final boolean greeted) {
+		this.greeted = greeted;
 	}
 
 	public String getUsername() {
@@ -61,8 +80,6 @@ public class User {
 		result = prime * result
 				+ ((this.password == null) ? 0 : this.password.hashCode());
 		result = prime * result + this.srcport;
-		result = prime * result
-				+ ((this.username == null) ? 0 : this.username.hashCode());
 		return result;
 	}
 
@@ -95,13 +112,6 @@ public class User {
 		if (this.srcport != other.srcport) {
 			return false;
 		}
-		if (this.username == null) {
-			if (other.username != null) {
-				return false;
-			}
-		} else if (!this.username.equals(other.username)) {
-			return false;
-		}
 		return true;
 	}
 
@@ -111,6 +121,14 @@ public class User {
 
 	public void setLogged(final boolean logged) {
 		this.logged = logged;
+	}
+
+	@Override
+	public String toString() {
+		return "User [username=" + this.username + ", password="
+				+ this.password + ", srcport=" + this.srcport + ", host="
+				+ this.host + ", logged=" + this.logged + ", greeted="
+				+ this.greeted + "]";
 	}
 
 }

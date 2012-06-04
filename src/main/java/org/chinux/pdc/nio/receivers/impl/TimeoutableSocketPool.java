@@ -77,4 +77,9 @@ public class TimeoutableSocketPool {
 		}
 		return null;
 	}
+
+	public synchronized int getElementsSize() {
+		return this.elements.size();
+	}
+
 }

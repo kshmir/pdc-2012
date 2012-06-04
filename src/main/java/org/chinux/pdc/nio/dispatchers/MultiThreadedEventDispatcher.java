@@ -15,6 +15,7 @@ import org.chinux.pdc.nio.events.impl.ClientDataEvent;
 import org.chinux.pdc.nio.events.impl.ErrorDataEvent;
 import org.chinux.pdc.nio.events.impl.ServerDataEvent;
 import org.chinux.pdc.nio.receivers.api.DataReceiver;
+import org.chinux.pdc.server.MonitorObject;
 import org.chinux.pdc.workers.impl.HTTPProxyEvent;
 import org.chinux.pdc.workers.impl.HTTPProxyWorker;
 
@@ -41,27 +42,35 @@ public class MultiThreadedEventDispatcher<T extends DataEvent> implements
 
 	public MultiThreadedEventDispatcher(
 			final DataReceiver<DataEvent> serverReceiver,
-			final DataReceiver<DataEvent> clientReceiver) {
+			final DataReceiver<DataEvent> clientReceiver,
+			final MonitorObject object) {
 		// If no parameter is given, we use 2 threads per core.
 		this(Runtime.getRuntime().availableProcessors() * 2, serverReceiver,
-				clientReceiver);
+				clientReceiver, object);
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public MultiThreadedEventDispatcher(final int dispatcherCount,
 			final DataReceiver<DataEvent> serverReceiver,
-			final DataReceiver<DataEvent> clientReceiver) {
+			final DataReceiver<DataEvent> clientReceiver,
+			final MonitorObject object) {
+		final Set<HTTPProxyWorker> workers = new HashSet<HTTPProxyWorker>();
 		for (int i = 0; i < dispatcherCount; i++) {
 			final HTTPProxyWorker worker = new HTTPProxyWorker();
+			worker.setMonitorObject(object);
 			worker.setEventDispatcher((UrgentEventDispatcher) this);
 			worker.setClientDataReceiver(clientReceiver);
 			worker.setServerDataReceiver(serverReceiver);
 			final ASyncEventDispatcher dispatcher = new ASyncEventDispatcher(
 					worker);
+
+			workers.add(worker);
 			this.dispatchers.addFirst(dispatcher);
 			final Thread t = new Thread(dispatcher);
 			t.start();
 		}
+
+		object.setHttpProxyWorkers(workers);
 
 		final TimerTask task = new TimerTask() {
 

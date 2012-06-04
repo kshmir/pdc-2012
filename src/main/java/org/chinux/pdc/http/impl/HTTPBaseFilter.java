@@ -14,10 +14,12 @@ import org.chinux.pdc.http.impl.filters.HTTPIPFilter;
 import org.chinux.pdc.http.impl.filters.HTTPMediaTypesFilter;
 import org.chinux.pdc.http.impl.filters.HTTPSizeFilter;
 import org.chinux.pdc.http.impl.filters.HTTPUriFilter;
+import org.chinux.pdc.server.MonitorObject;
 import org.chinux.pdc.workers.impl.HTTPProxyEvent;
 
 public class HTTPBaseFilter implements HTTPFilter {
 
+	private MonitorObject monitorObject;
 	private static HTTPBaseFilter baseResponseFilter = null;
 	private static HTTPBaseFilter baseRequestFilter = null;
 	private static Logger log = Logger.getLogger(HTTPBaseFilter.class);
@@ -42,9 +44,11 @@ public class HTTPBaseFilter implements HTTPFilter {
 				}
 			});
 
-	public static synchronized HTTPBaseFilter getBaseRequestFilter() {
+	public static synchronized HTTPBaseFilter getBaseRequestFilter(
+			final MonitorObject monitorObject) {
 		if (baseRequestFilter == null) {
 			baseRequestFilter = new HTTPBaseFilter();
+			baseRequestFilter.monitorObject = monitorObject;
 			baseRequestFilter.addFilter(new HTTPUriFilter(), 1);
 			baseRequestFilter.addFilter(new HTTPAllAccessFilter(), 2);
 			baseRequestFilter.addFilter(new HTTPIPFilter(), 3);
@@ -52,9 +56,11 @@ public class HTTPBaseFilter implements HTTPFilter {
 		return baseRequestFilter;
 	}
 
-	public static synchronized HTTPBaseFilter getBaseResponseFilter() {
+	public static synchronized HTTPBaseFilter getBaseResponseFilter(
+			final MonitorObject monitorObject) {
 		if (baseResponseFilter == null) {
 			baseResponseFilter = new HTTPBaseFilter();
+			baseResponseFilter.monitorObject = monitorObject;
 			baseResponseFilter.addFilter(new HTTPSizeFilter(), 1);
 			baseResponseFilter.addFilter(new HTTPMediaTypesFilter(), 2);
 		}
@@ -70,11 +76,26 @@ public class HTTPBaseFilter implements HTTPFilter {
 	public boolean isValid(final HTTPProxyEvent event) {
 		for (final HTTPFilter filter : this.filters) {
 			if (!filter.isValid(event)) {
+				this.updateMonitorObject(filter);
 				this.rejectedFilter = filter;
 				return false;
 			}
 		}
 		return true;
+	}
+
+	private void updateMonitorObject(final HTTPFilter filter) {
+		if (filter instanceof HTTPIPFilter) {
+			this.monitorObject.increaseIpBlocksQuant();
+		} else if (filter instanceof HTTPAllAccessFilter) {
+			this.monitorObject.increaseAllAccessBlocksQuant();
+		} else if (filter instanceof HTTPUriFilter) {
+			this.monitorObject.increaseUrlBlocksQuant();
+		} else if (filter instanceof HTTPMediaTypesFilter) {
+			this.monitorObject.increaseContentTypeBlocksQuant();
+		} else if (filter instanceof HTTPSizeFilter) {
+			this.monitorObject.increaseTooBigResourceBlocksQuant();
+		}
 	}
 
 	@Override

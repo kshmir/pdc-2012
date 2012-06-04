@@ -1,5 +1,6 @@
 package org.chinux.pdc.workers.impl;
 
+import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,17 +14,12 @@ import org.chinux.pdc.server.Configuration;
 import org.chinux.pdc.server.ConfigurationProvider;
 import org.chinux.pdc.server.LoginService;
 import org.chinux.pdc.server.LoginService.Code;
-import org.chinux.pdc.workers.api.Worker;
+import org.chinux.pdc.server.User;
 
-public class ConfigurationWorker implements Worker<DataEvent> {
+public class ConfigurationWorker extends LogueableWorker {
 
-	private String data;
-	private boolean logged = false;
-	private boolean helo = false;
 	private Pattern ipPattern = Pattern
 			.compile("(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/(8|16|24|32)");
-
-	private LoginService loginservice;
 
 	public ConfigurationWorker() {
 	}
@@ -39,15 +35,31 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 		}
 		/* obtains the command to process */
 		final String command = this.obtainCommand(dataEvent);
+
+		final InetAddress addr = ((ServerDataEvent) dataEvent).getChannel()
+				.socket().getInetAddress();
+		final int port = ((ServerDataEvent) dataEvent).getChannel().socket()
+				.getPort();
+		User currUser = new User(port, addr);
+		if (this.users.contains(currUser)) {
+			for (final User u : this.users) {
+				if (u.equals(currUser)) {
+					currUser = u;
+				}
+			}
+		}
 		/* initial salutation */
-		if (!this.helo) {
-			return this.helo(dataEvent, command);
+		if (!currUser.isGreeted()) {
+			currUser.setGreeted(true);
+			this.users.add(currUser);
+			return this.helo(dataEvent, command, currUser);
 		}
 		/* if the user is not logged , it should be */
-		if (!this.logged) {
+		if (!currUser.isLogged()) {
 			this.loginservice = LoginService.getInstance();
-			final Code code = this.loginservice.login(dataEvent, command);
-			this.logged = this.loginservice.isLogged(code);
+			final Code code = this.loginservice.login(dataEvent, command,
+					currUser);
+			currUser.setLogged(this.loginservice.isLogged(code));
 			return this.loginservice.createResponseEvent(code, dataEvent);
 		}
 		/* changes the proxy configuration */
@@ -71,22 +83,11 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 		return event;
 	}
 
-	private void resetWorkerState() {
-		this.helo = false;
-		this.logged = false;
+	@Override
+	void resetWorkerState() {
 		this.loginservice = null;
 		LoginService.resetInstance();
 		this.quit();
-	}
-
-	private String obtainCommand(final DataEvent dataEvent) {
-		if (new String(dataEvent.getData().array()).split("\n").length != 0) {
-			this.data = new String(dataEvent.getData().array()).split("\n")[0];
-		} else {
-			this.data = "";
-		}
-		final String command = this.data.split(" ")[0];
-		return command;
 	}
 
 	private byte[] processCommand(final String command,
@@ -116,25 +117,6 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 	}
 
 	private void quit() {
-		this.helo = false;
-		this.logged = false;
-	}
-
-	private DataEvent helo(final DataEvent dataEvent, final String command) {
-		ServerDataEvent event;
-		byte[] resp;
-		if (command.compareTo("HELO") != 0) {
-			resp = "".getBytes();
-		} else {
-			this.helo = true;
-			resp = "Hello user, I am glad to meet you\nEnter user name: "
-					.getBytes();
-		}
-		event = new ServerDataEvent(((ServerDataEvent) dataEvent).getChannel(),
-				ByteBuffer.wrap(resp), dataEvent.getReceiver());
-		event.setCanClose(false);
-		event.setCanSend(true);
-		return event;
 	}
 
 	private byte[] get(final String property, final Configuration configuration) {
@@ -295,4 +277,5 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 				chainProxyHost));
 		return resp;
 	}
+
 }
