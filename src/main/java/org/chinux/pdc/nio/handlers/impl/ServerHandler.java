@@ -33,9 +33,13 @@ public class ServerHandler implements NIOServerHandler, DataReceiver<DataEvent> 
 
 	private EventDispatcher<DataEvent> dispatcher;
 
-	public ServerHandler(final EventDispatcher<DataEvent> dispatcher) {
-		this.dispatcher = dispatcher;
+	public ServerHandler() {
+
 		this.readBuffer = ByteBuffer.allocate(1480);
+	}
+
+	public void setEventDispatcher(final EventDispatcher<DataEvent> dispatcher) {
+		this.dispatcher = dispatcher;
 	}
 
 	@Override

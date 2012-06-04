@@ -45,6 +45,8 @@ public class TimeoutableSocketPool {
 					TimeoutableSocketPool.this.elements.remove(c);
 					TimeoutableSocketPool.this.timeAdded.remove(c);
 				}
+
+				this.toRemove.clear();
 			}
 		};
 

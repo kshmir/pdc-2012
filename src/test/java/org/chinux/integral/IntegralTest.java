@@ -58,7 +58,9 @@ public class IntegralTest {
 		final ClientDataReceiver clientReceiver = new ASyncClientDataReceiver();
 
 		// Server logic
-		final ServerHandler serverHandler = new ServerHandler(serverDispatcher);
+		final ServerHandler serverHandler = new ServerHandler();
+
+		serverHandler.setEventDispatcher(serverDispatcher);
 
 		// Client logic
 		// final ClientHandler clientHandler = new

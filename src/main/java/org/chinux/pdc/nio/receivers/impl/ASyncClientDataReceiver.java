@@ -29,6 +29,7 @@ public class ASyncClientDataReceiver extends ClientDataReceiver implements
 			final ErrorDataEvent event = (ErrorDataEvent) dataEvent;
 			this.makeSocketChannelFromOld(
 					(SocketChannel) event.getAttachment(), event.getOwner());
+			return;
 		}
 
 		if (!(dataEvent instanceof ClientDataEvent)) {

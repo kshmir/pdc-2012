@@ -39,10 +39,16 @@
 	<bean id="configurationWorker" class="org.chinux.pdc.workers.impl.ConfigurationWorker" lazy-init="false">
 	</bean>
 
-	<bean id="eventDispatcher" class="org.chinux.pdc.nio.dispatchers.ASyncEventDispatcher"
+	<bean id="eventDispatcher" class="org.chinux.pdc.nio.dispatchers.MultiThreadedEventDispatcher"
 		lazy-init="false">
 		<constructor-arg>
-			<ref bean="httpProxyWorker" />
+			<value>${workerthreads}</value>
+		</constructor-arg>
+		<constructor-arg>
+			<ref bean="serverHandler" />
+		</constructor-arg>
+		<constructor-arg>
+			<ref bean="clientDataReceiver" />
 		</constructor-arg>
 	</bean>
 	
@@ -56,26 +62,20 @@
 	<bean id="clientHandler" class="org.chinux.pdc.nio.handlers.impl.ClientHandler"
 		lazy-init="false">
 		<constructor-arg>
-			<ref bean="eventDispatcher" />
-		</constructor-arg>
-		<constructor-arg>
 			<ref bean="clientDataReceiver" />
 		</constructor-arg>
+		<property name="eventDispatcher" ref="eventDispatcher"></property>
 		<property name="connectionCloseHandler" ref="clientDataReceiver"></property>
 	</bean>
 
 	<bean id="serverHandler" class="org.chinux.pdc.nio.handlers.impl.ServerHandler"
 		lazy-init="false">
-		<constructor-arg>
-			<ref bean="eventDispatcher" />
-		</constructor-arg>
+		<property name="eventDispatcher" ref="eventDispatcher"></property>
 	</bean>
 
 	<bean id="configServerHandler" class="org.chinux.pdc.nio.handlers.impl.ServerHandler"
 		lazy-init="false">
-		<constructor-arg>
-			<ref bean="workerEventDispatcher"/>
-		</constructor-arg>
+		<property name="eventDispatcher" ref="workerEventDispatcher"></property>
 	</bean>
 
 	<bean id="configServer" class="org.chinux.pdc.nio.services.NIOServer"
@@ -104,12 +104,6 @@
 	</bean>
 
 
-	<bean id="dispatcherService" class="org.chinux.pdc.Service"
-		lazy-init="default">
-		<constructor-arg>
-			<ref bean="eventDispatcher" />
-		</constructor-arg>
-	</bean>
 
 	<bean id="serverService" class="org.chinux.pdc.Service" lazy-init="default">
 		<constructor-arg>
