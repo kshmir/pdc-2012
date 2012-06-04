@@ -66,11 +66,14 @@ public class NIOSCBasicTest {
 		final ClientDataReceiver clientReceiver = new ASyncClientDataReceiver();
 
 		// Server logic
-		final ServerHandler serverHandler = new ServerHandler(serverDispatcher);
+		final ServerHandler serverHandler = new ServerHandler();
+
+		serverHandler.setEventDispatcher(serverDispatcher);
 
 		// Client logic
-		final ClientHandler clientHandler = new ClientHandler(clientDispatcher,
-				clientReceiver);
+		final ClientHandler clientHandler = new ClientHandler(clientReceiver);
+
+		clientHandler.setEventDispatcher(clientDispatcher);
 
 		final NIOClient client = new NIOClient(9090);
 		client.setHandler(clientHandler);

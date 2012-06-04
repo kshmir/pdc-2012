@@ -9,7 +9,7 @@ import org.chinux.pdc.nio.events.api.DataEvent;
 import org.chinux.pdc.workers.api.Worker;
 
 public class ASyncEventDispatcher<T extends DataEvent> implements Runnable,
-		EventDispatcher<T> {
+		MonitorableEventDispatcher, UrgentEventDispatcher<T> {
 
 	private Deque<T> events = new LinkedList<T>();
 	private Worker<T> worker;
@@ -30,6 +30,7 @@ public class ASyncEventDispatcher<T extends DataEvent> implements Runnable,
 		}
 	}
 
+	@Override
 	public void processDataUrgent(final T event) {
 		synchronized (this.events) {
 
@@ -74,6 +75,11 @@ public class ASyncEventDispatcher<T extends DataEvent> implements Runnable,
 				}
 			}
 		}
+	}
+
+	@Override
+	public synchronized int getQueueSize() {
+		return this.events.size();
 	}
 
 }

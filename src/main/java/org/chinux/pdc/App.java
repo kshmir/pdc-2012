@@ -32,6 +32,13 @@ public class App {
 						"The file to log to, the default output is stdout")
 				.create("logfile");
 
+		final Option workerthreads = OptionBuilder
+				.withLongOpt("workerthreads")
+				.hasArg()
+				.withDescription(
+						"The amount of worker threads to use, default is number of cores * 2")
+				.create("workerthreads");
+
 		final Option configport = OptionBuilder
 				.withLongOpt("configport")
 				.hasArg()
@@ -54,6 +61,7 @@ public class App {
 		opts.addOption(configport);
 		opts.addOption(monitorport);
 		opts.addOption(logfile);
+		opts.addOption(workerthreads);
 
 		return opts;
 	}
@@ -95,6 +103,8 @@ public class App {
 							+ " added, does it exist?");
 				}
 			}
+			setPropertyFromOption(line, "workerthreads", Runtime.getRuntime()
+					.availableProcessors() * 2);
 			setPropertyFromOption(line, "proxyport", 9090);
 			setPropertyFromOption(line, "configport", 9091);
 			setPropertyFromOption(line, "monitorport", 9092);

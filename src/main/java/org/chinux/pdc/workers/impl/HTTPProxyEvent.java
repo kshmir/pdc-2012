@@ -59,9 +59,6 @@ public class HTTPProxyEvent {
 		if (obj == null) {
 			return false;
 		}
-		if (this.getClass() != obj.getClass()) {
-			return false;
-		}
 		final HTTPProxyEvent other = (HTTPProxyEvent) obj;
 		if (this.getSocketChannel() == null) {
 			if (other.getSocketChannel() != null) {
@@ -99,13 +96,7 @@ public class HTTPProxyEvent {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime
-				* result
-				+ ((this.getSocketChannel() == null) ? 0 : this
-						.getSocketChannel().hashCode());
-		return result;
+		return this.getSocketChannel().hashCode();
 	}
 
 	public void setAddress(final InetAddress address) {

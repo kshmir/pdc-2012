@@ -27,18 +27,19 @@ public class ClientHandler implements NIOClientHandler, ConnectionCloseHandler {
 	private Map<Object, ArrayList<ByteBuffer>> pendingData;
 	private ConnectionCloseHandler connectionCloseHandler;
 
-	public ClientHandler(final EventDispatcher<DataEvent> dispatcher) {
-		this(dispatcher, new ASyncClientDataReceiver());
+	public ClientHandler() {
+		this(new ASyncClientDataReceiver());
 	}
 
-	public ClientHandler(final EventDispatcher<DataEvent> dispatcher,
-			final ClientDataReceiver receiver) {
-
+	public ClientHandler(final ClientDataReceiver receiver) {
 		this.setReceiver(receiver);
-		this.dispatcher = dispatcher;
 		this.readBuffer = ByteBuffer.allocate(1480);
 		this.pendingData = this.receiver.getPendingData();
 		this.connectionCloseHandler = this;
+	}
+
+	public void setEventDispatcher(final EventDispatcher<DataEvent> dispatcher) {
+		this.dispatcher = dispatcher;
 	}
 
 	public void setConnectionCloseHandler(final ConnectionCloseHandler handler) {

@@ -13,7 +13,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.chinux.pdc.FilterException;
-import org.chinux.pdc.nio.dispatchers.ASyncEventDispatcher;
+import org.chinux.pdc.nio.dispatchers.UrgentEventDispatcher;
 import org.chinux.pdc.nio.events.api.DataEvent;
 import org.chinux.pdc.nio.events.impl.ClientDataEvent;
 import org.chinux.pdc.nio.events.impl.ErrorDataEvent;
@@ -61,10 +61,10 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 	private DataReceiver<DataEvent> serverDataReceiver = null;
 
 	private HTTPRequestEventHandler requestEventHandler;
-	private ASyncEventDispatcher<DataEvent> eventDispatcher;
+	private UrgentEventDispatcher<DataEvent> eventDispatcher;
 
 	public void setEventDispatcher(
-			final ASyncEventDispatcher<DataEvent> eventDispatcher) {
+			final UrgentEventDispatcher<DataEvent> eventDispatcher) {
 		this.eventDispatcher = eventDispatcher;
 	}
 
@@ -213,15 +213,10 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 
 				this.receivedRequests.remove(event);
 				this.popEventForChannel(event.getSocketChannel());
+				this.eventsForChannel.remove(event.getSocketChannel());
 			}
 
 			this.logger.debug("Sending event to server: " + e);
-		}
-
-		if (this.eventsForChannel.get(event.getSocketChannel()) != null
-				&& this.eventsForChannel.get(event.getSocketChannel()).size() == 0) {
-			this.eventsForChannel.remove(event.getSocketChannel());
-			this.receivedRequests.remove(event);
 		}
 
 		return e;
@@ -305,8 +300,6 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 			e.setCanSend(false);
 
 		}
-
-		System.out.println(new String(serverEvent.getData().array()));
 
 		return e;
 	}
