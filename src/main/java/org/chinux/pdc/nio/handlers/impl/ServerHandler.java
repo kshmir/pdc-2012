@@ -88,7 +88,6 @@ public class ServerHandler implements NIOServerHandler, DataReceiver<DataEvent> 
 						(SocketChannel) errorEvent.getOwner(),
 						ChangeRequest.CLOSE, 0));
 			}
-			System.out.println("CONNECTION CLOSING!");
 			this.selector.wakeup();
 			return;
 		}
@@ -169,8 +168,6 @@ public class ServerHandler implements NIOServerHandler, DataReceiver<DataEvent> 
 		// Hand the data off to our worker thread
 		final ByteBuffer data = NIOUtil.readBuffer(readBuffer, numRead);
 
-		System.out.println(new String(readBuffer.array()));
-
 		this.dispatcher.processData(new ServerDataEvent(socketChannel, data,
 				this));
 	}
@@ -191,7 +188,7 @@ public class ServerHandler implements NIOServerHandler, DataReceiver<DataEvent> 
 
 					socketChannel.write(buf);
 					if (buf.remaining() > 0) {
-						System.out.println("FILLEDDD!!");
+
 						// ... or the socket's buffer fills up
 						break;
 					}
@@ -276,7 +273,6 @@ public class ServerHandler implements NIOServerHandler, DataReceiver<DataEvent> 
 
 		}
 
-		System.out.println("Proxy client disconnection");
 		this.dispatcher.processData(new ErrorDataEvent(
 				ErrorDataEvent.PROXY_CLIENT_DISCONNECT, change.socket, null));
 	}
@@ -290,7 +286,6 @@ public class ServerHandler implements NIOServerHandler, DataReceiver<DataEvent> 
 
 		}
 
-		System.out.println("Proxy client disconnection");
 		this.dispatcher.processData(new ErrorDataEvent(
 				ErrorDataEvent.PROXY_CLIENT_DISCONNECT, key.channel(), null));
 	}

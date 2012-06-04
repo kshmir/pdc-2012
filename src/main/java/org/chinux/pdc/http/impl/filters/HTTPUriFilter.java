@@ -13,12 +13,9 @@ public class HTTPUriFilter implements HTTPFilter {
 
 	@Override
 	public boolean isValid(final HTTPProxyEvent event) {
-		if (event.getRequest() == null) {
-			return true;
-		}
 		final List<String> uris = event.getEventConfiguration()
 				.getBlockedURLs();
-		final String req = event.getRequest().getHeaders().getHeader("host");
+		final String req = event.getRequest().getHeaders().getHeader("Host");
 		for (final String uri : uris) {
 			final Pattern pattern = Pattern.compile(uri);
 			final Matcher match = pattern.matcher(req);

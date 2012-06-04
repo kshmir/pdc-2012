@@ -1,20 +1,18 @@
 package org.chinux.pdc.workers.impl;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.chinux.pdc.nio.events.api.DataEvent;
+import org.chinux.pdc.nio.events.impl.ErrorDataEvent;
 import org.chinux.pdc.nio.events.impl.ServerDataEvent;
 import org.chinux.pdc.server.Configuration;
 import org.chinux.pdc.server.ConfigurationProvider;
+import org.chinux.pdc.server.LoginService;
+import org.chinux.pdc.server.LoginService.Code;
 import org.chinux.pdc.workers.api.Worker;
 
 public class ConfigurationWorker implements Worker<DataEvent> {
@@ -22,54 +20,78 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 	private String data;
 	private boolean logged = false;
 	private boolean helo = false;
-	private String username = null;
-	private Map<String, String> users;
 	private Pattern ipPattern = Pattern
-			.compile("(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/(0|8|16|24|32)");
+			.compile("(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/(8|16|24|32)");
+
+	private LoginService loginservice;
+
+	public ConfigurationWorker() {
+	}
 
 	@Override
 	public DataEvent DoWork(final DataEvent dataEvent) {
-		if (dataEvent == null || dataEvent.getData() == null) {
-			// Connection close!
-			return dataEvent;
-		}
 
-		final String str = new String(dataEvent.getData().array());
-		if (str.length() < 2) {
-			return dataEvent;
-		}
-		this.data = str.split("\n")[0];
-		this.users = new HashMap<String, String>();
-		final String command = this.data.split(" ")[0];
 		final ServerDataEvent event;
-		byte[] resp = null;
-
+		/* if there is an error.. */
+		if (dataEvent instanceof ErrorDataEvent) {
+			this.resetWorkerState();
+			return dataEvent;
+		}
+		/* obtains the command to process */
+		final String command = this.obtainCommand(dataEvent);
+		/* initial salutation */
 		if (!this.helo) {
 			return this.helo(dataEvent, command);
 		}
-
+		/* if the user is not logged , it should be */
 		if (!this.logged) {
-			final Properties props = new Properties();
-			try {
-				props.load(this.getClass().getResourceAsStream(
-						"/users.properties"));
-
-			} catch (final FileNotFoundException e) {
-				e.printStackTrace();
-			} catch (final IOException e) {
-				e.printStackTrace();
-			}
-			final String users[] = props.getProperty("user").split(",");
-			final String passwords[] = props.getProperty("password").split(",");
-			for (int i = 0; i < users.length && i < passwords.length; i++) {
-				this.users.put(users[i], passwords[i]);
-			}
-			return this.login(dataEvent, command);
+			this.loginservice = LoginService.getInstance();
+			final Code code = this.loginservice.login(dataEvent, command);
+			this.logged = this.loginservice.isLogged(code);
+			return this.loginservice.createResponseEvent(code, dataEvent);
 		}
+		/* changes the proxy configuration */
+		event = this.processConfiguration(dataEvent, command);
+		return event;
+	}
 
+	private ServerDataEvent processConfiguration(final DataEvent dataEvent,
+			final String command) {
+		ServerDataEvent event;
+		byte[] resp;
 		final Configuration configuration = ConfigurationProvider
 				.getConfiguration();
 
+		resp = this.processCommand(command, configuration);
+
+		event = new ServerDataEvent(((ServerDataEvent) dataEvent).getChannel(),
+				ByteBuffer.wrap(resp), dataEvent.getReceiver());
+		event.setCanClose(false);
+		event.setCanSend(true);
+		return event;
+	}
+
+	private void resetWorkerState() {
+		this.helo = false;
+		this.logged = false;
+		this.loginservice = null;
+		LoginService.resetInstance();
+		this.quit();
+	}
+
+	private String obtainCommand(final DataEvent dataEvent) {
+		if (new String(dataEvent.getData().array()).split("\n").length != 0) {
+			this.data = new String(dataEvent.getData().array()).split("\n")[0];
+		} else {
+			this.data = "";
+		}
+		final String command = this.data.split(" ")[0];
+		return command;
+	}
+
+	private byte[] processCommand(final String command,
+			final Configuration configuration) {
+		byte[] resp;
 		if (command.equals("GET")) {
 			if (this.data.split(" ").length <= 1) {
 				resp = "Invalid Parameter\n".getBytes();
@@ -86,21 +108,14 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 			}
 		} else if (command.equals("LOGOUT")) {
 			this.quit();
-			resp = "250 Logout OK\n".getBytes();
+			resp = "Logout OK\nEnter user name: ".getBytes();
 		} else {
 			resp = "Invalid Command\n".getBytes();
 		}
-
-		event = new ServerDataEvent(((ServerDataEvent) dataEvent).getChannel(),
-				ByteBuffer.wrap(resp), dataEvent.getReceiver());
-		event.setCanClose(false);
-		event.setCanSend(true);
-		return event;
+		return resp;
 	}
 
 	private void quit() {
-		// No save no more!
-		this.username = null;
 		this.helo = false;
 		this.logged = false;
 	}
@@ -112,31 +127,8 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 			resp = "".getBytes();
 		} else {
 			this.helo = true;
-			resp = "250 Hello user, I am glad to meet you\nEnter user name: "
+			resp = "Hello user, I am glad to meet you\nEnter user name: "
 					.getBytes();
-		}
-		event = new ServerDataEvent(((ServerDataEvent) dataEvent).getChannel(),
-				ByteBuffer.wrap(resp), dataEvent.getReceiver());
-		event.setCanClose(false);
-		event.setCanSend(true);
-		return event;
-	}
-
-	private DataEvent login(final DataEvent dataEvent, final String command) {
-		ServerDataEvent event;
-		byte[] resp;
-		if (this.username != null) {
-			if (!this.users.containsKey(this.username)
-					|| command.trim().compareTo(this.users.get(this.username)) != 0) {
-				resp = "Login Incorrect\n".getBytes();
-				this.username = null;
-			} else {
-				this.logged = true;
-				resp = "250 Login OK\n".getBytes();
-			}
-		} else {
-			this.username = command.trim();
-			resp = "Enter password: ".getBytes();
 		}
 		event = new ServerDataEvent(((ServerDataEvent) dataEvent).getChannel(),
 				ByteBuffer.wrap(resp), dataEvent.getReceiver());
@@ -146,31 +138,31 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 	}
 
 	private byte[] get(final String property, final Configuration configuration) {
-		if (property.equals("blockAll")) {
+		if (property.toLowerCase().equals("blockall")) {
 			return ((new Boolean(configuration.isBlockAll())).toString() + "\n")
 					.getBytes();
-		} else if (property.equals("l33t")) {
+		} else if (property.toLowerCase().equals("l33t")) {
 			return ((new Boolean(configuration.isL33t())).toString() + "\n")
 					.getBytes();
-		} else if (property.equals("rotateImages")) {
+		} else if (property.toLowerCase().equals("rotateimages")) {
 			return ((new Boolean(configuration.isRotateImages())).toString() + "\n")
 					.getBytes();
-		} else if (property.equals("maxResSize")) {
+		} else if (property.toLowerCase().equals("maxressize")) {
 			return ((new Integer(configuration.getMaxResSize())).toString() + "\n")
 					.getBytes();
-		} else if (property.equals("blockedIPs")) {
+		} else if (property.toLowerCase().equals("blockedips")) {
 			String resp = "";
 			for (final String str : configuration.getBlockedIPs()) {
 				resp += str + " ";
 			}
 			return (resp + "\n").getBytes();
-		} else if (property.equals("blockedURLs")) {
+		} else if (property.toLowerCase().equals("blockedurls")) {
 			String resp = "";
 			for (final String str : configuration.getBlockedURLs()) {
 				resp += str + " ";
 			}
 			return (resp + "\n").getBytes();
-		} else if (property.equals("blockedMediaTypes")) {
+		} else if (property.toLowerCase().equals("blockedmediatypes")) {
 			String resp = "";
 			for (final String str : configuration.getBlockedMediaTypes()) {
 				resp += str + " ";
@@ -196,7 +188,7 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 		byte[] resp = null;
 		resp = "Configuration changed\n".getBytes();
 
-		if (property.equals("maxResEnabled")) {
+		if (property.toLowerCase().equals("maxresenabled")) {
 			if (this.data.split(" ").length >= 3) {
 				maxResEnabled = Boolean.valueOf(this.data.split(" ")[2]);
 				resp = ("maxResEnabled set to " + this.data.split(" ")[2] + "\n")
@@ -204,7 +196,7 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 			} else {
 				resp = "Invalid Parameter\n".getBytes();
 			}
-		} else if (property.equals("chainProxyPort")) {
+		} else if (property.toLowerCase().equals("chainproxyport")) {
 			if (this.data.split(" ").length >= 3) {
 				chainProxyPort = Integer.valueOf(this.data.split(" ")[2]);
 				resp = ("chainProxyPort set to " + this.data.split(" ")[2] + "\n")
@@ -212,7 +204,7 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 			} else {
 				resp = "Invalid Parameter\n".getBytes();
 			}
-		} else if (property.equals("chainProxyHost")) {
+		} else if (property.toLowerCase().equals("chainproxyhost")) {
 			if (this.data.split(" ").length >= 3) {
 				chainProxyHost = this.data.split(" ")[2];
 				resp = ("chainProxyHost set to " + this.data.split(" ")[2] + "\n")
@@ -220,7 +212,7 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 			} else {
 				resp = "Invalid Parameter\n".getBytes();
 			}
-		} else if (property.equals("blockAll")) {
+		} else if (property.toLowerCase().equals("blockall")) {
 			if (this.data.split(" ").length >= 3) {
 				blockAll = Boolean.valueOf(this.data.split(" ")[2]);
 				resp = ("BlockAll set to " + this.data.split(" ")[2] + "\n")
@@ -228,7 +220,7 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 			} else {
 				resp = "Invalid Parameter\n".getBytes();
 			}
-		} else if (property.equals("chainProxy")) {
+		} else if (property.toLowerCase().equals("chainproxy")) {
 			if (this.data.split(" ").length >= 3) {
 				chainProxy = Boolean.valueOf(this.data.split(" ")[2]);
 				resp = ("ChainProxy set to " + this.data.split(" ")[2] + "\n")
@@ -236,7 +228,7 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 			} else {
 				resp = "Invalid Parameter\n".getBytes();
 			}
-		} else if (property.equals("l33t")) {
+		} else if (property.toLowerCase().equals("l33t")) {
 			if (this.data.split(" ").length >= 3) {
 				l33t = Boolean.valueOf(this.data.split(" ")[2]);
 				resp = ("l33t set to " + this.data.split(" ")[2] + "\n")
@@ -244,7 +236,7 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 			} else {
 				resp = "Invalid Parameter\n".getBytes();
 			}
-		} else if (property.equals("rotateImages")) {
+		} else if (property.toLowerCase().equals("rotateimages")) {
 			if (this.data.split(" ").length >= 3) {
 				rotateImages = Boolean.valueOf(this.data.split(" ")[2]);
 				resp = ("RotateImages set to " + this.data.split(" ")[2] + "\n")
@@ -252,7 +244,7 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 			} else {
 				resp = "Invalid Parameter\n".getBytes();
 			}
-		} else if (property.equals("maxResSize")) {
+		} else if (property.toLowerCase().equals("maxressize")) {
 			if (this.data.split(" ").length >= 3) {
 				maxResSize = Integer.valueOf(this.data.split(" ")[2]);
 				resp = ("MaxResSize set to " + this.data.split(" ")[2] + "\n")
@@ -260,9 +252,10 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 			} else {
 				resp = "Invalid Parameter\n".getBytes();
 			}
-		} else if (property.equals("blockedIPs")) {
+		} else if (property.toLowerCase().equals("blockedips")) {
 			blockedIPs = new ArrayList<String>();
 			if (this.data.split(" ").length >= 3) {
+				blockedIPs.addAll(configuration.getBlockedIPs());
 				for (final String str : this.data.split(" ")[2].split(",")) {
 					final Matcher match = this.ipPattern.matcher(str);
 					if (match.find()) {
@@ -274,17 +267,19 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 				}
 			}
 			resp = ("BlockedIPs set to " + blockedIPs + "\n").getBytes();
-		} else if (property.equals("blockedURLs")) {
+		} else if (property.toLowerCase().equals("blockedurls")) {
 			blockedURLs = new ArrayList<String>();
 			if (this.data.split(" ").length >= 3) {
+				blockedURLs.addAll(configuration.getBlockedURLs());
 				for (final String str : this.data.split(" ")[2].split(",")) {
 					blockedURLs.add(str);
 				}
 			}
 			resp = ("BlockedURLs set to " + blockedURLs + "\n").getBytes();
-		} else if (property.equals("blockedMediaTypes")) {
+		} else if (property.toLowerCase().equals("blockedmediatypes")) {
 			blockedMediaTypes = new ArrayList<String>();
 			if (this.data.split(" ").length >= 3) {
+				blockedMediaTypes.addAll(configuration.getBlockedMediaTypes());
 				for (final String str : this.data.split(" ")[2].split(",")) {
 					blockedMediaTypes.add(str);
 				}

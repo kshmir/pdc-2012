@@ -34,7 +34,6 @@ public class HTTPIPFilter implements HTTPFilter {
 		if (dest != null) {
 			return !this.matches(ips, dest);
 		}
-		this.log.info("Destination host null\n");
 		return true;
 	}
 

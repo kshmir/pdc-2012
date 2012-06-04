@@ -43,8 +43,6 @@ public class ASyncClientDataReceiver extends ClientDataReceiver implements
 				(event.getPort() != null) ? event.getPort()
 						: this.connectionPort);
 
-		System.out.println(socketHost.getPort());
-
 		synchronized (this.attachmentIPMap) {
 			synchronized (this.changeRequests) {
 				synchronized (this.pendingData) {

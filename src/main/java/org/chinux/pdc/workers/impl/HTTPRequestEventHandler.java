@@ -193,7 +193,8 @@ public class HTTPRequestEventHandler {
 
 			proxyEvent = event;
 
-			if (!HTTPBaseFilter.getBaseRequestFilter().isValid(event)) {
+			if (this.canDoFilter(event)
+					&& !HTTPBaseFilter.getBaseRequestFilter().isValid(event)) {
 				throw new FilterException(HTTPBaseFilter.getBaseRequestFilter()
 						.getErrorResponse(event));
 			} else {
@@ -211,6 +212,10 @@ public class HTTPRequestEventHandler {
 			}
 		}
 		return proxyEvent;
+	}
+
+	private boolean canDoFilter(final HTTPProxyEvent event) {
+		return event.getRequest() != null;
 	}
 
 	private void addMaxForwardsHeader(final HTTPRequestHeader header) {

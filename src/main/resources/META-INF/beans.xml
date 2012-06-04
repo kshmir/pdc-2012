@@ -36,7 +36,8 @@
 		<property name="eventDispatcher" ref="eventDispatcher"/>	
 	</bean>
 	
-	<bean id="configurationWorker" class="org.chinux.pdc.workers.impl.ConfigurationWorker"/>
+	<bean id="configurationWorker" class="org.chinux.pdc.workers.impl.ConfigurationWorker" lazy-init="false">
+	</bean>
 
 	<bean id="eventDispatcher" class="org.chinux.pdc.nio.dispatchers.ASyncEventDispatcher"
 		lazy-init="false">
