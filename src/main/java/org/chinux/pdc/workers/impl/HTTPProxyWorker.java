@@ -199,6 +199,8 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 				final ClientDataEvent tellToClose = new ClientDataEvent(null,
 						this.clientDataReceiver, null, event, null);
 				this.clientDataReceiver.closeConnection(tellToClose);
+				this.receivedRequests.remove(event);
+				this.eventsForChannel.remove(event.getSocketChannel());
 			}
 			e.setCanSend(event.canSend());
 
@@ -213,7 +215,6 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 
 				this.receivedRequests.remove(event);
 				this.popEventForChannel(event.getSocketChannel());
-				this.eventsForChannel.remove(event.getSocketChannel());
 			}
 
 			this.logger.debug("Sending event to server: " + e);
