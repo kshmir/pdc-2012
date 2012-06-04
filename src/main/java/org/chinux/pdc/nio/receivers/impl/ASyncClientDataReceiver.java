@@ -27,8 +27,11 @@ public class ASyncClientDataReceiver extends ClientDataReceiver implements
 
 		if (dataEvent instanceof ErrorDataEvent) {
 			final ErrorDataEvent event = (ErrorDataEvent) dataEvent;
-			this.makeSocketChannelFromOld(
-					(SocketChannel) event.getAttachment(), event.getOwner());
+			synchronized (this.changeRequests) {
+				this.changeRequests.add(new ChangeRequest((SocketChannel) event
+						.getAttachment(), ChangeRequest.MAKE_NEW,
+						SelectionKey.OP_WRITE, event.getOwner()));
+			}
 			return;
 		}
 
@@ -56,6 +59,8 @@ public class ASyncClientDataReceiver extends ClientDataReceiver implements
 					}
 					SocketChannel socketChannel;
 
+					boolean isNew = false;
+
 					socketChannel = this.attachmentSocketMap.get(event
 							.getAttachment());
 
@@ -65,6 +70,8 @@ public class ASyncClientDataReceiver extends ClientDataReceiver implements
 
 						if (socketChannel == null) {
 							socketChannel = this.makeSocketChannel(socketHost);
+
+							isNew = true;
 						}
 
 						this.attachmentIPMap.put(event.getAttachment(),
@@ -84,8 +91,15 @@ public class ASyncClientDataReceiver extends ClientDataReceiver implements
 
 					if (!socketChannel.isConnected()
 							&& this.pendingData.get(event.getAttachment()) == null) {
-						this.makeSocketChannelFromOld(socketChannel,
-								event.getAttachment());
+						if (!isNew) {
+							this.makeSocketChannelFromOld(socketChannel,
+									event.getAttachment());
+						} else {
+							this.changeRequests.add(new ChangeRequest(
+									socketChannel, ChangeRequest.REGISTER,
+									SelectionKey.OP_CONNECT, event
+											.getAttachment()));
+						}
 
 					} else {
 						this.changeRequests.add(new ChangeRequest(
@@ -120,6 +134,8 @@ public class ASyncClientDataReceiver extends ClientDataReceiver implements
 			socketChannel.connect(socketHost);
 
 		} catch (final IOException e) {
+			System.out.println(socketHost.getPort());
+			System.out.println(socketHost.getHostName());
 			e.printStackTrace();
 			socketChannel = null; // TODO: Que onda?
 		}
@@ -156,6 +172,9 @@ public class ASyncClientDataReceiver extends ClientDataReceiver implements
 
 				if (change != null && change.socket != null) {
 					switch (change.type) {
+					case ChangeRequest.MAKE_NEW:
+						this.makeSocketChannelFromOld(change.socket,
+								change.attachment);
 					case ChangeRequest.CLOSE:
 						if (change.socket.isConnected()
 								&& this.pendingData.get(change.attachment) != null
@@ -217,6 +236,7 @@ public class ASyncClientDataReceiver extends ClientDataReceiver implements
 
 		try {
 			oldSocket.close();
+			oldSocket.socket().close();
 		} catch (final IOException e) {
 			e.printStackTrace();
 		}

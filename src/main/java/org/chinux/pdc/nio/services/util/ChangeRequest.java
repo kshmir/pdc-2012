@@ -6,6 +6,7 @@ public class ChangeRequest {
 	public static final int REGISTER = 1;
 	public static final int CHANGEOPS = 2;
 	public static final int CLOSE = 3;
+	public static final int MAKE_NEW = 4;
 
 	public SocketChannel socket;
 	public int type;
