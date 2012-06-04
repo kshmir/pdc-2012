@@ -20,11 +20,12 @@
 	</bean>
 
 
+	<bean id="monitorObject" class="org.chinux.pdc.server.MonitorObject" lazy-init="false">
+	</bean>
+
 	<bean id="clientDataReceiver" class="org.chinux.pdc.nio.receivers.impl.ASyncClientDataReceiver"
 		lazy-init="false">
-	</bean>
-	
-	<bean id="monitorObject" class="org.chinux.pdc.server.MonitorObject" lazy-init="false">
+		<property name="monitorObject" ref="monitorObject"/>
 	</bean>
 	
 	<bean id="httpProxyWorker" class="org.chinux.pdc.workers.impl.HTTPProxyWorker">
@@ -38,9 +39,6 @@
 		<constructor-arg>
 			<value type="java.lang.String" >src/main/resources/users.properties</value>
 		</constructor-arg>
-<!-- 		<constructor-arg> -->
-<!-- 			<ref bean="monitorObject" /> -->
-<!-- 		</constructor-arg> -->
 		<property name="monitorObject" ref="monitorObject"/>
 	</bean>
 	

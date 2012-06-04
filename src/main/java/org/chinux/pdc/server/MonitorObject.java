@@ -16,8 +16,17 @@ public class MonitorObject {
 	private int clientConnectionsQuant;
 	private int originServerConnectionsQuant;
 	private int connectionsQuant;
+	private int timedConnections;
 
 	public MonitorObject() {
+	}
+
+	public int getTimedConnections() {
+		return this.timedConnections;
+	}
+
+	public void setTimedConnections(final int timedConnections) {
+		this.timedConnections = timedConnections;
 	}
 
 	public void setConnectionsQuant(final int connectionsQuant) {

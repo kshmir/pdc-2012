@@ -91,6 +91,7 @@ public class MonitorWorker extends LogueableWorker {
 		int ctypeblocks = 0;
 		int sizeblocks = 0;
 		int totalconnections = 0;
+		int timedconnections = 0;
 
 		synchronized (this) {
 			totalBytes = this.monitorObject.getTotalTransferedBytes();
@@ -108,6 +109,7 @@ public class MonitorWorker extends LogueableWorker {
 			ctypeblocks = this.monitorObject.getContentTypeBlocksQuant();
 			sizeblocks = this.monitorObject.getTooBigResourceBlocksQuant();
 			totalconnections = this.monitorObject.getConnectionsQuant();
+			timedconnections = this.monitorObject.getTimedConnections();
 		}
 
 		String totalkb = "";
@@ -154,6 +156,9 @@ public class MonitorWorker extends LogueableWorker {
 							/ (1024 * 1024), 2)) + " MB)";
 		}
 
+		final int clientsconnections = (totalconnections - timedconnections) / 2;
+		final int serversconnections = (totalconnections - timedconnections) / 2;
+
 		final String resp = "======================= PROXY MONITOR INFORMATION ===========================\n"
 				+ "Bytes Transferred from clients:                               "
 				+ fromClientBytes
@@ -197,8 +202,17 @@ public class MonitorWorker extends LogueableWorker {
 				+ "Total Blocks Quantity:                                        "
 				+ totalblocks
 				+ "\n"
+				+ "Waiting Connections Quantity:                                 "
+				+ timedconnections
+				+ "\n"
 				+ "Total Connections Quantity:                                   "
-				+ totalconnections + "\n\n";
+				+ totalconnections
+				+ "\n"
+				+ "Clients Connections Quantity                                  "
+				+ clientsconnections
+				+ "\n"
+				+ "Servers Connections Quantity                                  "
+				+ serversconnections + "\n\n";
 		final ServerDataEvent event = new ServerDataEvent(
 				((ServerDataEvent) dataEvent).getChannel(),
 				ByteBuffer.wrap(resp.getBytes()), dataEvent.getReceiver());
