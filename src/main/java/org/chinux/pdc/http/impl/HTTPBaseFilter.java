@@ -60,7 +60,7 @@ public class HTTPBaseFilter implements HTTPFilter {
 			final MonitorObject monitorObject) {
 		if (baseResponseFilter == null) {
 			baseResponseFilter = new HTTPBaseFilter();
-			baseRequestFilter.monitorObject = monitorObject;
+			baseResponseFilter.monitorObject = monitorObject;
 			baseResponseFilter.addFilter(new HTTPSizeFilter(), 1);
 			baseResponseFilter.addFilter(new HTTPMediaTypesFilter(), 2);
 		}
@@ -76,7 +76,7 @@ public class HTTPBaseFilter implements HTTPFilter {
 	public boolean isValid(final HTTPProxyEvent event) {
 		for (final HTTPFilter filter : this.filters) {
 			if (!filter.isValid(event)) {
-				updateMonitorObject(filter);
+				this.updateMonitorObject(filter);
 				this.rejectedFilter = filter;
 				return false;
 			}

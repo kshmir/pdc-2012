@@ -78,8 +78,8 @@ public class TimeoutableSocketPool {
 		return null;
 	}
 
-	public Map<Object, LinkedList<SocketChannel>> getElements() {
-		return this.elements;
+	public synchronized int getElementsSize() {
+		return this.elements.size();
 	}
 
 }

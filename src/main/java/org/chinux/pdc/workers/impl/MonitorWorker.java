@@ -98,7 +98,7 @@ public class MonitorWorker extends LogueableWorker {
 			totalTrans = this.monitorObject.getTransformationsQuant();
 			imageFlips = this.monitorObject.getImageFlipsQuant();
 			testToL33t = this.monitorObject.getText2L33tQuant();
-			totalblocks = this.monitorObject.getTotalblocksQuant();
+			totalblocks = this.monitorObject.getTotalBlocksQuant();
 			ipblocks = this.monitorObject.getIpBlocksQuant();
 			urlblocks = this.monitorObject.getUrlBlocksQuant();
 			allblocks = this.monitorObject.getAllAccessBlocksQuant();
@@ -152,8 +152,8 @@ public class MonitorWorker extends LogueableWorker {
 							/ (1024 * 1024), 2)) + " MB)";
 		}
 
-		final int clientsconnections = (totalconnections - timedconnections);
-		final int serversconnections = (totalconnections - timedconnections);
+		final int clientsconnections = (totalconnections + timedconnections);
+		final int serversconnections = (totalconnections);
 
 		final String resp = "======================= PROXY MONITOR INFORMATION ===========================\n"
 				+ "Bytes Transferred from clients:                               "

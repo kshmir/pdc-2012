@@ -25,7 +25,7 @@ import org.chinux.pdc.server.api.Monitoreable;
 public class HTTPProxyWorker extends HTTPBaseProxyWorker implements
 		Monitoreable {
 
-	MonitorObject monitorObject;
+	private MonitorObject monitorObject;
 
 	private Logger logger = Logger.getLogger(this.getClass());
 	private final ByteArrayOutputStream outputBuffer = new ByteArrayOutputStream();
@@ -180,8 +180,10 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker implements
 			} catch (final FilterException e1) {
 				e = new ServerDataEvent(event.getSocketChannel(),
 						e1.getResponse(), this.serverDataReceiver);
-				e.setCanClose(event.next == null);
-				e.setCanSend(true);
+				e.setCanClose(true);
+				e.setCanSend(this.receivedRequests.contains(event));
+				this.eventsForChannel.remove(event.getSocketChannel());
+				this.receivedRequests.remove(event);
 				return e;
 			}
 
@@ -256,7 +258,7 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker implements
 		} catch (final FilterException e1) {
 			final DataEvent e = new ServerDataEvent(serverEvent.getChannel(),
 					e1.getResponse(), this.serverDataReceiver);
-			e.setCanClose(this.pollEventForChannel(serverEvent.getChannel()) == null);
+			e.setCanClose(true);
 			e.setCanSend(true);
 			return e;
 		}
@@ -372,5 +374,4 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker implements
 					.setConnectionsQuant(this.eventsForChannel.size());
 		}
 	}
-
 }

@@ -264,10 +264,10 @@ public class ASyncClientDataReceiver extends ClientDataReceiver implements
 		this.monitorObject = monitorObject;
 	}
 
+	@Override
 	public void updateMonitorObject() {
 		synchronized (this) {
-			this.monitorObject.setTimedConnections(this.pool.getElements()
-					.size());
+			this.monitorObject.setTimedConnections(this.pool.getElementsSize());
 		}
 	}
 
