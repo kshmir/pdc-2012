@@ -225,4 +225,5 @@ public class MonitorWorker extends LogueableWorker {
 		final double multiplier = Math.pow(10, places);
 		return Math.floor(multiplier * value) / multiplier;
 	}
+
 }

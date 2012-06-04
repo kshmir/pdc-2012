@@ -1,7 +1,15 @@
 package org.chinux.pdc.server;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
+import org.chinux.pdc.nio.receivers.impl.ASyncClientDataReceiver;
+import org.chinux.pdc.workers.impl.HTTPProxyWorker;
+
 public class MonitorObject {
 
+	private ASyncClientDataReceiver clientDataReceiver;
+	private HTTPProxyWorker httpProxyWorker;
 	private int fromClientsTransferedBytes;
 	private int fromServersTransferedBytes;
 	private int openedConnectionsQuant;
@@ -17,8 +25,21 @@ public class MonitorObject {
 	private int originServerConnectionsQuant;
 	private int connectionsQuant;
 	private int timedConnections;
+	Timer timer;
 
 	public MonitorObject() {
+		new Timer();
+		this.timer = new Timer();
+		this.timer.schedule(new monitorDataPoller(), 5 * 1000);
+	}
+
+	public ASyncClientDataReceiver getClientDataReceiver() {
+		return this.clientDataReceiver;
+	}
+
+	public void setClientDataReceiver(
+			final ASyncClientDataReceiver clientDataReceiver) {
+		this.clientDataReceiver = clientDataReceiver;
 	}
 
 	public int getTimedConnections() {
@@ -194,4 +215,21 @@ public class MonitorObject {
 		this.fromServersTransferedBytes += bytes;
 	}
 
+	public HTTPProxyWorker getHttpProxyWorker() {
+		return this.httpProxyWorker;
+	}
+
+	public void setHttpProxyWorker(final HTTPProxyWorker httpProxyWorker) {
+		this.httpProxyWorker = httpProxyWorker;
+	}
+
+	private class monitorDataPoller extends TimerTask {
+		@Override
+		public void run() {
+			System.out.println("getting data");
+			MonitorObject.this.clientDataReceiver.updateMonitorObject();
+			MonitorObject.this.httpProxyWorker.updateMonitorObject();
+			// System.exit(0);
+		}
+	}
 }

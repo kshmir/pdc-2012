@@ -20,8 +20,10 @@ import org.chinux.pdc.nio.events.impl.ErrorDataEvent;
 import org.chinux.pdc.nio.events.impl.ServerDataEvent;
 import org.chinux.pdc.nio.receivers.api.DataReceiver;
 import org.chinux.pdc.server.MonitorObject;
+import org.chinux.pdc.server.api.Monitoreable;
 
-public class HTTPProxyWorker extends HTTPBaseProxyWorker {
+public class HTTPProxyWorker extends HTTPBaseProxyWorker implements
+		Monitoreable {
 
 	MonitorObject monitorObject;
 
@@ -35,11 +37,6 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 		if (this.eventsForChannel.get(channel) == null) {
 			this.eventsForChannel
 					.put(channel, new LinkedList<HTTPProxyEvent>());
-		}
-
-		synchronized (this) {
-			this.monitorObject
-					.setConnectionsQuant(this.eventsForChannel.size());
 		}
 
 		for (final HTTPProxyEvent e : this.eventsForChannel.get(channel)) {
@@ -253,11 +250,9 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 			throws IOException {
 
 		final HTTPRequestEventHandler handler = this.getRequestEventHandler();
-		/* TODO: NEW MINE */
 		synchronized (this) {
 			this.monitorObject.addFromClientsBytes(serverEvent.getData()
 					.array().length);
-			// System.out.println(this.monitorObject);
 		}
 		HTTPProxyEvent httpEvent;
 		try {
@@ -365,6 +360,14 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 		}
 
 		return answerDataEvent;
+	}
+
+	@Override
+	public void updateMonitorObject() {
+		synchronized (this) {
+			this.monitorObject
+					.setConnectionsQuant(this.eventsForChannel.size());
+		}
 	}
 
 }

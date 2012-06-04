@@ -21,6 +21,8 @@
 
 
 	<bean id="monitorObject" class="org.chinux.pdc.server.MonitorObject" lazy-init="false">
+			<property name="clientDataReceiver" ref="clientDataReceiver"/>
+			<property name="httpProxyWorker" ref="httpProxyWorker"/>
 	</bean>
 
 	<bean id="clientDataReceiver" class="org.chinux.pdc.nio.receivers.impl.ASyncClientDataReceiver"
