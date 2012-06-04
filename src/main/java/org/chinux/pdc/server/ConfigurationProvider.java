@@ -1,6 +1,5 @@
 package org.chinux.pdc.server;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,8 +39,11 @@ public class ConfigurationProvider {
 								prop.getProperty("maxResSize")), new Boolean(
 								prop.getProperty("l33t")), new Boolean(
 								prop.getProperty("rotateImages")), new Boolean(
-								prop.getProperty("chainProxy")));
-			} catch (final IOException e) {
+								prop.getProperty("chainProxy")), new Boolean(
+								prop.getProperty("maxResEnabled")),
+						Integer.valueOf(prop.getProperty("chainProxyPort")),
+						prop.getProperty("chainProxyHost"));
+			} catch (final Exception e) {
 				System.err
 						.println("Configuration file error. Default configuration loaded");
 				configuration = new Configuration();

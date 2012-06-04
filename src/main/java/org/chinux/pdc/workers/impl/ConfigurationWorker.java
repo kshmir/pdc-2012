@@ -29,6 +29,11 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 
 	@Override
 	public DataEvent DoWork(final DataEvent dataEvent) {
+		if (dataEvent == null || dataEvent.getData() == null) {
+			// Connection close!
+			return dataEvent;
+		}
+
 		final String str = new String(dataEvent.getData().array());
 		if (str.length() < 2) {
 			return dataEvent;
@@ -181,6 +186,9 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 		boolean l33t = configuration.isL33t();
 		boolean rotateImages = configuration.isRotateImages();
 		boolean chainProxy = configuration.isChainProxy();
+		boolean maxResEnabled = configuration.isMaxResEnabled();
+		Integer chainProxyPort = configuration.getChainProxyPort();
+		String chainProxyHost = configuration.getChainProxyHost();
 		int maxResSize = configuration.getMaxResSize();
 		List<String> blockedIPs = configuration.getBlockedIPs();
 		List<String> blockedURLs = configuration.getBlockedURLs();
@@ -188,7 +196,31 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 		byte[] resp = null;
 		resp = "Configuration changed\n".getBytes();
 
-		if (property.equals("blockAll")) {
+		if (property.equals("maxResEnabled")) {
+			if (this.data.split(" ").length >= 3) {
+				maxResEnabled = Boolean.valueOf(this.data.split(" ")[2]);
+				resp = ("maxResEnabled set to " + this.data.split(" ")[2] + "\n")
+						.getBytes();
+			} else {
+				resp = "Invalid Parameter\n".getBytes();
+			}
+		} else if (property.equals("chainProxyPort")) {
+			if (this.data.split(" ").length >= 3) {
+				chainProxyPort = Integer.valueOf(this.data.split(" ")[2]);
+				resp = ("chainProxyPort set to " + this.data.split(" ")[2] + "\n")
+						.getBytes();
+			} else {
+				resp = "Invalid Parameter\n".getBytes();
+			}
+		} else if (property.equals("chainProxyHost")) {
+			if (this.data.split(" ").length >= 3) {
+				chainProxyHost = this.data.split(" ")[2];
+				resp = ("chainProxyHost set to " + this.data.split(" ")[2] + "\n")
+						.getBytes();
+			} else {
+				resp = "Invalid Parameter\n".getBytes();
+			}
+		} else if (property.equals("blockAll")) {
 			if (this.data.split(" ").length >= 3) {
 				blockAll = Boolean.valueOf(this.data.split(" ")[2]);
 				resp = ("BlockAll set to " + this.data.split(" ")[2] + "\n")
@@ -264,7 +296,8 @@ public class ConfigurationWorker implements Worker<DataEvent> {
 		}
 		ConfigurationProvider.setConfiguration(new Configuration(blockAll,
 				blockedIPs, blockedURLs, blockedMediaTypes, maxResSize, l33t,
-				rotateImages, chainProxy));
+				rotateImages, chainProxy, maxResEnabled, chainProxyPort,
+				chainProxyHost));
 		return resp;
 	}
 }

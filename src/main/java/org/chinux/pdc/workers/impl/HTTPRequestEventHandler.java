@@ -102,9 +102,16 @@ public class HTTPRequestEventHandler {
 			if (httpEvent.getRequest().getHeaders().getHeader("Host") == null) {
 				throw new Exception();
 			}
-			address = this.resolver.getAddressForHost(httpEvent.getRequest()
-					.getHeaders().getHeader("Host"));
+
+			if (httpEvent.getEventConfiguration().isChainProxy()) {
+				address = this.resolver.getAddressForHost(httpEvent
+						.getEventConfiguration().getChainProxyHost());
+			} else {
+				address = this.resolver.getAddressForHost(httpEvent
+						.getRequest().getHeaders().getHeader("Host"));
+			}
 		} catch (final Exception e) {
+			// TODO: Throw a valid exception!!!
 			address = clientChannel.socket().getInetAddress();
 		}
 		return address;

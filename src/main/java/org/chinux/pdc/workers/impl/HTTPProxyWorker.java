@@ -296,11 +296,17 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 			e.setCanSend(httpEvent.canSend());
 			this.logger.debug("Sending event to client:" + e);
 
+			if (httpEvent.getEventConfiguration().isChainProxy()) {
+				((ClientDataEvent) e).setPort(httpEvent.getEventConfiguration()
+						.getChainProxyPort());
+			}
 		} else {
 			e.setCanClose(false);
 			e.setCanSend(false);
 
 		}
+
+		System.out.println(new String(serverEvent.getData().array()));
 
 		return e;
 	}
