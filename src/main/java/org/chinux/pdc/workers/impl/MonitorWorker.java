@@ -156,8 +156,8 @@ public class MonitorWorker extends LogueableWorker {
 							/ (1024 * 1024), 2)) + " MB)";
 		}
 
-		final int clientsconnections = (totalconnections - timedconnections) / 2;
-		final int serversconnections = (totalconnections - timedconnections) / 2;
+		final int clientsconnections = (totalconnections - timedconnections);
+		final int serversconnections = (totalconnections - timedconnections);
 
 		final String resp = "======================= PROXY MONITOR INFORMATION ===========================\n"
 				+ "Bytes Transferred from clients:                               "
