@@ -1,6 +1,6 @@
 package org.chinux.pdc.nio.receivers.api;
 
-import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.Selector;
@@ -20,10 +20,10 @@ public abstract class ClientDataReceiver implements DataReceiver<DataEvent> {
 	protected int connectionPort;
 
 	protected List<ChangeRequest> changeRequests = new ArrayList<ChangeRequest>();
-	
+
 	protected Map<Object, ArrayList<ByteBuffer>> pendingData = new HashMap<Object, ArrayList<ByteBuffer>>();
 	protected Map<Object, SocketChannel> attachmentSocketMap = new HashMap<Object, SocketChannel>();
-	protected Map<Object, InetAddress> attachmentIPMap = new HashMap<Object, InetAddress>();
+	protected Map<Object, InetSocketAddress> attachmentIPMap = new HashMap<Object, InetSocketAddress>();
 
 	protected Logger log = Logger.getLogger(this.getClass());
 

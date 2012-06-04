@@ -40,16 +40,19 @@ public class ASyncClientDataReceiver extends ClientDataReceiver implements
 		final InetAddress host = event.getAddress();
 
 		final InetSocketAddress socketHost = new InetSocketAddress(host,
-				this.connectionPort);
+				(event.getPort() != null) ? event.getPort()
+						: this.connectionPort);
+
+		System.out.println(socketHost.getPort());
 
 		synchronized (this.attachmentIPMap) {
 			synchronized (this.changeRequests) {
 				synchronized (this.pendingData) {
 
-					final InetAddress oldHost = this.attachmentIPMap.get(event
-							.getAttachment());
+					final InetSocketAddress oldHost = this.attachmentIPMap
+							.get(event.getAttachment());
 
-					if (oldHost != null && !oldHost.equals(host)) {
+					if (oldHost != null && !oldHost.getAddress().equals(host)) {
 						this.attachmentSocketMap.remove(event.getAttachment());
 					}
 					SocketChannel socketChannel;
@@ -65,7 +68,8 @@ public class ASyncClientDataReceiver extends ClientDataReceiver implements
 							socketChannel = this.makeSocketChannel(socketHost);
 						}
 
-						this.attachmentIPMap.put(event.getAttachment(), host);
+						this.attachmentIPMap.put(event.getAttachment(),
+								socketHost);
 						this.attachmentSocketMap.put(event.getAttachment(),
 								socketChannel);
 					}
@@ -205,8 +209,7 @@ public class ASyncClientDataReceiver extends ClientDataReceiver implements
 	private void makeSocketChannelFromOld(final SocketChannel oldSocket,
 			final Object attachment) {
 		final SocketChannel newSocket = this
-				.makeSocketChannel(new InetSocketAddress(this.attachmentIPMap
-						.get(attachment), this.connectionPort));
+				.makeSocketChannel(this.attachmentIPMap.get(attachment));
 
 		this.attachmentSocketMap.remove(oldSocket);
 		this.attachmentSocketMap.put(attachment, newSocket);

@@ -19,6 +19,8 @@ public class ClientDataEvent extends DataEvent {
 	private Object owner; // The owner of a clientDataEvent can be a
 							// SocketChannel
 
+	private Integer port = null; // For proxy chaining
+
 	public ClientDataEvent(final ByteBuffer data, final Object attachment,
 			final Object owner) {
 		this(data, null, null, attachment, owner);
@@ -73,6 +75,14 @@ public class ClientDataEvent extends DataEvent {
 
 	public void setOwner(final Object owner) {
 		this.owner = owner;
+	}
+
+	public Integer getPort() {
+		return this.port;
+	}
+
+	public void setPort(final Integer port) {
+		this.port = port;
 	}
 
 }

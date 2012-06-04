@@ -169,6 +169,8 @@ public class ServerHandler implements NIOServerHandler, DataReceiver<DataEvent> 
 		// Hand the data off to our worker thread
 		final ByteBuffer data = NIOUtil.readBuffer(readBuffer, numRead);
 
+		System.out.println(new String(readBuffer.array()));
+
 		this.dispatcher.processData(new ServerDataEvent(socketChannel, data,
 				this));
 	}
