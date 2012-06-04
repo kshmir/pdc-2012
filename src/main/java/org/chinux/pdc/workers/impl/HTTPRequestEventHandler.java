@@ -172,16 +172,6 @@ public class HTTPRequestEventHandler {
 			final HTTPRequestHeader header = new HTTPRequestHeaderImpl(
 					headerString);
 
-			if (header.getHeader("connection") != null
-					&& header.getHeader("connection").equals("close")) {
-				if (header.getHTTPVersion() != null
-						&& header.getHTTPVersion().equals("1.0")) {
-					header.addHeader("connection", "close");
-				} else {
-					header.removeHeader("connection");
-				}
-			}
-
 			header.removeHeader("Accept-Encoding");
 			header.addHeader("Accept-Encoding", "identity");
 			this.addViaHeader(header);
