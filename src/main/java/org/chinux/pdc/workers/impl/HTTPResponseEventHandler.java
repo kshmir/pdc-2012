@@ -61,7 +61,7 @@ public class HTTPResponseEventHandler {
 		}
 
 		if (this.canProcessData(rawData)) {
-			this.processData(stream, rawData);
+			this.processData(stream, rawData, clientEvent);
 		}
 
 		if (this.canDoFilter(this.event)) {
@@ -93,8 +93,10 @@ public class HTTPResponseEventHandler {
 	}
 
 	private void processData(final ByteArrayOutputStream stream,
-			final ByteBuffer rawData) {
+			final ByteBuffer rawData, final ClientDataEvent clientEvent) {
 		final HTTPResponse response = this.event.getResponse();
+
+		response.getBodyReader().setIsConnectionClosed(clientEvent.canClose());
 
 		final ByteBuffer data = response.getBodyReader().processData(rawData);
 
@@ -186,8 +188,11 @@ public class HTTPResponseEventHandler {
 			response.getBodyReader().addResponseReader(
 					new HTTPContentLengthReader(response.getHeaders()), 20);
 		} else if (!this.hasContentLength(response)
-				&& !this.hasEncodingChunked(response)) {
-			// CRLF ended
+				&& !this.hasEncodingChunked(response)
+				&& response.getHeaders().getHTTPVersion() != null
+				&& response.getHeaders().getHTTPVersion().equals("1.0")) {
+			response.getBodyReader().addResponseReader(
+					new HTTPOneDotOneReader(), 20);
 		}
 
 		if (this.hasImageMIME(response)

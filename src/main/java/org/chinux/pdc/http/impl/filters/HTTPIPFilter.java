@@ -21,8 +21,8 @@ public class HTTPIPFilter implements HTTPFilter {
 		String dest = null;
 		try {
 			dest = InetAddress.getByName(
-					event.getRequest().getHeaders().getHeader("host"))
-					.toString();
+					event.getRequest().getHeaders().getHeader("host")
+							.split(":")[0]).toString();
 		} catch (final UnknownHostException e) {
 			e.printStackTrace();
 			return false;

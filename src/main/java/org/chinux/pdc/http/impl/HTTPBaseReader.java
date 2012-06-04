@@ -13,10 +13,13 @@ import java.util.TreeSet;
 import org.chinux.pdc.http.api.HTTPDelimiterReader;
 import org.chinux.pdc.http.api.HTTPMessageHeader;
 import org.chinux.pdc.http.api.HTTPReader;
+import org.chinux.pdc.workers.impl.HTTPConnectionCloseReader;
 
-public class HTTPBaseReader implements HTTPDelimiterReader {
+public class HTTPBaseReader implements HTTPDelimiterReader,
+		HTTPConnectionCloseReader {
 
 	private boolean finished;
+	private boolean connectionClosed = false;
 	private boolean mustConcatHeaders;
 	private HTTPMessageHeader header;
 	private ByteBuffer offsetByteBuffer = null;
@@ -58,6 +61,7 @@ public class HTTPBaseReader implements HTTPDelimiterReader {
 		this.finished = true;
 
 		if (data.array().length == 0) {
+			this.finished = this.connectionClosed;
 			return ByteBuffer.allocate(0);
 		}
 		for (final HTTPReader reader : this.readers) {
@@ -118,5 +122,16 @@ public class HTTPBaseReader implements HTTPDelimiterReader {
 		} else {
 			return this.offsetByteBuffer;
 		}
+	}
+
+	@Override
+	public void setIsConnectionClosed(final boolean closed) {
+		for (final HTTPReader reader : this.readers) {
+			if (reader instanceof HTTPConnectionCloseReader) {
+				((HTTPConnectionCloseReader) reader)
+						.setIsConnectionClosed(closed);
+			}
+		}
+		this.connectionClosed = closed;
 	}
 }
