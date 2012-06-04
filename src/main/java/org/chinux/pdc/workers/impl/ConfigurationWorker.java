@@ -3,10 +3,10 @@ package org.chinux.pdc.workers.impl;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -22,7 +22,6 @@ import org.chinux.pdc.server.User;
 
 public class ConfigurationWorker extends LogueableWorker {
 
-	private Map<String, User> users;
 	private Pattern ipPattern = Pattern
 			.compile("(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/(0|8|16|24|32)");
 
@@ -32,7 +31,7 @@ public class ConfigurationWorker extends LogueableWorker {
 
 	@Override
 	public DataEvent DoWork(final DataEvent dataEvent) {
-		ServerDataEvent event;
+		final ServerDataEvent event;
 		/* if there is an error.. */
 		if (dataEvent instanceof ErrorDataEvent) {
 			this.resetWorkerState();
@@ -40,15 +39,31 @@ public class ConfigurationWorker extends LogueableWorker {
 		}
 		/* obtains the command to process */
 		final String command = this.obtainCommand(dataEvent);
+
+		final InetAddress addr = ((ServerDataEvent) dataEvent).getChannel()
+				.socket().getInetAddress();
+		final int port = ((ServerDataEvent) dataEvent).getChannel().socket()
+				.getPort();
+		User currUser = new User(port, addr);
+		if (this.users.contains(currUser)) {
+			for (final User u : this.users) {
+				if (u.equals(currUser)) {
+					currUser = u;
+				}
+			}
+		}
 		/* initial salutation */
-		if (!this.helo) {
-			return this.helo(dataEvent, command);
+		if (!currUser.isGreeted()) {
+			currUser.setGreeted(true);
+			this.users.add(currUser);
+			return this.helo(dataEvent, command, currUser);
 		}
 		/* if the user is not logged , it should be */
-		if (!this.logged) {
+		if (!currUser.isLogged()) {
 			this.loginservice = LoginService.getInstance(this.propertiespath);
-			final Code code = this.loginservice.login(dataEvent, command);
-			this.logged = this.loginservice.isLogged(code);
+			final Code code = this.loginservice.login(dataEvent, command,
+					currUser);
+			currUser.setLogged(this.loginservice.isLogged(code));
 			return this.loginservice.createResponseEvent(code, dataEvent);
 		}
 		/* changes the proxy configuration */
@@ -74,8 +89,6 @@ public class ConfigurationWorker extends LogueableWorker {
 
 	@Override
 	void resetWorkerState() {
-		this.helo = false;
-		this.logged = false;
 		this.loginservice = null;
 		LoginService.resetInstance();
 		this.quit();
@@ -107,8 +120,7 @@ public class ConfigurationWorker extends LogueableWorker {
 		return resp;
 	}
 
-	@Override
-	void quit() {
+	private void quit() {
 		final Configuration configuration = ConfigurationProvider
 				.getConfiguration();
 		final Properties prop = new Properties();
@@ -143,8 +155,6 @@ public class ConfigurationWorker extends LogueableWorker {
 		} catch (final IOException e) {
 			e.printStackTrace();
 		}
-		this.helo = false;
-		this.logged = false;
 	}
 
 	private byte[] get(final String property, final Configuration configuration) {
