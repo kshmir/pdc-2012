@@ -236,7 +236,6 @@ public class ASyncClientDataReceiver extends ClientDataReceiver implements
 
 		try {
 			oldSocket.close();
-			oldSocket.socket().close();
 		} catch (final IOException e) {
 			e.printStackTrace();
 		}
