@@ -172,7 +172,8 @@ public class HTTPRequestEventHandler {
 			final HTTPRequestHeader header = new HTTPRequestHeaderImpl(
 					headerString);
 
-			if (header.getHeader("connection").equals("close")) {
+			if (header.getHeader("connection") != null
+					&& header.getHeader("connection").equals("close")) {
 				if (header.getHTTPVersion() != null
 						&& header.getHTTPVersion().equals("1.0")) {
 					header.addHeader("connection", "close");
