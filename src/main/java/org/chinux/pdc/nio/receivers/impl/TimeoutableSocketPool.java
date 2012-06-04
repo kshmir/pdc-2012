@@ -77,4 +77,9 @@ public class TimeoutableSocketPool {
 		}
 		return null;
 	}
+
+	public Map<Object, LinkedList<SocketChannel>> getElements() {
+		return this.elements;
+	}
+
 }

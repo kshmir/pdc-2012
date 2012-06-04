@@ -10,7 +10,7 @@ import org.chinux.pdc.nio.receivers.api.DataReceiver;
  * @author cris
  * 
  */
-public abstract class DataEvent {
+public abstract class DataEvent implements Cloneable {
 
 	@Override
 	public String toString() {
@@ -64,5 +64,14 @@ public abstract class DataEvent {
 
 	public DataReceiver<DataEvent> getReceiver() {
 		return this.receiver;
+	}
+
+	@Override
+	public Object clone() {
+		try {
+			return super.clone();
+		} catch (final CloneNotSupportedException e) {
+			return null;
+		}
 	}
 }

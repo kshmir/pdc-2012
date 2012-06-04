@@ -19,8 +19,13 @@ import org.chinux.pdc.nio.events.impl.ClientDataEvent;
 import org.chinux.pdc.nio.events.impl.ErrorDataEvent;
 import org.chinux.pdc.nio.events.impl.ServerDataEvent;
 import org.chinux.pdc.nio.receivers.api.DataReceiver;
+import org.chinux.pdc.server.MonitorObject;
+import org.chinux.pdc.server.api.Monitoreable;
 
-public class HTTPProxyWorker extends HTTPBaseProxyWorker {
+public class HTTPProxyWorker extends HTTPBaseProxyWorker implements
+		Monitoreable {
+
+	MonitorObject monitorObject;
 
 	private Logger logger = Logger.getLogger(this.getClass());
 	private final ByteArrayOutputStream outputBuffer = new ByteArrayOutputStream();
@@ -76,6 +81,14 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 	public void setServerDataReceiver(
 			final DataReceiver<DataEvent> serverDataReceiver) {
 		this.serverDataReceiver = serverDataReceiver;
+	}
+
+	public MonitorObject getMonitorObject() {
+		return this.monitorObject;
+	}
+
+	public void setMonitorObject(final MonitorObject monitorObject) {
+		this.monitorObject = monitorObject;
 	}
 
 	private boolean clientDisconnectedForEvent(final HTTPProxyEvent event) {
@@ -145,6 +158,11 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 			event = (HTTPProxyEvent) clientEvent.getAttachment();
 		}
 
+		synchronized (this) {
+			this.monitorObject.addFromServersBytes(clientEvent.getData()
+					.array().length);
+		}
+
 		DataEvent e = null;
 		if (this.clientDisconnectedForEvent(event)) {
 			e = new ClientDataEvent(null, this.clientDataReceiver, null, event,
@@ -155,7 +173,7 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 		} else {
 
 			final HTTPResponseEventHandler eventHandler = new HTTPResponseEventHandler(
-					event);
+					event, this.monitorObject);
 
 			try {
 				eventHandler.handle(this.outputBuffer, clientEvent);
@@ -228,7 +246,10 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 			throws IOException {
 
 		final HTTPRequestEventHandler handler = this.getRequestEventHandler();
-
+		synchronized (this) {
+			this.monitorObject.addFromClientsBytes(serverEvent.getData()
+					.array().length);
+		}
 		HTTPProxyEvent httpEvent;
 		try {
 			httpEvent = handler.handle(serverEvent);
@@ -308,7 +329,7 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 	private HTTPRequestEventHandler getRequestEventHandler() {
 		if (this.requestEventHandler == null) {
 			this.requestEventHandler = new HTTPRequestEventHandler(
-					this.outputBuffer);
+					this.outputBuffer, this.monitorObject);
 		}
 		return this.requestEventHandler;
 	}
@@ -342,6 +363,14 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker {
 		}
 
 		return answerDataEvent;
+	}
+
+	@Override
+	public void updateMonitorObject() {
+		synchronized (this) {
+			this.monitorObject
+					.setConnectionsQuant(this.eventsForChannel.size());
+		}
 	}
 
 }

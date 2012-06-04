@@ -3,7 +3,6 @@ package org.chinux.pdc.server;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.nio.channels.SocketChannel;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -13,14 +12,11 @@ import org.chinux.pdc.nio.events.impl.ServerDataEvent;
 
 public class LoginService {
 
-	private String currentUserName = null;
-
 	public enum Code {
 		BADLOGIN, OTHERTERMINALOPEN, OKLOGIN, GETPASSWORD
 	}
 
 	Map<String, User> usersByUserName;
-	Map<String, User> usersByPassword;
 
 	private static LoginService instance = null;
 
@@ -37,7 +33,6 @@ public class LoginService {
 
 	LoginService() {
 		this.usersByUserName = new HashMap<String, User>();
-		this.usersByPassword = new HashMap<String, User>();
 
 		final Properties props = new Properties();
 		try {
@@ -51,37 +46,38 @@ public class LoginService {
 		final String users[] = props.getProperty("user").split(",");
 		final String passwords[] = props.getProperty("password").split(",");
 		for (int i = 0; i < users.length && i < passwords.length; i++) {
-			this.usersByPassword.put(passwords[i], new User(users[i],
-					passwords[i], -1, null));
 			this.usersByUserName.put(users[i], new User(users[i], passwords[i],
 					-1, null));
 		}
 
 	}
 
-	public Code login(final DataEvent dataEvent, final String command) {
+	public Code login(final DataEvent dataEvent, final String command,
+			final User currUser) {
 		Code resp;
-		final SocketChannel sock = ((ServerDataEvent) dataEvent).getChannel();
-		if (this.currentUserName != null) {
-			final User user = this.usersByUserName.get(this.currentUserName);
-			if (!this.usersByUserName.containsKey(this.currentUserName)
-					|| command.trim().compareTo(user.getPassword()) != 0) {
+		if (currUser.getUsername() != null) {
+			final String password = command.trim();
+
+			if (!this.usersByUserName.get(currUser.getUsername()).getPassword()
+					.equals(password)) {
+				/* the password for the user is not correct */
 				resp = Code.BADLOGIN;
-				this.currentUserName = null;
-			} else if (this.usersByUserName.get(this.currentUserName)
-					.isLogged()) {
-				resp = Code.OTHERTERMINALOPEN;
-				this.currentUserName = null;
-			} else {
-				final User currUser = this.usersByUserName
-						.get(this.currentUserName);
+			} /*
+			 * else if (this.usersByUserName.get(this.currentUserName)
+			 * .isLogged()) { resp = Code.OTHERTERMINALOPEN; }
+			 */else {
+				this.usersByUserName.get(currUser.getUsername())
+						.setLogged(true);
 				currUser.setLogged(true);
-				currUser.setSrcport(sock.socket().getLocalPort());
-				currUser.setHost(sock.socket().getInetAddress());
 				resp = Code.OKLOGIN;
 			}
 		} else {
-			this.currentUserName = command.trim();
+			final String username = command.trim();
+			if (!this.usersByUserName.containsKey(username)) {
+				/* none existent username */
+				return Code.BADLOGIN;
+			}
+			currUser.setUsername(username);
 			resp = Code.GETPASSWORD;
 		}
 		return resp;

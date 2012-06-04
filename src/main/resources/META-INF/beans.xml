@@ -26,14 +26,25 @@
 	</bean>
 
 
+	<bean id="monitorObject" class="org.chinux.pdc.server.MonitorObject" lazy-init="false">
+			<property name="clientDataReceiver" ref="clientDataReceiver"/>
+			<property name="httpProxyWorker" ref="httpProxyWorker"/>
+	</bean>
+
 	<bean id="clientDataReceiver" class="org.chinux.pdc.nio.receivers.impl.ASyncClientDataReceiver"
 		lazy-init="false">
+		<property name="monitorObject" ref="monitorObject"/>
 	</bean>
 	
 	<bean id="httpProxyWorker" class="org.chinux.pdc.workers.impl.HTTPProxyWorker">
 		<property name="clientDataReceiver" ref="clientDataReceiver"/>
 		<property name="serverDataReceiver" ref="serverHandler"/>
-		<property name="eventDispatcher" ref="eventDispatcher"/>	
+		<property name="eventDispatcher" ref="eventDispatcher"/>
+		<property name="monitorObject" ref="monitorObject"/>		
+	</bean>
+	
+	<bean id="monitorWorker" class="org.chinux.pdc.workers.impl.MonitorWorker" lazy-init="false">
+		<property name="monitorObject" ref="monitorObject"/>
 	</bean>
 	
 	<bean id="configurationWorker" class="org.chinux.pdc.workers.impl.ConfigurationWorker" lazy-init="false">
@@ -58,6 +69,13 @@
 			<ref bean="configurationWorker" />
 		</constructor-arg>
 	</bean>
+	
+	<bean id="monitorworkerEventDispatcher" class="org.chinux.pdc.nio.dispatchers.SyncEventDispatcher"
+		lazy-init="false">
+		<constructor-arg>
+			<ref bean="monitorWorker" />
+		</constructor-arg>
+	</bean>
 
 	<bean id="clientHandler" class="org.chinux.pdc.nio.handlers.impl.ClientHandler"
 		lazy-init="false">
@@ -77,6 +95,11 @@
 		lazy-init="false">
 		<property name="eventDispatcher" ref="workerEventDispatcher"></property>
 	</bean>
+	
+	<bean id="monitorServerHandler" class="org.chinux.pdc.nio.handlers.impl.ServerHandler"
+		lazy-init="false">
+		<property name="eventDispatcher" ref="monitorworkerEventDispatcher"></property>
+	</bean>
 
 	<bean id="configServer" class="org.chinux.pdc.nio.services.NIOServer"
 		lazy-init="false">
@@ -84,6 +107,14 @@
 			<value type="java.lang.Integer">${configport}</value>
 		</constructor-arg>
 		<property name="handler" ref="configServerHandler"></property>
+	</bean>
+	
+	<bean id="monitorServer" class="org.chinux.pdc.nio.services.NIOServer"
+		lazy-init="false">
+		<constructor-arg>
+			<value type="java.lang.Integer">${monitorport}</value>
+		</constructor-arg>
+		<property name="handler" ref="monitorServerHandler"></property>
 	</bean>
 
 
@@ -116,6 +147,13 @@
 			<ref bean="configServer" />
 		</constructor-arg>
 	</bean>
+	
+	<bean id="monitorServerService" class="org.chinux.pdc.Service" lazy-init="default">
+		<constructor-arg>
+			<ref bean="monitorServer" />
+		</constructor-arg>
+	</bean>
+	
 
 	<bean id="clientService" class="org.chinux.pdc.Service" lazy-init="default">
 		<constructor-arg>
