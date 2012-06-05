@@ -133,12 +133,14 @@ public class ConfigurationProvider {
 
 		Configuration config = null;
 
-		if ((config = getConfigurationFromIP(httpClientInfo.getAddress())) != null) {
-			return config;
-		}
+		if (httpClientInfo.getAddress() != null) {
+			if ((config = getConfigurationFromIP(httpClientInfo.getAddress())) != null) {
+				return config;
+			}
 
-		if ((config = fromInetSubmask(httpClientInfo.getAddress())) != null) {
-			return config;
+			if ((config = fromInetSubmask(httpClientInfo.getAddress())) != null) {
+				return config;
+			}
 		}
 
 		if ((config = getConfigurationFromBrowser(httpClientInfo.getBrowser())) != null) {
