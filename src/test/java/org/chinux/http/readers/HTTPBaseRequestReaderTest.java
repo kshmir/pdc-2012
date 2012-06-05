@@ -2,6 +2,7 @@ package org.chinux.http.readers;
 
 import java.nio.ByteBuffer;
 
+import org.chinux.pdc.FilterException;
 import org.chinux.pdc.http.api.HTTPReader;
 import org.chinux.pdc.http.api.HTTPRequestHeader;
 import org.chinux.pdc.http.impl.HTTPBaseReader;
@@ -18,7 +19,7 @@ public class HTTPBaseRequestReaderTest {
 
 	@Ignore
 	@Test
-	public void processDataGETTest() {
+	public void processDataGETTest() throws FilterException {
 		final MonitorObject monitorObject = new MonitorObject();
 
 		final HTTPRequestHeader requestheader1 = new HTTPRequestHeaderImpl(
@@ -34,7 +35,7 @@ public class HTTPBaseRequestReaderTest {
 
 	@Ignore
 	@Test
-	public void processDataHEADTest() {
+	public void processDataHEADTest() throws FilterException {
 		final MonitorObject monitorObject = new MonitorObject();
 
 		final String request2 = "HEAD / HTTP/1.1\r\n";
@@ -51,7 +52,7 @@ public class HTTPBaseRequestReaderTest {
 
 	@Ignore
 	@Test
-	public void processDataPOSTTest() {
+	public void processDataPOSTTest() throws FilterException {
 		final MonitorObject monitorObject = new MonitorObject();
 		final HTTPRequestHeader requestheader3 = new HTTPRequestHeaderImpl(
 				TestUtils.stringFromFile("http/requests/request4.txt"));
