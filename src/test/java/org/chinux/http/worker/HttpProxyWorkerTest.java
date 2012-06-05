@@ -26,7 +26,6 @@ public class HttpProxyWorkerTest {
 
 	final Socket socket = Mockito.mock(Socket.class);
 
-	// TODO: Fix all this tests in a deterministic way
 	@Ignore
 	@Test
 	public void testBasicGetResponse() throws IOException {

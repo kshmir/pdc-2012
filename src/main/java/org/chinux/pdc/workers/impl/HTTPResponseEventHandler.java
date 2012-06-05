@@ -58,7 +58,6 @@ public class HTTPResponseEventHandler {
 			if (this.matchesHeader(pendingHeader)) {
 				// The rawdata is used for the data of the response, since both
 				// can fit in the same space.
-				// TODO: Catch this exception when an invalid header comes in
 				rawData = this.buildEventResponse(stream, pendingHeader);
 			} else {
 			}

@@ -9,8 +9,6 @@ public class FakeExternalServerWorker implements Worker<DataEvent> {
 	public DataEvent DoWork(final DataEvent dataEvent) {
 		dataEvent.setCanSend(true);
 
-		// TODO: create new data event with response.txt info
-
 		return dataEvent;
 	}
 }

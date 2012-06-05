@@ -71,7 +71,6 @@ public class HTTPBaseReader implements HTTPDelimiterReader,
 			return ByteBuffer.allocate(0);
 		}
 		for (final HTTPReader reader : this.readers) {
-			// TODO: count the transformations
 			data = reader.processData(data);
 
 			this.updateMonitorObject(reader);

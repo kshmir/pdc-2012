@@ -37,7 +37,6 @@ public class HTTPIPFilter implements HTTPFilter {
 
 				}
 			} else {
-				// TODO: DNS checker
 				InetAddress ofIp;
 				try {
 					ofIp = InetAddress.getByName(ip);
