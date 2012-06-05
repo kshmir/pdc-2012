@@ -2,6 +2,8 @@ package org.chinux.nio;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -54,8 +56,9 @@ public class NIOSCBasicTest {
 				new Worker<DataEvent>() {
 					@Override
 					public DataEvent DoWork(final DataEvent dataEvent) {
-						NIOSCBasicTest.this.receivedString = new String(
-								dataEvent.getData()).trim();
+						NIOSCBasicTest.this.receivedString = Charset
+								.forName("ISO-8859-1")
+								.decode(dataEvent.getData()).toString().trim();
 						return dataEvent;
 					}
 				});
@@ -63,11 +66,14 @@ public class NIOSCBasicTest {
 		final ClientDataReceiver clientReceiver = new ASyncClientDataReceiver();
 
 		// Server logic
-		final ServerHandler serverHandler = new ServerHandler(serverDispatcher);
+		final ServerHandler serverHandler = new ServerHandler();
+
+		serverHandler.setEventDispatcher(serverDispatcher);
 
 		// Client logic
-		final ClientHandler clientHandler = new ClientHandler(clientDispatcher,
-				clientReceiver);
+		final ClientHandler clientHandler = new ClientHandler(clientReceiver);
+
+		clientHandler.setEventDispatcher(clientDispatcher);
 
 		final NIOClient client = new NIOClient(9090);
 		client.setHandler(clientHandler);
@@ -83,13 +89,13 @@ public class NIOSCBasicTest {
 		service.awaitTermination(1, TimeUnit.MILLISECONDS);
 
 		final DataEvent event = new ClientDataEvent(
-				this.toSendString.getBytes(), InetAddress.getLocalHost(),
-				clientHandler);
+				ByteBuffer.wrap(this.toSendString.getBytes()),
+				InetAddress.getLocalHost(), clientHandler);
 
 		clientReceiver.receiveEvent(event);
 
-		// 1ms should be enough to receive the data
-		service.awaitTermination(30, TimeUnit.MILLISECONDS);
+		// 100ms should be enough to receive the data
+		service.awaitTermination(100, TimeUnit.MILLISECONDS);
 
 		service.shutdownNow();
 

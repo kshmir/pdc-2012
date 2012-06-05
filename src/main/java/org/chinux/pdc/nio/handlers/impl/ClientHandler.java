@@ -12,29 +12,38 @@ import java.util.Map;
 import org.chinux.pdc.nio.dispatchers.EventDispatcher;
 import org.chinux.pdc.nio.events.api.DataEvent;
 import org.chinux.pdc.nio.events.impl.ClientDataEvent;
+import org.chinux.pdc.nio.events.impl.ErrorDataEvent;
 import org.chinux.pdc.nio.handlers.api.NIOClientHandler;
 import org.chinux.pdc.nio.receivers.api.ClientDataReceiver;
 import org.chinux.pdc.nio.receivers.impl.ASyncClientDataReceiver;
+import org.chinux.pdc.nio.receivers.impl.ConnectionCloseHandler;
 import org.chinux.pdc.nio.util.NIOUtil;
 
-public class ClientHandler implements NIOClientHandler {
+public class ClientHandler implements NIOClientHandler, ConnectionCloseHandler {
 
 	private ByteBuffer readBuffer;
 	private EventDispatcher<DataEvent> dispatcher;
 	private ClientDataReceiver receiver;
 	private Map<Object, ArrayList<ByteBuffer>> pendingData;
+	private ConnectionCloseHandler connectionCloseHandler;
 
-	public ClientHandler(final EventDispatcher<DataEvent> dispatcher) {
-		this(dispatcher, new ASyncClientDataReceiver());
+	public ClientHandler() {
+		this(new ASyncClientDataReceiver());
 	}
 
-	public ClientHandler(final EventDispatcher<DataEvent> dispatcher,
-			final ClientDataReceiver receiver) {
-
+	public ClientHandler(final ClientDataReceiver receiver) {
 		this.setReceiver(receiver);
-		this.dispatcher = dispatcher;
-		this.readBuffer = ByteBuffer.allocate(1024);
+		this.readBuffer = ByteBuffer.allocate(1480);
 		this.pendingData = this.receiver.getPendingData();
+		this.connectionCloseHandler = this;
+	}
+
+	public void setEventDispatcher(final EventDispatcher<DataEvent> dispatcher) {
+		this.dispatcher = dispatcher;
+	}
+
+	public void setConnectionCloseHandler(final ConnectionCloseHandler handler) {
+		this.connectionCloseHandler = handler;
 	}
 
 	public void setReceiver(final ClientDataReceiver receiver) {
@@ -53,6 +62,11 @@ public class ClientHandler implements NIOClientHandler {
 
 	@Override
 	public void handleRead(final SelectionKey key) throws IOException {
+
+		if (key.interestOps() != SelectionKey.OP_READ) {
+			return;
+		}
+
 		final SocketChannel socketChannel = (SocketChannel) key.channel();
 
 		// Clear out our read buffer so it's ready for new data
@@ -69,6 +83,7 @@ public class ClientHandler implements NIOClientHandler {
 			// the selection key and close the channel.
 			key.cancel();
 			socketChannel.close();
+			this.handleUnexpectedDisconnect(key);
 			return;
 		}
 
@@ -76,13 +91,13 @@ public class ClientHandler implements NIOClientHandler {
 			// Remote entity shut the socket down cleanly. Do the
 			// same from our end and cancel the channel.
 
-			// TODO: Handle this
-			key.channel().close();
+			socketChannel.close();
 			key.cancel();
+
 		}
 
 		// Hand the data off to our worker thread
-		final byte[] data = NIOUtil.readBuffer(readBuffer, numRead);
+		final ByteBuffer data = NIOUtil.readBuffer(readBuffer, numRead);
 
 		final ClientDataEvent event = new ClientDataEvent(data,
 				key.attachment());
@@ -97,24 +112,32 @@ public class ClientHandler implements NIOClientHandler {
 	public void handleWrite(final SelectionKey key) throws IOException {
 		final SocketChannel socketChannel = (SocketChannel) key.channel();
 
-		synchronized (this.pendingData) {
-			final ArrayList<ByteBuffer> queue = this.pendingData.get(key
-					.attachment());
+		try {
+			synchronized (this.pendingData) {
+				final ArrayList<ByteBuffer> queue = this.pendingData.get(key
+						.attachment());
 
-			// Write until there's not more data ...
-			while (!queue.isEmpty()) {
-				final ByteBuffer buf = queue.get(0);
-				socketChannel.write(buf);
-				if (buf.remaining() > 0) {
-					// ... or the socket's buffer fills up
-					break;
+				// Write until there's not more data ...
+				while (queue != null && !queue.isEmpty()) {
+
+					final ByteBuffer buf = queue.get(0);
+
+					socketChannel.write(buf);
+
+					if (buf.remaining() > 0) {
+						// ... or the socket's buffer fills up
+						break;
+					}
+					queue.remove(0);
 				}
-				queue.remove(0);
-			}
 
-			if (queue.isEmpty()) {
-				key.interestOps(SelectionKey.OP_READ);
+				if (queue == null || queue.isEmpty()) {
+					key.interestOps(SelectionKey.OP_READ);
+				}
 			}
+		} catch (final IOException ioe) {
+			ioe.printStackTrace();
+			this.handleUnexpectedDisconnect(key);
 		}
 	}
 
@@ -125,17 +148,34 @@ public class ClientHandler implements NIOClientHandler {
 
 		try {
 			socketChannel.finishConnect();
+			// Register an interest in writing on this channel
+			key.interestOps(SelectionKey.OP_WRITE);
 		} catch (final IOException e) {
-			e.printStackTrace(); // TODO: Handle this
+			this.handleUnexpectedDisconnect(key);
 		}
-
-		// Register an interest in writing on this channel
-		key.interestOps(SelectionKey.OP_WRITE);
 	}
 
 	@Override
-	public void handlePendingChanges() throws ClosedChannelException {
-		this.receiver.handlePendingChanges();
+	public boolean handlePendingChanges() throws ClosedChannelException {
+		return this.receiver.handlePendingChanges();
+	}
+
+	@Override
+	public void handleUnexpectedDisconnect(final SelectionKey key) {
+		final ErrorDataEvent errorEvent = new ErrorDataEvent(
+				ErrorDataEvent.REMOTE_CLIENT_DISCONNECT, key.channel(),
+				key.attachment());
+
+		this.dispatcher.processData(errorEvent);
+	}
+
+	@Override
+	public void handleConnectionClose(final SocketChannel socket) {
+		try {
+			socket.close();
+		} catch (final IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 }

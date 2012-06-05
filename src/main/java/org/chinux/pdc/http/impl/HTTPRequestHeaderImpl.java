@@ -1,12 +1,16 @@
 package org.chinux.pdc.http.impl;
 
+import java.net.URISyntaxException;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang.StringUtils;
+import org.chinux.pdc.FilterException;
 import org.chinux.pdc.http.api.HTTPRequestHeader;
+import org.chinux.pdc.http.util.ErrorPageProvider;
 
 public class HTTPRequestHeaderImpl implements HTTPRequestHeader {
 
@@ -15,25 +19,37 @@ public class HTTPRequestHeaderImpl implements HTTPRequestHeader {
 
 	private static Pattern headerPattern = Pattern.compile("([\\w-]+): (.+)");
 
-	private static Pattern parametersPattern = Pattern.compile("([\\w|=]+)");
-
 	private String method;
 	private Map<String, String> headers;
-	private Map<String, String> parameters;
 	private String URI;
-	private String request;
 	private String version;
 
-	public HTTPRequestHeaderImpl(final String request) {
-		this.request = request;
+	public HTTPRequestHeaderImpl(final String request) throws FilterException {
 		this.headers = new HashMap<String, String>();
-		this.parameters = new HashMap<String, String>();
+
 		final String firstLine = request.split("\n")[0];
+
+		if (firstLine.startsWith("CONNECT") || firstLine.startsWith("TRACE")) {
+			throw new FilterException(ByteBuffer.wrap(ErrorPageProvider
+					.get405()));
+		}
 
 		Matcher match = headPattern.matcher(firstLine);
 		if (match.find()) {
 			this.method = match.group(1);
 			this.URI = match.group(2);
+			if (this.URI.startsWith("http")) {
+				try {
+					String params = "";
+					if (this.URI.indexOf("?") != -1) {
+						params = this.URI.substring(this.URI.indexOf("?"));
+					}
+					this.URI = new java.net.URI(this.URI).getPath() + params;
+				} catch (final URISyntaxException e) {
+
+				}
+			}
+
 			this.version = match.group(3);
 		}
 
@@ -42,21 +58,9 @@ public class HTTPRequestHeaderImpl implements HTTPRequestHeader {
 			this.headers.put(match.group(1).toLowerCase(), match.group(2));
 		}
 
-		this.headers.put("accept-encoding", "identity"); // No gzip or deflate
-		// support
-
 		if (this.method.equals("GET")) {
 			if (!this.URI.contains("?")) {
 				return;
-			}
-
-			match = parametersPattern.matcher(this.URI.substring(this.URI
-					.indexOf('?') + 1));
-			String[] values = null;
-			while (match.find()) {
-				values = match.group(1).split("=");
-				this.parameters.put(values[0], (values.length > 1) ? values[1]
-						: "");
 			}
 		}
 
@@ -69,8 +73,8 @@ public class HTTPRequestHeaderImpl implements HTTPRequestHeader {
 
 	@Override
 	public String getHeader(final String name) {
-		return this.headers.containsKey(name.toLowerCase()) ? this.headers
-				.get(name.toLowerCase()) : null;
+		return this.headers.containsKey(name.toLowerCase()) ? this.headers.get(
+				name.toLowerCase()).trim() : null;
 	}
 
 	@Override
@@ -89,9 +93,8 @@ public class HTTPRequestHeaderImpl implements HTTPRequestHeader {
 	}
 
 	@Override
-	public String getParameter(final String name) {
-		return this.parameters.containsKey(name) ? this.parameters.get(name)
-				: null;
+	public String getHTTPVersion() {
+		return this.version.split("/")[1];
 	}
 
 	@Override

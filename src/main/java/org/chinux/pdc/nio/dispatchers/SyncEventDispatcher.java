@@ -1,5 +1,7 @@
 package org.chinux.pdc.nio.dispatchers;
 
+import java.io.IOException;
+
 import org.chinux.pdc.nio.events.api.DataEvent;
 import org.chinux.pdc.workers.api.Worker;
 
@@ -14,14 +16,19 @@ public class SyncEventDispatcher<T extends DataEvent> implements
 
 	@Override
 	public void processData(final T event) {
-		final T processed = worker.DoWork(event);
+		T processed;
+		try {
+			processed = this.worker.DoWork(event);
+			if (processed.canSend()) {
+				processed.getReceiver().receiveEvent(processed);
+			}
 
-		if (processed.canSend()) {
-			processed.getReceiver().receiveEvent(processed);
+			if (processed.canClose()) {
+				processed.getReceiver().closeConnection(processed);
+			}
+		} catch (final IOException e) {
+			e.printStackTrace();
 		}
 
-		if (event.canClose()) {
-			processed.getReceiver().closeConnection(processed);
-		}
 	}
 }

@@ -60,10 +60,14 @@ public class NIOServer implements Runnable {
 			try {
 
 				// Process any pending changes
-				this.handler.handlePendingChanges();
+				final boolean hasChanges = this.handler.handlePendingChanges();
 
 				// Wait for an event one of the registered channels
-				this.selector.select();
+				if (!hasChanges) {
+					this.selector.select();
+				} else {
+					this.selector.selectNow();
+				}
 
 				// Iterate over the set of keys for which events are available
 				final Iterator<SelectionKey> selectedKeys = this.selector
@@ -93,5 +97,4 @@ public class NIOServer implements Runnable {
 			}
 		}
 	}
-
 }

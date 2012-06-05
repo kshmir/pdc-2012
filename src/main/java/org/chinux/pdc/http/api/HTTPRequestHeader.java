@@ -1,6 +1,6 @@
 package org.chinux.pdc.http.api;
 
-public interface HTTPRequestHeader {
+public interface HTTPRequestHeader extends HTTPMessageHeader {
 
 	/**
 	 * Returns all the values of the specified request header as a String
@@ -19,8 +19,7 @@ public interface HTTPRequestHeader {
 	 */
 	public String getRequestURI();
 
-	/** Returns the value of the specified parameter. */
-	public String getParameter(String name);
+	public String getHTTPVersion();
 
 	public void removeHeader(String name);
 

@@ -1,5 +1,6 @@
 package org.chinux.pdc.nio.events.impl;
 
+import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
 import org.chinux.pdc.nio.events.api.DataEvent;
@@ -15,11 +16,11 @@ public class ServerDataEvent extends DataEvent {
 
 	private SocketChannel channel;
 
-	public ServerDataEvent(final SocketChannel channel, final byte[] data) {
+	public ServerDataEvent(final SocketChannel channel, final ByteBuffer data) {
 		this(channel, data, null);
 	}
 
-	public ServerDataEvent(final SocketChannel channel, final byte[] data,
+	public ServerDataEvent(final SocketChannel channel, final ByteBuffer data,
 			final DataReceiver<DataEvent> receiver) {
 		super(data, receiver);
 

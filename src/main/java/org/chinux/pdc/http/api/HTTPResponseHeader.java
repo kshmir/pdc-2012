@@ -1,6 +1,12 @@
 package org.chinux.pdc.http.api;
 
-public interface HTTPResponseHeader {
+import java.nio.charset.Charset;
+
+public interface HTTPResponseHeader extends HTTPMessageHeader {
+
+	public Charset getCharset();
+
+	public String getHTTPVersion();
 
 	public void addHeader(String name, String value);
 
