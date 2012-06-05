@@ -205,7 +205,6 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker implements
 					ByteBuffer.wrap(this.outputBuffer.toByteArray().clone()),
 					this.serverDataReceiver);
 
-			// TODO: Aprolijar esto
 			if (this.isEndOfConnection(clientEvent, event)) {
 
 				this.logger.info("CERRANDO CON RESPONSE: "
@@ -224,7 +223,6 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker implements
 			}
 			e.setCanSend(event.canSend());
 
-			// TODO: Aprolijar esto
 			if (this.isEndOfRequest(clientEvent, event)) {
 				this.logger.info("Reenviando RESPONSE: "
 						+ event.getSocketChannel().socket().getInetAddress()

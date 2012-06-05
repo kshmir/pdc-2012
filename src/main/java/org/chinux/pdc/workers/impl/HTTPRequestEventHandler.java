@@ -113,7 +113,7 @@ public class HTTPRequestEventHandler {
 						httpEvent.getRequest().getHeaders().getHeader("Host"));
 			}
 		} catch (final Exception e) {
-			// TODO: Throw a valid exception!!!
+
 			address = clientChannel.socket().getInetAddress();
 		}
 		return address;

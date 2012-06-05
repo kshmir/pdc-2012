@@ -138,10 +138,8 @@ public class ASyncClientDataReceiver extends ClientDataReceiver implements
 			socketChannel.connect(socketHost);
 
 		} catch (final IOException e) {
-			System.out.println(socketHost.getPort());
-			System.out.println(socketHost.getHostName());
 			e.printStackTrace();
-			socketChannel = null; // TODO: Que onda?
+			socketChannel = null;
 		}
 		return socketChannel;
 	}
