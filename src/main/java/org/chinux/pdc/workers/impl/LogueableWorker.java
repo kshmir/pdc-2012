@@ -28,7 +28,7 @@ public abstract class LogueableWorker implements Worker<DataEvent> {
 		} else {
 			this.data = "";
 		}
-		final String command = this.data.split(" ")[0];
+		final String command = this.data.trim();
 		return command;
 	}
 

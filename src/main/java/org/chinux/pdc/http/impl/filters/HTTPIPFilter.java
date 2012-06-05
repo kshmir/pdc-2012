@@ -5,6 +5,7 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.List;
 
+import org.apache.commons.net.util.SubnetUtils;
 import org.apache.log4j.Logger;
 import org.chinux.pdc.http.api.HTTPFilter;
 import org.chinux.pdc.http.impl.HTTPBaseFilter;
@@ -17,22 +18,36 @@ public class HTTPIPFilter implements HTTPFilter {
 
 	@Override
 	public boolean isValid(final HTTPProxyEvent event) {
-		final List<String> ips = event.getEventConfiguration().getBlockedIPs();
-		String dest = null;
+		InetAddress toAddress = null;
 		try {
-			dest = InetAddress.getByName(
-					event.getRequest().getHeaders().getHeader("host")
-							.split(":")[0]).toString();
-		} catch (final UnknownHostException e) {
-			e.printStackTrace();
-			return false;
-		}
-		if (dest.split("/").length < 2) {
+			toAddress = InetAddress.getByName(event.getRequest().getHeaders()
+					.getHeader("host"));
+		} catch (final Exception e1) {
 			return true;
 		}
-		dest = dest.split("/")[1];
-		if (dest != null) {
-			return !this.matches(ips, dest);
+		final List<String> ips = event.getEventConfiguration().getBlockedIPs();
+		for (final String ip : ips) {
+			if (ip.contains("/")) {
+				try {
+					if (new SubnetUtils(ip).getInfo().isInRange(
+							toAddress.getHostAddress())) {
+						return false;
+					}
+				} catch (final Exception e) {
+
+				}
+			} else {
+				// TODO: DNS checker
+				InetAddress ofIp;
+				try {
+					ofIp = InetAddress.getByName(ip);
+					if (ofIp.equals(toAddress)) {
+						return false;
+					}
+				} catch (final UnknownHostException e) {
+				}
+
+			}
 		}
 		return true;
 	}
@@ -40,33 +55,5 @@ public class HTTPIPFilter implements HTTPFilter {
 	@Override
 	public ByteBuffer getErrorResponse(final HTTPProxyEvent event) {
 		return ByteBuffer.wrap(ErrorPageProvider.get403());
-	}
-
-	private boolean matches(final List<String> list, final String ip) {
-		for (final String str : list) {
-			if (str.split("/").length != 2) {
-				return false;
-			}
-			final Integer mask = Integer.valueOf(str.split("/")[1]);
-			final String[] req = ip.split("\\.");
-			final String[] value = str.split("/")[0].split("\\.");
-			switch (mask) {
-			case 8:
-				return req[0].compareTo(value[0]) == 0;
-			case 16:
-				return req[0].compareTo(value[0]) == 0
-						&& req[1].compareTo(value[1]) == 0;
-			case 24:
-				return req[0].compareTo(value[0]) == 0
-						&& req[1].compareTo(value[1]) == 0
-						&& req[2].compareTo(value[2]) == 0;
-			case 32:
-				return ip.compareTo(str) == 0;
-			default:
-				return false;
-			}
-
-		}
-		return false;
 	}
 }

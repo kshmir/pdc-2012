@@ -45,6 +45,18 @@
 			<artifactId>commons-cli</artifactId>
 			<version>1.2</version>
 		</dependency>
+		<dependency>
+			<groupId>commons-net</groupId>
+			<artifactId>commons-net</artifactId>
+			<version>3.1</version>
+		</dependency>
+		<dependency>
+			<groupId>user-agent-utils</groupId>
+			<artifactId>user-agent-utils</artifactId>
+			<version>1.6</version>
+			<scope>system</scope>
+			<systemPath>${project.basedir}/lib/UserAgentUtils-1.6.jar</systemPath>
+		</dependency>
 	</dependencies>
 	<build>
 		<plugins>
