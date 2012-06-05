@@ -55,7 +55,6 @@ public class ASyncEventDispatcher<T extends DataEvent> implements Runnable,
 				}
 				dataEvent = this.events.poll();
 
-				// System.out.println();
 				T event;
 				try {
 					event = this.worker.DoWork(dataEvent);

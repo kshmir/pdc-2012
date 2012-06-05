@@ -88,14 +88,14 @@ public class LoginService {
 		byte[] resp = null;
 		switch (code) {
 		case BADLOGIN:
-			resp = "Login Incorrect\nEnter user name:".getBytes();
+			resp = "Login Incorrect\nEnter user name: ".getBytes();
 			break;
 		case OTHERTERMINALOPEN:
 			resp = "Login Incorrect - The user is yet logged in another terminal\n"
 					.getBytes();
 			break;
 		case OKLOGIN:
-			resp = "250 Login OK\n".getBytes();
+			resp = "Login OK\n".getBytes();
 			break;
 		case GETPASSWORD:
 			resp = "Enter password: ".getBytes();
