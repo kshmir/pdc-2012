@@ -1,13 +1,16 @@
 package org.chinux.pdc.http.impl;
 
 import java.net.URISyntaxException;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang.StringUtils;
+import org.chinux.pdc.FilterException;
 import org.chinux.pdc.http.api.HTTPRequestHeader;
+import org.chinux.pdc.http.util.ErrorPageProvider;
 
 public class HTTPRequestHeaderImpl implements HTTPRequestHeader {
 
@@ -21,9 +24,15 @@ public class HTTPRequestHeaderImpl implements HTTPRequestHeader {
 	private String URI;
 	private String version;
 
-	public HTTPRequestHeaderImpl(final String request) {
+	public HTTPRequestHeaderImpl(final String request) throws FilterException {
 		this.headers = new HashMap<String, String>();
+
 		final String firstLine = request.split("\n")[0];
+
+		if (firstLine.startsWith("CONNECT") || firstLine.startsWith("TRACE")) {
+			throw new FilterException(ByteBuffer.wrap(ErrorPageProvider
+					.get405()));
+		}
 
 		Matcher match = headPattern.matcher(firstLine);
 		if (match.find()) {

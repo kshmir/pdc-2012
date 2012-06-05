@@ -54,8 +54,6 @@
 			<groupId>user-agent-utils</groupId>
 			<artifactId>user-agent-utils</artifactId>
 			<version>1.6</version>
-			<scope>system</scope>
-			<systemPath>${project.basedir}/lib/UserAgentUtils-1.6.jar</systemPath>
 		</dependency>
 	</dependencies>
 	<build>

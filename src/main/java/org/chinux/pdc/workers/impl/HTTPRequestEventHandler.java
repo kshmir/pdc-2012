@@ -97,8 +97,6 @@ public class HTTPRequestEventHandler {
 				&& this.rawData != null;
 	}
 
-	private IPAddressResolver resolver = new IPAddressResolver();
-
 	private InetAddress getEventAddress(final SocketChannel clientChannel,
 			final HTTPProxyEvent httpEvent) {
 		InetAddress address = null;
@@ -108,11 +106,11 @@ public class HTTPRequestEventHandler {
 			}
 
 			if (httpEvent.getEventConfiguration().isChainProxy()) {
-				address = this.resolver.getAddressForHost(httpEvent
-						.getEventConfiguration().getChainProxyHost());
+				address = IPAddressResolver.getInstance().getAddressForHost(
+						httpEvent.getEventConfiguration().getChainProxyHost());
 			} else {
-				address = this.resolver.getAddressForHost(httpEvent
-						.getRequest().getHeaders().getHeader("Host"));
+				address = IPAddressResolver.getInstance().getAddressForHost(
+						httpEvent.getRequest().getHeaders().getHeader("Host"));
 			}
 		} catch (final Exception e) {
 			// TODO: Throw a valid exception!!!

@@ -8,11 +8,16 @@ import java.io.InputStream;
 public class ErrorPageProvider {
 
 	private static byte[] page403 = null;
+	private static byte[] page405 = null;
 
 	public synchronized static byte[] get403() {
-		if (page403 == null) {
+		return page403 = extractPage(page403, "/403.html");
+	}
+
+	private static byte[] extractPage(byte[] buff, final String fileName) {
+		if (buff == null) {
 			final InputStream in = ErrorPageProvider.class
-					.getResourceAsStream("/403.html");
+					.getResourceAsStream(fileName);
 			final ByteArrayOutputStream inStream = new ByteArrayOutputStream();
 			try {
 				int i = 0;
@@ -25,8 +30,12 @@ public class ErrorPageProvider {
 				e.printStackTrace();
 			}
 
-			page403 = inStream.toByteArray();
+			buff = inStream.toByteArray();
 		}
-		return page403;
+		return buff;
+	}
+
+	public static byte[] get405() {
+		return page405 = extractPage(page405, "/405.html");
 	}
 }

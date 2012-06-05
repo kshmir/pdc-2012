@@ -1,14 +1,6 @@
 #!/bin/bash
 
-for f in lib/*.jar
-do
-  if [[ $f =~ lib/gdata-([a-z-]*)-(.*)\.jar ]]; then
-      n=${BASH_REMATCH[1]}
-      v=${BASH_REMATCH[2]}
+mvn install:install-file -DgroupId=user-agent-utils \
+          -DartifactId=user-agent-utils -Dversion=1.6 -Dfile=lib/UserAgentUtils-1.6.jar -Dpackaging=jar \
+          -DgeneratePom=true
 
-      echo "installing mvn artifact $n $v"
-      mvn install:install-file -DgroupId=com.google.gdata \
-         -DartifactId=$n -Dversion=$v -Dfile=$f -Dpackaging=jar \
-         -DgeneratePom=true
-  fi
-done
