@@ -9,6 +9,7 @@ import org.chinux.pdc.http.api.HTTPRequest;
 import org.chinux.pdc.http.api.HTTPResponse;
 import org.chinux.pdc.server.Configuration;
 import org.chinux.pdc.server.ConfigurationProvider;
+import org.chinux.pdc.server.HTTPClientInfo;
 
 /**
  * Represents a unique httprequest sent by a client. When receiving a new
@@ -29,8 +30,7 @@ public class HTTPProxyEvent {
 	private Charset dataCharset = Charset.forName("ISO-8859-1"); // Por ahora re
 																	// va
 
-	private Configuration eventConfiguration = ConfigurationProvider
-			.getConfiguration();
+	private Configuration eventConfiguration = null;
 
 	private StringBuilder builder = new StringBuilder();
 	private boolean canSend;
@@ -40,7 +40,8 @@ public class HTTPProxyEvent {
 	public HTTPProxyEvent(final HTTPRequest request, final SocketChannel channel) {
 		this.request = request;
 		this.socketChannel = channel;
-
+		this.eventConfiguration = ConfigurationProvider
+				.getConfiguration(new HTTPClientInfo(this));
 	}
 
 	public boolean canClose() {

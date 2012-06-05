@@ -209,8 +209,8 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker implements
 			if (this.isEndOfConnection(clientEvent, event)) {
 
 				this.logger.info("CERRANDO CON RESPONSE: "
-						+ event.getSocketChannel().socket().getPort() + " "
-						+ event.getResponse().getHeaders().returnStatusCode()
+						+ event.getSocketChannel().socket().getInetAddress()
+						+ ":" + event.getSocketChannel().socket().getPort()
 						+ " "
 						+ event.getRequest().getHeaders().getHeader("host")
 						+ event.getRequest().getHeaders().getRequestURI());
@@ -227,7 +227,9 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker implements
 			// TODO: Aprolijar esto
 			if (this.isEndOfRequest(clientEvent, event)) {
 				this.logger.info("Reenviando RESPONSE: "
-						+ event.getSocketChannel().socket().getPort() + " "
+						+ event.getSocketChannel().socket().getInetAddress()
+						+ ":" + event.getSocketChannel().socket().getPort()
+						+ " "
 						+ event.getResponse().getHeaders().returnStatusCode()
 						+ " "
 						+ event.getRequest().getHeaders().getHeader("host")

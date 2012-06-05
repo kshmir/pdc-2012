@@ -7,6 +7,11 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import nl.bitwalker.useragentutils.Browser;
+import nl.bitwalker.useragentutils.OperatingSystem;
+
+import org.apache.commons.net.util.SubnetUtils;
+import org.apache.commons.net.util.SubnetUtils.SubnetInfo;
 import org.chinux.pdc.nio.events.api.DataEvent;
 import org.chinux.pdc.nio.events.impl.ErrorDataEvent;
 import org.chinux.pdc.nio.events.impl.ServerDataEvent;
@@ -18,11 +23,19 @@ import org.chinux.pdc.server.User;
 
 public class ConfigurationWorker extends LogueableWorker {
 
-	private Pattern ipPattern = Pattern
-			.compile("(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/(8|16|24|32)");
+	private static final int BROWSER = 0;
 
-	public ConfigurationWorker() {
-	}
+	private static final int OPERATING_SYSTEM = 1;
+
+	private static final int IP_ADDRESS = 2;
+
+	private static final int SUBNET = 3;
+
+	private Pattern ipPattern = Pattern
+			.compile("(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(/(8|16|24|32))?");
+
+	private String[] subcommands = new String[] { "BROWSER", "OS", "IP",
+			"SUBNET" };
 
 	@Override
 	public DataEvent DoWork(final DataEvent dataEvent) {
@@ -69,12 +82,93 @@ public class ConfigurationWorker extends LogueableWorker {
 
 	private ServerDataEvent processConfiguration(final DataEvent dataEvent,
 			final String command) {
-		ServerDataEvent event;
+		final ServerDataEvent event;
 		byte[] resp;
-		final Configuration configuration = ConfigurationProvider
-				.getConfiguration();
+		Configuration configuration = null;
+		Object owner = null;
 
-		resp = this.processCommand(command, configuration);
+		try {
+
+			String subCommand = command.split(" ")[0];
+
+			int i = -1;
+			for (int j = 0; j < this.subcommands.length; j++) {
+				if (subCommand.equals(this.subcommands[j])) {
+					i = j;
+					break;
+				}
+			}
+
+			if (command.split(" ").length < 2) {
+				i = -1;
+			} else {
+				subCommand = command.split(" ")[1];
+			}
+
+			switch (i) {
+			case BROWSER:
+				try {
+					final Browser b = Browser.valueOf(subCommand.toUpperCase())
+							.getGroup();
+					configuration = ConfigurationProvider
+							.getConfigurationFromBrowser(b);
+					owner = b;
+				} catch (final Exception e) {
+					throw new IllegalArgumentException();
+				}
+				break;
+			case OPERATING_SYSTEM:
+				try {
+					final OperatingSystem os = OperatingSystem.valueOf(
+							subCommand.toUpperCase()).getGroup();
+					configuration = ConfigurationProvider
+							.getConfigurationFromOperatingSystem(os);
+					owner = os;
+				} catch (final Exception e) {
+					throw new IllegalArgumentException();
+				}
+				break;
+			case IP_ADDRESS:
+				try {
+					final InetAddress address = InetAddress
+							.getByName(subCommand);
+
+					configuration = ConfigurationProvider
+							.getConfigurationFromIP(address);
+					owner = address;
+				} catch (final Exception e) {
+					throw new IllegalArgumentException();
+				}
+				break;
+			case SUBNET:
+				try {
+					final SubnetInfo subnet = new SubnetUtils(subCommand)
+							.getInfo();
+
+					configuration = ConfigurationProvider
+							.getConfigurationFromSubnet(subnet);
+
+					owner = subnet;
+				} catch (final Exception e) {
+					throw new IllegalArgumentException();
+				}
+				break;
+			default:
+				configuration = ConfigurationProvider.getDefaultConfiguration();
+				break;
+			}
+
+			if (configuration == null) {
+				configuration = ConfigurationProvider.getDefaultConfiguration();
+			}
+
+			final String endCommand = (i != -1) ? command.split(" ", 3)[2]
+					: command;
+
+			resp = this.processCommand(endCommand, configuration, owner);
+		} catch (final IllegalArgumentException e) {
+			resp = "400; Invalid parameters\n".getBytes();
+		}
 
 		event = new ServerDataEvent(((ServerDataEvent) dataEvent).getChannel(),
 				ByteBuffer.wrap(resp), dataEvent.getReceiver());
@@ -90,28 +184,31 @@ public class ConfigurationWorker extends LogueableWorker {
 		this.quit();
 	}
 
-	private byte[] processCommand(final String command,
-			final Configuration configuration) {
+	private byte[] processCommand(final String rawCommand,
+			final Configuration configuration, final Object owner) {
+		final String command = rawCommand.split(" ")[0];
+
 		byte[] resp;
 		if (command.equals("GET")) {
-			if (this.data.split(" ").length <= 1) {
-				resp = "Invalid Parameter\n".getBytes();
+			if (rawCommand.split(" ").length <= 1) {
+				resp = "401; Invalid Parameter\n".getBytes();
 			} else {
-				resp = this.get(this.data.split(" ")[1], configuration);
+				resp = this.get(rawCommand.split(" ")[1], configuration);
 			}
 		} else if (command.equals("GETALL")) {
 			resp = configuration.toString().getBytes();
 		} else if (command.equals("SET")) {
-			if (this.data.split(" ").length <= 1) {
-				resp = "Invalid Parameter\n".getBytes();
+			if (rawCommand.split(" ").length <= 1) {
+				resp = "401; Invalid Parameter\n".getBytes();
 			} else {
-				resp = this.set(this.data.split(" ")[1], configuration);
+				resp = this.set(rawCommand.split(" ")[1], configuration, owner,
+						rawCommand);
 			}
 		} else if (command.equals("LOGOUT")) {
 			this.quit();
-			resp = "Logout OK\nEnter user name: ".getBytes();
+			resp = "201; Logout OK\nEnter user name: ".getBytes();
 		} else {
-			resp = "Invalid Command\n".getBytes();
+			resp = "400; Invalid Command\n".getBytes();
 		}
 		return resp;
 	}
@@ -151,11 +248,13 @@ public class ConfigurationWorker extends LogueableWorker {
 			}
 			return (resp + "\n").getBytes();
 		} else {
-			return "Invalid Configuration Parameter\n".getBytes();
+			return "402; Invalid Configuration Parameter\n".getBytes();
 		}
 	}
 
-	private byte[] set(final String property, final Configuration configuration) {
+	private byte[] set(final String property,
+			final Configuration configuration, final Object owner,
+			final String data) {
 		boolean blockAll = configuration.isBlockAll();
 		boolean l33t = configuration.isL33t();
 		boolean rotateImages = configuration.isRotateImages();
@@ -171,110 +270,110 @@ public class ConfigurationWorker extends LogueableWorker {
 		resp = "Configuration changed\n".getBytes();
 
 		if (property.toLowerCase().equals("maxresenabled")) {
-			if (this.data.split(" ").length >= 3) {
-				maxResEnabled = Boolean.valueOf(this.data.split(" ")[2]);
-				resp = ("maxResEnabled set to " + this.data.split(" ")[2] + "\n")
+			if (data.split(" ").length >= 3) {
+				maxResEnabled = Boolean.valueOf(data.split(" ")[2]);
+				resp = ("200; maxResEnabled set to " + data.split(" ")[2] + "\n")
 						.getBytes();
 			} else {
-				resp = "Invalid Parameter\n".getBytes();
+				resp = "402; Invalid Parameter\n".getBytes();
 			}
 		} else if (property.toLowerCase().equals("chainproxyport")) {
-			if (this.data.split(" ").length >= 3) {
-				chainProxyPort = Integer.valueOf(this.data.split(" ")[2]);
-				resp = ("chainProxyPort set to " + this.data.split(" ")[2] + "\n")
+			if (data.split(" ").length >= 3) {
+				chainProxyPort = Integer.valueOf(data.split(" ")[2]);
+				resp = ("200; chainProxyPort set to " + data.split(" ")[2] + "\n")
 						.getBytes();
 			} else {
-				resp = "Invalid Parameter\n".getBytes();
+				resp = "402; Invalid Parameter\n".getBytes();
 			}
 		} else if (property.toLowerCase().equals("chainproxyhost")) {
-			if (this.data.split(" ").length >= 3) {
-				chainProxyHost = this.data.split(" ")[2];
-				resp = ("chainProxyHost set to " + this.data.split(" ")[2] + "\n")
+			if (data.split(" ").length >= 3) {
+				chainProxyHost = data.split(" ")[2];
+				resp = ("200; chainProxyHost set to " + data.split(" ")[2] + "\n")
 						.getBytes();
 			} else {
-				resp = "Invalid Parameter\n".getBytes();
+				resp = "402; Invalid Parameter\n".getBytes();
 			}
 		} else if (property.toLowerCase().equals("blockall")) {
-			if (this.data.split(" ").length >= 3) {
-				blockAll = Boolean.valueOf(this.data.split(" ")[2]);
-				resp = ("BlockAll set to " + this.data.split(" ")[2] + "\n")
+			if (data.split(" ").length >= 3) {
+				blockAll = Boolean.valueOf(data.split(" ")[2]);
+				resp = ("200; BlockAll set to " + data.split(" ")[2] + "\n")
 						.getBytes();
 			} else {
-				resp = "Invalid Parameter\n".getBytes();
+				resp = "402; Invalid Parameter\n".getBytes();
 			}
 		} else if (property.toLowerCase().equals("chainproxy")) {
-			if (this.data.split(" ").length >= 3) {
-				chainProxy = Boolean.valueOf(this.data.split(" ")[2]);
-				resp = ("ChainProxy set to " + this.data.split(" ")[2] + "\n")
+			if (data.split(" ").length >= 3) {
+				chainProxy = Boolean.valueOf(data.split(" ")[2]);
+				resp = ("200; ChainProxy set to " + data.split(" ")[2] + "\n")
 						.getBytes();
 			} else {
-				resp = "Invalid Parameter\n".getBytes();
+				resp = "402; Invalid Parameter\n".getBytes();
 			}
 		} else if (property.toLowerCase().equals("l33t")) {
-			if (this.data.split(" ").length >= 3) {
-				l33t = Boolean.valueOf(this.data.split(" ")[2]);
-				resp = ("l33t set to " + this.data.split(" ")[2] + "\n")
+			if (data.split(" ").length >= 3) {
+				l33t = Boolean.valueOf(data.split(" ")[2]);
+				resp = ("200; l33t set to " + data.split(" ")[2] + "\n")
 						.getBytes();
 			} else {
-				resp = "Invalid Parameter\n".getBytes();
+				resp = "402; Invalid Parameter\n".getBytes();
 			}
 		} else if (property.toLowerCase().equals("rotateimages")) {
-			if (this.data.split(" ").length >= 3) {
-				rotateImages = Boolean.valueOf(this.data.split(" ")[2]);
-				resp = ("RotateImages set to " + this.data.split(" ")[2] + "\n")
+			if (data.split(" ").length >= 3) {
+				rotateImages = Boolean.valueOf(data.split(" ")[2]);
+				resp = ("200; RotateImages set to " + data.split(" ")[2] + "\n")
 						.getBytes();
 			} else {
-				resp = "Invalid Parameter\n".getBytes();
+				resp = "402; Invalid Parameter\n".getBytes();
 			}
 		} else if (property.toLowerCase().equals("maxressize")) {
-			if (this.data.split(" ").length >= 3) {
-				maxResSize = Integer.valueOf(this.data.split(" ")[2]);
-				resp = ("MaxResSize set to " + this.data.split(" ")[2] + "\n")
+			if (data.split(" ").length >= 3) {
+				maxResSize = Integer.valueOf(data.split(" ")[2]);
+				resp = ("200; MaxResSize set to " + data.split(" ")[2] + "\n")
 						.getBytes();
 			} else {
-				resp = "Invalid Parameter\n".getBytes();
+				resp = "402; Invalid Parameter\n".getBytes();
 			}
 		} else if (property.toLowerCase().equals("blockedips")) {
 			blockedIPs = new ArrayList<String>();
-			if (this.data.split(" ").length >= 3) {
+			if (data.split(" ").length >= 3) {
 				blockedIPs.addAll(configuration.getBlockedIPs());
-				for (final String str : this.data.split(" ")[2].split(",")) {
+				for (final String str : data.split(" ")[2].split(",")) {
 					final Matcher match = this.ipPattern.matcher(str);
 					if (match.find()) {
 						blockedIPs.add(str);
 					} else {
-						resp = "Invalid Parameter\n".getBytes();
+						resp = "402; Invalid Parameter\n".getBytes();
 						break;
 					}
 				}
 			}
-			resp = ("BlockedIPs set to " + blockedIPs + "\n").getBytes();
+			resp = ("200; BlockedIPs set to " + blockedIPs + "\n").getBytes();
 		} else if (property.toLowerCase().equals("blockedurls")) {
 			blockedURLs = new ArrayList<String>();
-			if (this.data.split(" ").length >= 3) {
+			if (data.split(" ").length >= 3) {
 				blockedURLs.addAll(configuration.getBlockedURLs());
-				for (final String str : this.data.split(" ")[2].split(",")) {
+				for (final String str : data.split(" ")[2].split(",")) {
 					blockedURLs.add(str);
 				}
 			}
-			resp = ("BlockedURLs set to " + blockedURLs + "\n").getBytes();
+			resp = ("200; BlockedURLs set to " + blockedURLs + "\n").getBytes();
 		} else if (property.toLowerCase().equals("blockedmediatypes")) {
 			blockedMediaTypes = new ArrayList<String>();
-			if (this.data.split(" ").length >= 3) {
+			if (data.split(" ").length >= 3) {
 				blockedMediaTypes.addAll(configuration.getBlockedMediaTypes());
-				for (final String str : this.data.split(" ")[2].split(",")) {
+				for (final String str : data.split(" ")[2].split(",")) {
 					blockedMediaTypes.add(str);
 				}
 			}
-			resp = ("BlockedMediaTypes set to " + blockedMediaTypes + "\n")
+			resp = ("200; BlockedMediaTypes set to " + blockedMediaTypes + "\n")
 					.getBytes();
 		} else {
-			return "Invalid Configuration Parameter\n".getBytes();
+			return "403; Invalid Configuration Parameter\n".getBytes();
 		}
 		ConfigurationProvider.setConfiguration(new Configuration(blockAll,
 				blockedIPs, blockedURLs, blockedMediaTypes, maxResSize, l33t,
 				rotateImages, chainProxy, maxResEnabled, chainProxyPort,
-				chainProxyHost));
+				chainProxyHost), owner);
 		return resp;
 	}
 

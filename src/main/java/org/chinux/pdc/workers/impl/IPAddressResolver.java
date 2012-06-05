@@ -13,7 +13,7 @@ public class IPAddressResolver {
 
 	private Map<String, InetAddress> addresses = new HashMap<String, InetAddress>();
 
-	public InetAddress getAddressForHost(final String host)
+	public synchronized InetAddress getAddressForHost(final String host)
 			throws UnknownHostException {
 		if (this.addresses.containsKey(host)) {
 			return this.addresses.get(host);
