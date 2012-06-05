@@ -2,6 +2,7 @@ package org.chinux.http.headers;
 
 import junit.framework.Assert;
 
+import org.chinux.pdc.FilterException;
 import org.chinux.pdc.http.api.HTTPRequestHeader;
 import org.chinux.pdc.http.impl.HTTPRequestHeaderImpl;
 import org.chinux.util.TestUtils;
@@ -10,7 +11,7 @@ import org.junit.Test;
 public class HTTPRequestHeaderImplTest {
 
 	@Test
-	public void GetNoParamTest() {
+	public void GetNoParamTest() throws FilterException {
 		final HTTPRequestHeader req = new HTTPRequestHeaderImpl(
 				TestUtils.stringFromFile("http/requests/request1.txt"));
 		Assert.assertEquals("GET", req.getMethod());
@@ -19,7 +20,7 @@ public class HTTPRequestHeaderImplTest {
 	}
 
 	@Test
-	public void GetParamTest() {
+	public void GetParamTest() throws FilterException {
 		final HTTPRequestHeader req = new HTTPRequestHeaderImpl(
 				TestUtils.stringFromFile("http/requests/request2.txt"));
 		Assert.assertEquals("GET", req.getMethod());
@@ -30,7 +31,7 @@ public class HTTPRequestHeaderImplTest {
 	}
 
 	@Test
-	public void PostTest() {
+	public void PostTest() throws FilterException {
 		final HTTPRequestHeader req = new HTTPRequestHeaderImpl(
 				TestUtils.stringFromFile("http/requests/request3.txt"));
 		Assert.assertEquals("POST", req.getMethod());
