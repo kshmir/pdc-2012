@@ -316,10 +316,7 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker implements
 			e.setCanSend(httpEvent.canSend());
 			this.logger.debug("Sending event to client:" + e);
 
-			if (httpEvent.getEventConfiguration().isChainProxy()) {
-				((ClientDataEvent) e).setPort(httpEvent.getEventConfiguration()
-						.getChainProxyPort());
-			}
+			modifyEventPort(httpEvent, e);
 		} else {
 			e.setCanClose(false);
 			e.setCanSend(false);
@@ -327,6 +324,25 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker implements
 		}
 
 		return e;
+	}
+
+	private void modifyEventPort(HTTPProxyEvent httpEvent, final DataEvent e) {
+		if (httpEvent.getEventConfiguration().isChainProxy()) {
+			((ClientDataEvent) e).setPort(httpEvent.getEventConfiguration()
+					.getChainProxyPort());
+		}
+
+		if (httpEvent.getRequest().getHeaders().getHeader("Host")
+				.split(":").length > 1) {
+			try {
+				final Integer parsed = Integer.parseInt(httpEvent
+						.getRequest().getHeaders().getHeader("Host")
+						.split(":")[1]);
+				((ClientDataEvent) e).setPort(parsed);
+			} catch (final Exception ex) {
+
+			}
+		}
 	}
 
 	private HTTPRequestEventHandler getRequestEventHandler() {

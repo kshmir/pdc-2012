@@ -110,7 +110,9 @@ public class HTTPRequestEventHandler {
 						httpEvent.getEventConfiguration().getChainProxyHost());
 			} else {
 				address = IPAddressResolver.getInstance().getAddressForHost(
-						httpEvent.getRequest().getHeaders().getHeader("Host"));
+						httpEvent.getRequest().getHeaders().getHeader("Host")
+								.split(":")[0]);
+
 			}
 		} catch (final Exception e) {
 
