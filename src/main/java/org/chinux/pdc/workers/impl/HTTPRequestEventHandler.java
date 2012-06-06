@@ -19,6 +19,7 @@ import org.chinux.pdc.http.impl.HTTPBaseFilter;
 import org.chinux.pdc.http.impl.HTTPBaseReader;
 import org.chinux.pdc.http.impl.HTTPRequestHeaderImpl;
 import org.chinux.pdc.http.impl.HTTPRequestImpl;
+import org.chinux.pdc.http.util.ErrorPageProvider;
 import org.chinux.pdc.nio.events.impl.ServerDataEvent;
 import org.chinux.pdc.server.MonitorObject;
 
@@ -98,7 +99,7 @@ public class HTTPRequestEventHandler {
 	}
 
 	private InetAddress getEventAddress(final SocketChannel clientChannel,
-			final HTTPProxyEvent httpEvent) {
+			final HTTPProxyEvent httpEvent) throws FilterException {
 		InetAddress address = null;
 		try {
 			if (httpEvent.getRequest().getHeaders().getHeader("Host") == null) {
@@ -115,8 +116,8 @@ public class HTTPRequestEventHandler {
 
 			}
 		} catch (final Exception e) {
-
-			address = clientChannel.socket().getInetAddress();
+			throw new FilterException(ByteBuffer.wrap(ErrorPageProvider
+					.get502()));
 		}
 		return address;
 	}
