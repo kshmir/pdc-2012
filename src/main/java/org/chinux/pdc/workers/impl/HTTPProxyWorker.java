@@ -13,6 +13,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.chinux.pdc.FilterException;
+import org.chinux.pdc.http.util.ErrorPageProvider;
 import org.chinux.pdc.nio.dispatchers.UrgentEventDispatcher;
 import org.chinux.pdc.nio.events.api.DataEvent;
 import org.chinux.pdc.nio.events.impl.ClientDataEvent;
@@ -361,6 +362,17 @@ public class HTTPProxyWorker extends HTTPBaseProxyWorker implements
 			answerDataEvent = errorEvent;
 
 			this.logger.debug("Handling error of remote client disconnect!");
+			break;
+		case ErrorDataEvent.NO_HOST_AVAILABLE:
+			final HTTPProxyEvent event = (HTTPProxyEvent) errorEvent.getOwner();
+
+			final ServerDataEvent answer = new ServerDataEvent(
+					event.getSocketChannel(), ByteBuffer.wrap(ErrorPageProvider
+							.get502()), this.serverDataReceiver);
+
+			answer.setCanSend(true);
+			answer.setCanClose(true);
+			answerDataEvent = answer;
 			break;
 		}
 

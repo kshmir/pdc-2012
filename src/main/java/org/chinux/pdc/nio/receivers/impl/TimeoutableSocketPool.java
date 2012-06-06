@@ -2,20 +2,20 @@ package org.chinux.pdc.nio.receivers.impl;
 
 import java.io.IOException;
 import java.nio.channels.SocketChannel;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class TimeoutableSocketPool {
 
 	private Timer timeoutTimer = new Timer();
 
-	private Map<Object, LinkedList<SocketChannel>> elements = new HashMap<Object, LinkedList<SocketChannel>>();
-	private Map<SocketChannel, Long> timeAdded = new HashMap<SocketChannel, Long>();
+	private Map<Object, LinkedList<SocketChannel>> elements = new ConcurrentHashMap<Object, LinkedList<SocketChannel>>();
+	private Map<SocketChannel, Long> timeAdded = new ConcurrentHashMap<SocketChannel, Long>();
 
 	private int seconds;
 

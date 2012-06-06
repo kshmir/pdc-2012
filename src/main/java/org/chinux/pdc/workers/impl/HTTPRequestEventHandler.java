@@ -177,13 +177,13 @@ public class HTTPRequestEventHandler {
 			header.removeHeader("Accept-Encoding");
 			header.addHeader("Accept-Encoding", "identity");
 			this.addViaHeader(header);
-			this.addMaxForwardsHeader(header);
 
 			final HTTPProxyEvent event = new HTTPProxyEvent(
 					new HTTPRequestImpl(header, new HTTPBaseReader(header,
 							this.monitorObject)), clientChannel);
 
-			if (!(header.getMethod().equals("GET"))) {
+			if (!(header.getMethod().equals("GET") || header.getMethod()
+					.equals("HEAD"))) {
 				event.setCanSend(true);
 				this.readingDataSockets.put(clientChannel, event);
 			} else {
@@ -219,22 +219,6 @@ public class HTTPRequestEventHandler {
 
 	private boolean canDoFilter(final HTTPProxyEvent event) {
 		return event.getRequest() != null;
-	}
-
-	private void addMaxForwardsHeader(final HTTPRequestHeader header) {
-		Integer currentforwards;
-		if (header.getHeader("Max-Forwards") != null) {
-			currentforwards = Integer.valueOf(header.getHeader("Max-Forwards"));
-			if (currentforwards == 0) {
-				// do not forward request
-			} else {
-				currentforwards--;
-			}
-		} else {
-			currentforwards = 10;
-		}
-		header.addHeader("Max-Forwards", String.valueOf(currentforwards));
-
 	}
 
 	private void addViaHeader(final HTTPRequestHeader header) {

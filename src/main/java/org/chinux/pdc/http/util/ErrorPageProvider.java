@@ -8,7 +8,8 @@ import java.io.InputStream;
 public class ErrorPageProvider {
 
 	private static byte[] page403 = null;
-	private static byte[] page405 = null;
+	private static byte[] page501 = null;
+	private static byte[] page502 = null;
 
 	public synchronized static byte[] get403() {
 		return page403 = extractPage(page403, "/403.html");
@@ -35,7 +36,11 @@ public class ErrorPageProvider {
 		return buff;
 	}
 
-	public static byte[] get405() {
-		return page405 = extractPage(page405, "/405.html");
+	public synchronized static byte[] get501() {
+		return page501 = extractPage(page501, "/501.html");
+	}
+
+	public synchronized static byte[] get502() {
+		return page502 = extractPage(page502, "/502.html");
 	}
 }

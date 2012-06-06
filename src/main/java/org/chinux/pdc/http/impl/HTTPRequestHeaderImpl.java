@@ -29,9 +29,12 @@ public class HTTPRequestHeaderImpl implements HTTPRequestHeader {
 
 		final String firstLine = request.split("\n")[0];
 
-		if (firstLine.startsWith("CONNECT") || firstLine.startsWith("TRACE")) {
+		if (firstLine.startsWith("CONNECT") || firstLine.startsWith("TRACE")
+				|| firstLine.startsWith("OPTIONS")
+				|| firstLine.startsWith("PUT")
+				|| firstLine.startsWith("DELETE")) {
 			throw new FilterException(ByteBuffer.wrap(ErrorPageProvider
-					.get405()));
+					.get501()));
 		}
 
 		Matcher match = headPattern.matcher(firstLine);

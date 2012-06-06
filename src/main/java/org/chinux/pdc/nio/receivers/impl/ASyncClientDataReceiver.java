@@ -84,15 +84,6 @@ public class ASyncClientDataReceiver extends ClientDataReceiver implements
 								socketChannel);
 					}
 
-					// Queue a channel registration since the caller is not
-					// the
-					// selecting thread. As part of the registration we'll
-					// register
-					// an interest in connection events. These are raised
-					// when a
-					// channel
-					// is ready to complete connection establishment.
-
 					if (!socketChannel.isConnected()
 							&& this.pendingData.get(event.getAttachment()) == null) {
 						if (!isNew) {
@@ -137,8 +128,8 @@ public class ASyncClientDataReceiver extends ClientDataReceiver implements
 			socketChannel.configureBlocking(false);
 			socketChannel.connect(socketHost);
 
-		} catch (final IOException e) {
-			e.printStackTrace();
+		} catch (final Exception e) {
+			System.out.println("!!!");
 			socketChannel = null;
 		}
 		return socketChannel;
@@ -231,6 +222,15 @@ public class ASyncClientDataReceiver extends ClientDataReceiver implements
 		final SocketChannel newSocket = this
 				.makeSocketChannel(this.attachmentIPMap.get(attachment));
 
+		// if (newSocket == null) {
+		// final ErrorDataEvent errorEvent = new ErrorDataEvent(
+		// ErrorDataEvent.REMOTE_CLIENT_DISCONNECT, oldSocket,
+		// attachment);
+		//
+		// this.dispatcher.processData(errorEvent);
+		//
+		// return;
+		// }
 		this.attachmentSocketMap.remove(oldSocket);
 		this.attachmentSocketMap.put(attachment, newSocket);
 		this.changeRequests.add(new ChangeRequest(newSocket,
@@ -239,6 +239,7 @@ public class ASyncClientDataReceiver extends ClientDataReceiver implements
 		try {
 			oldSocket.close();
 		} catch (final IOException e) {
+			System.out.println("Retrying connection");
 			e.printStackTrace();
 		}
 	}

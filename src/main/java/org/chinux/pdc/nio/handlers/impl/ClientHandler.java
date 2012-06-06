@@ -40,6 +40,9 @@ public class ClientHandler implements NIOClientHandler, ConnectionCloseHandler {
 
 	public void setEventDispatcher(final EventDispatcher<DataEvent> dispatcher) {
 		this.dispatcher = dispatcher;
+		if (this.receiver != null) {
+			this.receiver.setDispatcher(this.dispatcher);
+		}
 	}
 
 	public void setConnectionCloseHandler(final ConnectionCloseHandler handler) {
@@ -48,6 +51,9 @@ public class ClientHandler implements NIOClientHandler, ConnectionCloseHandler {
 
 	public void setReceiver(final ClientDataReceiver receiver) {
 		this.receiver = receiver;
+		if (this.dispatcher != null) {
+			this.receiver.setDispatcher(this.dispatcher);
+		}
 	}
 
 	@Override
@@ -136,8 +142,7 @@ public class ClientHandler implements NIOClientHandler, ConnectionCloseHandler {
 				}
 			}
 		} catch (final IOException ioe) {
-			ioe.printStackTrace();
-			this.handleUnexpectedDisconnect(key);
+			this.handleNoConnect(key);
 		}
 	}
 
@@ -151,13 +156,22 @@ public class ClientHandler implements NIOClientHandler, ConnectionCloseHandler {
 			// Register an interest in writing on this channel
 			key.interestOps(SelectionKey.OP_WRITE);
 		} catch (final IOException e) {
-			this.handleUnexpectedDisconnect(key);
+
+			this.handleNoConnect(key);
 		}
 	}
 
 	@Override
 	public boolean handlePendingChanges() throws ClosedChannelException {
 		return this.receiver.handlePendingChanges();
+	}
+
+	private void handleNoConnect(final SelectionKey key) {
+		final ErrorDataEvent errorEvent = new ErrorDataEvent(
+				ErrorDataEvent.NO_HOST_AVAILABLE, key.channel(),
+				key.attachment());
+
+		this.dispatcher.processData(errorEvent);
 	}
 
 	@Override

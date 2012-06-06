@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
+import org.chinux.pdc.nio.dispatchers.EventDispatcher;
 import org.chinux.pdc.nio.events.api.DataEvent;
 import org.chinux.pdc.nio.services.util.ChangeRequest;
 
@@ -25,10 +26,16 @@ public abstract class ClientDataReceiver implements DataReceiver<DataEvent> {
 	protected Map<Object, SocketChannel> attachmentSocketMap = new HashMap<Object, SocketChannel>();
 	protected Map<Object, InetSocketAddress> attachmentIPMap = new HashMap<Object, InetSocketAddress>();
 
+	protected EventDispatcher<DataEvent> dispatcher;
+
 	protected Logger log = Logger.getLogger(this.getClass());
 
 	public Map<Object, ArrayList<ByteBuffer>> getPendingData() {
 		return this.pendingData;
+	}
+
+	public void setDispatcher(final EventDispatcher<DataEvent> dispatcher) {
+		this.dispatcher = dispatcher;
 	}
 
 	public abstract boolean handlePendingChanges()

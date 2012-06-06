@@ -152,7 +152,9 @@ public class MultiThreadedEventDispatcher<T extends DataEvent> implements
 			final ErrorDataEvent event) {
 		SocketChannel key = null;
 
-		if (event.getErrorType() == ErrorDataEvent.REMOTE_CLIENT_DISCONNECT) {
+		if (event.getErrorType() == ErrorDataEvent.REMOTE_CLIENT_DISCONNECT
+				|| event.getErrorType() == ErrorDataEvent.NO_HOST_AVAILABLE) {
+
 			// HTTPProxyEvent owner of the error
 			key = ((HTTPProxyEvent) event.getOwner()).getSocketChannel();
 		} else {

@@ -9,6 +9,8 @@ public class ErrorDataEvent extends DataEvent {
 
 	public static final int REMOTE_CLIENT_DISCONNECT = 1;
 
+	public static final int NO_HOST_AVAILABLE = 2;
+
 	private int errorType;
 	private Object attachment;
 	private Object owner;

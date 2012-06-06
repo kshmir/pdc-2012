@@ -13,10 +13,10 @@ import java.util.TreeSet;
 import org.chinux.pdc.http.api.HTTPDelimiterReader;
 import org.chinux.pdc.http.api.HTTPMessageHeader;
 import org.chinux.pdc.http.api.HTTPReader;
+import org.chinux.pdc.http.impl.readers.HTTPConnectionCloseReader;
 import org.chinux.pdc.http.impl.readers.HTTPImageResponseReader;
 import org.chinux.pdc.http.impl.readers.HTTPL33tEncoder;
 import org.chinux.pdc.server.MonitorObject;
-import org.chinux.pdc.workers.impl.HTTPConnectionCloseReader;
 
 public class HTTPBaseReader implements HTTPDelimiterReader,
 		HTTPConnectionCloseReader {

@@ -18,6 +18,7 @@ import org.chinux.pdc.http.impl.readers.HTTPChunkedResponseTransformReader;
 import org.chinux.pdc.http.impl.readers.HTTPContentLengthReader;
 import org.chinux.pdc.http.impl.readers.HTTPImageResponseReader;
 import org.chinux.pdc.http.impl.readers.HTTPL33tEncoder;
+import org.chinux.pdc.http.impl.readers.HTTPOneDotOneReader;
 import org.chinux.pdc.nio.events.impl.ClientDataEvent;
 import org.chinux.pdc.server.MonitorObject;
 
